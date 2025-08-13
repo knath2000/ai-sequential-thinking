@@ -41,12 +41,72 @@ export function setupRoutes(app: FastifyInstance) {
     return sequentialHandler(req, reply);
   });
 
-  // Minimal POST / to prevent 404 from http-first probes
-  app.post('/', async () => ({
-    ok: true,
-    server: { name: 'ai-sequential-thinking', version: '0.1.0' },
-    capabilities: { tools: ['sequential_thinking'], transports: ['http', 'sse'] },
-  }));
+  // JSON-RPC 2.0 endpoint for MCP streamable HTTP transport
+  app.post('/', async (req: FastifyRequest, reply: FastifyReply) => {
+    const body = (req.body as any) || {};
+    const id = body?.id ?? null;
+    const sendResult = (result: unknown) => reply.send({ jsonrpc: '2.0', id, result });
+    const sendError = (code: number, message: string, data?: unknown) => reply.send({ jsonrpc: '2.0', id, error: { code, message, data } });
+
+    if (body?.jsonrpc !== '2.0' || typeof body?.method !== 'string') {
+      return sendError(-32600, 'Invalid Request');
+    }
+
+    const method = body.method as string;
+    const params = (body.params as any) || {};
+
+    if (method === 'initialize') {
+      return sendResult({
+        serverInfo: { name: 'ai-sequential-thinking', version: '0.1.0' },
+        capabilities: {},
+      });
+    }
+
+    if (method === 'tools/list') {
+      return sendResult({
+        tools: [
+          {
+            name: 'sequential_thinking',
+            description: 'Dynamic, reflective sequential thinking with branching, revisions, and tool recommendations.',
+            input_schema: {
+              type: 'object',
+              properties: {
+                thought: { type: 'string' },
+                thought_number: { type: 'number' },
+                total_thoughts: { type: 'number' },
+                next_thought_needed: { type: 'boolean' },
+                is_revision: { type: 'boolean' },
+                revises_thought: { type: 'number' },
+                branch_from_thought: { type: 'number' },
+                branch_id: { type: 'string' },
+                needs_more_thoughts: { type: 'boolean' },
+                session_id: { type: 'string' },
+              },
+              required: ['thought', 'thought_number', 'total_thoughts', 'next_thought_needed'],
+              additionalProperties: true,
+            },
+          },
+        ],
+      });
+    }
+
+    if (method === 'tools/call') {
+      const toolName = params?.name || params?.tool;
+      const args = params?.arguments || params?.args || {};
+      if (toolName !== 'sequential_thinking') {
+        return sendError(-32601, 'Tool not found');
+      }
+      const session = (req.headers['x-session-id'] as string) || (req.query as any)?.session_id || args.session_id;
+      const required = ['thought', 'thought_number', 'total_thoughts', 'next_thought_needed'];
+      for (const k of required) {
+        if (!(k in args)) return sendError(-32602, `Missing argument: ${k}`);
+      }
+      const entry = addThought(args as ThoughtInput, session);
+      return sendResult({ content: [{ type: 'text', text: JSON.stringify({ ok: true, entry }) }] });
+    }
+
+    return sendError(-32601, 'Method not found');
+  });
 
   app.post('/process_thought', async (req: FastifyRequest, reply: FastifyReply) => {
     const body = (req.body as Partial<ThoughtInput> | undefined) || {};

@@ -57,6 +57,7 @@ export function setupRoutes(app: FastifyInstance) {
 
     if (method === 'initialize') {
       return sendResult({
+        protocolVersion: '2024-11-05',
         serverInfo: { name: 'ai-sequential-thinking', version: '0.1.0' },
         capabilities: {},
       });
@@ -68,7 +69,7 @@ export function setupRoutes(app: FastifyInstance) {
           {
             name: 'sequential_thinking',
             description: 'Dynamic, reflective sequential thinking with branching, revisions, and tool recommendations.',
-            input_schema: {
+            inputSchema: {
               type: 'object',
               properties: {
                 thought: { type: 'string' },

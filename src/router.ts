@@ -4,6 +4,7 @@ import { addThought, clearHistory, generateSummary } from './progress';
 import type { ThoughtInput } from './types';
 import crypto from 'crypto';
 import { submitModalJob } from './mcpTools/modalClient';
+import { callPerplexityAsk } from './mcpTools/perplexityAsk';
 
 export function setupRoutes(app: FastifyInstance) {
   app.get('/health', async () => ({ ok: true }));
@@ -117,6 +118,32 @@ export function setupRoutes(app: FastifyInstance) {
       for (const k of required) {
         if (!(k in args)) return sendError(-32602, `Missing argument: ${k}`);
       }
+
+      if (args.auto === true) {
+        const steps: any[] = [];
+        const maxSteps = Number(args.max_steps || args.total_thoughts || 3);
+        let thoughtNumber = Number(args.thought_number) || 1;
+        for (let i = 0; i < maxSteps; i++) {
+          const thoughtArgs = {
+            ...args,
+            thought_number: thoughtNumber,
+            next_thought_needed: i < maxSteps - 1,
+          } as ThoughtInput & Record<string, any>
+          const entry = addThought(thoughtArgs, session)
+
+          if (args.use_perplexity) {
+            const enrich = await callPerplexityAsk(String(thoughtArgs.thought), args.perplexity_endpoint)
+            steps.push({ entry, perplexity: enrich })
+          } else {
+            steps.push({ entry })
+          }
+
+          thoughtNumber += 1
+        }
+        const summary = `Auto-orchestrated ${steps.length} steps.`
+        return sendResult({ summary, steps })
+      }
+
       const entry = addThought(args as ThoughtInput, session);
       return sendResult({ content: [{ type: 'text', text: JSON.stringify({ ok: true, entry }) }] });
     }

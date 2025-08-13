@@ -4,6 +4,7 @@ import { addThought, clearHistory, generateSummary } from './progress';
 import type { ThoughtInput } from './types';
 import crypto from 'crypto';
 import { submitModalJob } from './mcpTools/modalClient';
+import { generateThinkingSteps } from './provider';
 
 export function setupRoutes(app: FastifyInstance) {
   // Simple in-memory rate limiter per key (sessionId or IP)
@@ -154,9 +155,20 @@ export function setupRoutes(app: FastifyInstance) {
         return sendError(-32602, 'Thought too long', { maxLength: MAX_THOUGHT_LENGTH });
       }
 
+      // Optionally trigger LangDB to verify gateway usage when requested
+      let providerMeta: { provider: string; model: string; source: string } | undefined
+      if (args.use_langdb === true) {
+        try {
+          const { provider, model, source } = await generateThinkingSteps(thought)
+          providerMeta = { provider, model, source }
+        } catch {}
+      }
+
       addThought(args as ThoughtInput, session);
-      // Return minimal per-step shape; the Agent controls chaining
-      return sendResult({ content: [{ type: 'text', text: JSON.stringify({ ok: true, status: 'recorded' }) }] });
+      // Return minimal per-step shape; include provider meta if available
+      const payload: Record<string, unknown> = { ok: true, status: 'recorded' }
+      if (providerMeta) Object.assign(payload, providerMeta)
+      return sendResult({ content: [{ type: 'text', text: JSON.stringify(payload) }] });
     }
 
     if (method === 'prompts/list') {

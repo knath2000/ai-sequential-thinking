@@ -21,6 +21,33 @@ export function setupRoutes(app: FastifyInstance) {
     return sequentialHandler(req, reply);
   });
 
+  // Server info for MCP remotes
+  app.get('/server-info', async () => ({
+    name: 'ai-sequential-thinking',
+    version: '0.1.0',
+    transports: ['http', 'sse'],
+    endpoints: {
+      http: '/',
+      sse: '/sse',
+    },
+  }));
+
+  // Provide SSE on common paths to avoid 404 during probing
+  app.get('/', async (req: FastifyRequest, reply: FastifyReply) => {
+    return sequentialHandler(req, reply);
+  });
+
+  app.get('/sse', async (req: FastifyRequest, reply: FastifyReply) => {
+    return sequentialHandler(req, reply);
+  });
+
+  // Minimal POST / to prevent 404 from http-first probes
+  app.post('/', async () => ({
+    ok: true,
+    server: { name: 'ai-sequential-thinking', version: '0.1.0' },
+    capabilities: { tools: ['sequential_thinking'], transports: ['http', 'sse'] },
+  }));
+
   app.post('/process_thought', async (req: FastifyRequest, reply: FastifyReply) => {
     const body = (req.body as Partial<ThoughtInput> | undefined) || {};
     const {

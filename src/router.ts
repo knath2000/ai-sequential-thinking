@@ -44,7 +44,8 @@ export function setupRoutes(app: FastifyInstance) {
   // JSON-RPC 2.0 endpoint for MCP streamable HTTP transport
   app.post('/', async (req: FastifyRequest, reply: FastifyReply) => {
     const body = (req.body as any) || {};
-    const id = body?.id ?? null;
+    const hasId = Object.prototype.hasOwnProperty.call(body, 'id');
+    const id = hasId ? body.id : undefined;
     const sendResult = (result: unknown) => reply.send({ jsonrpc: '2.0', id, result });
     const sendError = (code: number, message: string, data?: unknown) => reply.send({ jsonrpc: '2.0', id, error: { code, message, data } });
 
@@ -55,11 +56,25 @@ export function setupRoutes(app: FastifyInstance) {
     const method = body.method as string;
     const params = (body.params as any) || {};
 
+    // Handle notifications (no id) without responding
+    if (!hasId) {
+      if (method === 'notifications/initialized') {
+        return reply.status(204).send();
+      }
+      return reply.status(204).send();
+    }
+
     if (method === 'initialize') {
       return sendResult({
-        protocolVersion: '2024-11-05',
+        protocolVersion: '2025-06-18',
         serverInfo: { name: 'ai-sequential-thinking', version: '0.1.0' },
-        capabilities: {},
+        capabilities: {
+          tools: {},
+          prompts: {},
+          resources: {},
+          logging: {},
+          roots: {},
+        },
       });
     }
 
@@ -104,6 +119,14 @@ export function setupRoutes(app: FastifyInstance) {
       }
       const entry = addThought(args as ThoughtInput, session);
       return sendResult({ content: [{ type: 'text', text: JSON.stringify({ ok: true, entry }) }] });
+    }
+
+    if (method === 'prompts/list') {
+      return sendResult({ prompts: [] });
+    }
+
+    if (method === 'resources/list') {
+      return sendResult({ resources: [] });
     }
 
     return sendError(-32601, 'Method not found');

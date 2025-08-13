@@ -23,13 +23,13 @@ export async function sequentialHandler(req: FastifyRequest, reply: FastifyReply
   sendEvent('step_update', { step_description: 'Starting sequential thinking run', progress_pct: 0, query });
 
   // Fetch provider-configured steps (stubbed for now)
-  const { steps, provider, model } = await generateThinkingSteps(String(query || ''));
+  const { steps, provider, model, source } = await generateThinkingSteps(String(query || ''));
   for (const s of steps) {
     await new Promise((r) => setTimeout(r, 200));
     sendEvent('step_update', s);
   }
   await new Promise((r) => setTimeout(r, 150));
-  sendEvent('complete', { final_summary: `Sequential run complete. Provider=${provider}, Model=${model}` });
+  sendEvent('complete', { final_summary: `Sequential run complete. Provider=${provider}, Model=${model}, Source=${source}` });
   clearInterval(interval);
   reply.raw.end();
 }

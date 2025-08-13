@@ -23,15 +23,25 @@ export interface ThinkingStep {
 }
 
 // Stub generator to be replaced by actual provider calls
-export async function generateThinkingSteps(query: string): Promise<{ steps: ThinkingStep[]; provider: Provider; model: string }> {
+export async function generateThinkingSteps(query: string): Promise<{ steps: ThinkingStep[]; provider: Provider; model: string; source: 'langdb' | 'stub' }> {
   const { provider, model } = getProviderConfig()
+  // Try LangDB if configured
+  try {
+    const { callLangdbChatForSteps } = await import('./providers/langdbClient')
+    const res = await callLangdbChatForSteps(query, model)
+    if (res.ok && res.steps?.length) {
+      return { steps: res.steps, provider, model, source: 'langdb' }
+    }
+  } catch {}
+
+  // Fallback stub
   const base: ThinkingStep[] = [
     { step_description: 'Analyzing input', progress_pct: 20 },
     { step_description: 'Planning steps', progress_pct: 45 },
     { step_description: 'Synthesizing answer', progress_pct: 80 },
   ]
   void query
-  return { steps: base, provider, model }
+  return { steps: base, provider, model, source: 'stub' }
 }
 
 

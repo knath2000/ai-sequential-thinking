@@ -21,6 +21,25 @@ Improvements_Identified_For_Consolidation:
 
 ---
 Date: 2025-08-13
+TaskRef: "Push to GitHub and validate MCP tool inside Cursor"
+
+Learnings:
+- Verifying MCP from inside Cursor confirms per-step parity works with Agent-driven chaining.
+- Recording steps without heavy payloads keeps tool latency low and avoids client ambiguities.
+
+Difficulties:
+- None significant; ensured rate limiting didn’t interfere with rapid test calls.
+
+Successes:
+- Pushed repo to GitHub (`main`).
+- Three sequential_thinking calls returned `{ ok: true, status: "recorded" }` in Cursor chat.
+
+Improvements_Identified_For_Consolidation:
+- Testing workflow: Prefer direct tool calls in Cursor for MCP validation after server updates.
+---
+
+---
+Date: 2025-08-13
 TaskRef: "Implement JSON-RPC MCP server, Cursor integration, and auto-orchestrator"
 
 Learnings:

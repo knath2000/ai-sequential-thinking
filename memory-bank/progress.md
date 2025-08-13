@@ -14,6 +14,8 @@
 - Finalized per-step behavior parity: removed `auto` and `auto_chain` from JSON-RPC; minimal per-step returns
 - Guardrails added: rate limiting, input caps, structured error objects
 - Fixed protocol compliance: `protocolVersion` and `inputSchema` casing
+- Repository pushed to GitHub: `https://github.com/knath2000/ai-sequential-thinking` (`main`)
+- In-Cursor validation: 3 `sequential_thinking` tool calls recorded successfully
 - GitHub pushes for all changes
 
 ### Next

@@ -8,6 +8,11 @@
 **Rate limiting and input caps**
 - Implement simple in-memory rate limiting keyed by session/IP with env-tunable window and max.
 - Enforce input size caps (e.g., `thought` length) and return structured error objects consistently.
+
+## Testing & Validation
+**Cursor-first MCP validation**
+- Validate tool behavior by invoking the MCP tool directly in Cursor chat once the server is active.
+- Expect minimal per-step "recorded" responses; rely on the Agent for chaining. Helps detect protocol mismatches early.
 # Consolidated Learnings
 
 ## MCP + Cursor Interop

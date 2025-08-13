@@ -14,6 +14,7 @@
 - `claudeClient.ts`: LangDB client wrapper; structured prompts and tool schemas
 - `mcpTools/perplexityAsk.ts`: Outbound HTTP to Perplexity-Ask MCP server
 - `progress.ts`: State machine for steps, branches, and revisions
+- `provider.ts`: Provider/model config (env-based) and step generation stub for SSE
 
 ### Typical Flow (Text Diagram)
 Client → SSE/stdio → MCP Server → LangDB (Claude Opus 4)

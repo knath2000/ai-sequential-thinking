@@ -21,6 +21,10 @@
 - Matched protocolVersion to `2025-06-18` and corrected `inputSchema` casing
 - Compared behavior with third-party `sequentialthinking-tools`; documented no standard auto-chain field
 
+### Validation (this session)
+- Repo pushed to GitHub (`main`)
+- In-Cursor test: invoked `sequential_thinking` three times; each returned `{ ok: true, status: "recorded" }`
+
 ### Next Steps
 1. FINALIZED: Adopted per-step parity with minimal return shape; client (Agent) controls chaining.
 2. Implemented: removed auto/auto_chain multi-step paths from JSON-RPC; standardized minimal per-step response.

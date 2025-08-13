@@ -1,4 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { generateThinkingSteps } from './provider';
 
 export async function sequentialHandler(req: FastifyRequest, reply: FastifyReply) {
   reply.raw.setHeader('Content-Type', 'text/event-stream');
@@ -21,9 +22,14 @@ export async function sequentialHandler(req: FastifyRequest, reply: FastifyReply
 
   sendEvent('step_update', { step_description: 'Starting sequential thinking run', progress_pct: 0, query });
 
-  // TODO: wire callClaude + perplexityAsk and stream real updates
-
-  sendEvent('complete', { final_summary: 'Scaffold in place. Implement orchestration next.' });
+  // Fetch provider-configured steps (stubbed for now)
+  const { steps, provider, model } = await generateThinkingSteps(String(query || ''));
+  for (const s of steps) {
+    await new Promise((r) => setTimeout(r, 200));
+    sendEvent('step_update', s);
+  }
+  await new Promise((r) => setTimeout(r, 150));
+  sendEvent('complete', { final_summary: `Sequential run complete. Provider=${provider}, Model=${model}` });
   clearInterval(interval);
   reply.raw.end();
 }

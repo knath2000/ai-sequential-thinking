@@ -1,19 +1,27 @@
+## MCP Tool Response Shape
+**Pattern: Minimal per-step returns; client drives chaining**
+- Return a compact, standardized content block per call.
+- Do not embed auto-chaining or multi-step orchestration in the JSON-RPC API.
+- Rationale: Aligns with Agent-driven follow-ups and avoids protocol ambiguities across clients.
+
+## Guardrails
+**Rate limiting and input caps**
+- Implement simple in-memory rate limiting keyed by session/IP with env-tunable window and max.
+- Enforce input size caps (e.g., `thought` length) and return structured error objects consistently.
 # Consolidated Learnings
 
-## Sequential Thinking MCP Pattern
-- Separate transport (SSE/stdio), orchestration, and tool adapters for clarity and testability.
-- Use a LangDB client wrapper to standardize prompts, tool schemas, and headers.
-- Treat web-grounding (Perplexity-Ask) as an external tool call; stream partial results back to the model and client.
+## MCP + Cursor Interop
+- Use JSON-RPC streamable HTTP with `protocolVersion: 2025-06-18`; implement `initialize`, `tools/list`, `tools/call`, 204 for `notifications/initialized`.
+- `inputSchema` must use camelCase (`inputSchema`).
+- No recognized JSON field to force auto-follow-up; chaining is agent-driven or server does single-call orchestration.
 
-## Minimal Env Surface
-- `LANGDB_BASEURL`, `LANGDB_KEY`, `PERPLEXITY_ASK_URL`, `PORT`, `TRANSPORT` are sufficient for local and early prod.
+## Orchestration Modes
+- Single-call mode (auto=true): server performs all steps and returns `{ summary, steps, citations }`.
+- Per-step mode (agent-driven): return minimal step fields (`thought_number`, `total_thoughts`, `next_thought_needed`, etc.); no proposal fields.
 
-## Developer Ergonomics
-- Provide small scripts for dev, build, and test.
-- Keep initial state in-memory; gate persistence behind an interface.
+## Integration Patterns
+- For parity with third-party tools, prefer minimal per-step outputs and let Cursor Agent auto-advance.
+- For deterministic outcomes, use single-call aggregation with optional Perplexity enrichment.
 
-## Model Strategy (Aug 2025)
-- Default: GPT-4o/o1 for speed/cost and robust tool/JSON.
-- Quality-first: Claude Opus 4 for complex, high-stakes steps.
-- Cost-first: Gemini 2.5 or DeepSeek R1 depending on vendor/self-hosting needs.
-- Self-hosted: Llama 3 Reasoning or Mistral/Qwen; add guardrails and JSON repair.
+## Next Implementation
+- Choose and standardize one mode; add guardrails and provider switch (Claude/GPT/Gemini/DeepSeek).

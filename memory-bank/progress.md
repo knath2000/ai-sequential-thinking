@@ -6,18 +6,19 @@
 - Project scaffolded; server running locally
 
 ### Completed
-- productContext, projectbrief, systemPatterns, techContext, activeContext created
-- TS Fastify server with SSE + stub stdio
-- Endpoints: `/health`, `/capabilities`, `/sequential`
+- TS Fastify server with SSE + stdio stub and JSON-RPC root
+- Endpoints: `/health`, `/capabilities`, `/sequential`, `/server-info`, `/sse`, JSON-RPC `/`
 - In-memory sequential-thinking: `/process_thought`, `/generate_summary`, `/clear_history`, `/run`
-- Perplexity grounding used to select model matrix (default GPT-4o/o1; quality Opus 4; cost Gemini 2.5/DeepSeek; self-host Llama/Mistral)
+- Modal GPU app deployed with webhook (HMAC) and local smoke tests
+- Cursor MCP config updated; server integrated
+- Finalized per-step behavior parity: removed `auto` and `auto_chain` from JSON-RPC; minimal per-step returns
+- Guardrails added: rate limiting, input caps, structured error objects
+- Fixed protocol compliance: `protocolVersion` and `inputSchema` casing
+- GitHub pushes for all changes
 
 ### Next
-- Implement Claude (LangDB) client and Perplexity tool wrappers
-- Orchestrate sequential tool streaming and tool-calls
-- Provider switch for model choices
-- E2E test with grounding and strict JSON streaming
+- Wire provider client (LangDB Claude et al.) and Perplexity enrichment in orchestrator path
+- Railway deploy, then test in Cursor Agent mode both flows
 
 ### Known Issues
-- stdio transport not yet implemented
-- Orchestration currently mocked; no model calls yet
+- No standard JSON-RPC field to force client auto-follow-up; rely on Agent mode or single-call auto

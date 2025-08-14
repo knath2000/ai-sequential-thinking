@@ -68,10 +68,11 @@ export async function callLangdbChatForSteps(prompt: string, model: string, time
   const config: AxiosRequestConfig = {
     headers: {
       'Content-Type': 'application/json',
+      Accept: 'application/json',
       Authorization: `Bearer ${apiKey}`,
-      'x-project-id': projectId,
+      'X-Project-Id': projectId,
     },
-    timeout: typeof timeoutMs === 'number' ? timeoutMs : 5000,
+    timeout: typeof timeoutMs === 'number' ? timeoutMs : 10000,
     validateStatus: () => true,
   }
 

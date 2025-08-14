@@ -37,8 +37,9 @@ def run_llm_task(payload: dict, callback_url: str, webhook_secret: Optional[str]
 
     headers = {
         "Content-Type": "application/json",
+        "Accept": "application/json",
         "Authorization": f"Bearer {payload.get('langdb_api_key') or payload.get('langdb_key')}",
-        "x-project-id": payload.get("langdb_project_id", ""),
+        "X-Project-Id": payload.get("langdb_project_id", ""),
     }
     body_req = {
         "model": model,
@@ -54,7 +55,7 @@ def run_llm_task(payload: dict, callback_url: str, webhook_secret: Optional[str]
     error = None
     try:
         print(f"[run_llm_task] cid={correlation_id} calling LangDB: {url} model={model}")
-        resp = requests.post(url, headers=headers, json=body_req, timeout=10)
+        resp = requests.post(url, headers=headers, json=body_req, timeout=15)
         if resp.status_code >= 200 and resp.status_code < 300:
             result = resp.json()
         else:

@@ -93,7 +93,7 @@ export function setupRoutes(app: FastifyInstance) {
         : ''
     try {
       const { callLangdbChatForSteps } = await import('./providers/langdbClient')
-      const res = await callLangdbChatForSteps('diagnostic', model, 4000)
+      const res = await callLangdbChatForSteps('diagnostic', model, Number(process.env.DIAG_LANGDB_TIMEOUT_MS || 8000))
       return {
         ok: res.ok,
         hasSteps: Boolean(res.steps && res.steps.length > 0),

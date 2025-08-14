@@ -4,7 +4,7 @@ import { addThought, clearHistory, generateSummary } from './progress';
 import type { ThoughtInput } from './types';
 import crypto from 'crypto';
 import { submitModalJob } from './mcpTools/modalClient';
-import { generateThinkingSteps } from './provider';
+import { getProviderConfig } from './provider';
 
 export function setupRoutes(app: FastifyInstance) {
   // Simple in-memory rate limiter per key (sessionId or IP)
@@ -34,6 +34,10 @@ export function setupRoutes(app: FastifyInstance) {
   }
 
   const MAX_THOUGHT_LENGTH = Number(process.env.MAX_THOUGHT_LENGTH || 2000);
+
+  // In-memory Modal orchestration for LangDB offload
+  const jobWaiters: Map<string, { resolve: (v: unknown) => void; reject: (e: unknown) => void; createdAt: number }> = new Map();
+  const jobResults: Map<string, { done: boolean; result?: unknown; createdAt: number }> = new Map();
 
   app.get('/health', async () => ({ ok: true }));
 
@@ -194,21 +198,47 @@ export function setupRoutes(app: FastifyInstance) {
       if (thought.length > MAX_THOUGHT_LENGTH) {
         return sendError(-32602, 'Thought too long', { maxLength: MAX_THOUGHT_LENGTH });
       }
-
-      // Optionally trigger LangDB to verify gateway usage when requested
-      let providerMeta: { provider: string; model: string; source: string } | undefined
+      // If use_langdb flag is set, offload to Modal and await result (with timeout)
       if (args.use_langdb === true) {
+        const correlationId = crypto.randomUUID();
+        const { model, provider } = getProviderConfig();
+        const modalPayload = {
+          kind: 'langdb_chat_steps',
+          thought,
+          model,
+          provider,
+          session_id: session,
+          correlation_id: correlationId,
+        };
         try {
-          const { provider, model, source } = await generateThinkingSteps(thought)
-          providerMeta = { provider, model, source }
-        } catch {}
+          const job = await submitModalJob({ task: 'langdb_chat_steps', payload: modalPayload, callbackPath: '/webhook/modal' });
+          // Register waiter
+          const resultPromise = new Promise<unknown>((resolve, reject) => {
+            jobWaiters.set(correlationId, { resolve, reject, createdAt: Date.now() });
+          });
+          const timeoutMs = Number(process.env.MODAL_SYNC_TIMEOUT_MS || 25000);
+          const timed = new Promise<undefined>((_r, reject) => setTimeout(() => reject(new Error('timeout')), timeoutMs));
+          try {
+            const result: any = await Promise.race([resultPromise, timed]);
+            addThought(args as ThoughtInput, session);
+            const payload: Record<string, unknown> = { ok: true, status: 'recorded', provider, model, source: 'langdb', correlation_id: correlationId, job_id: job?.id || job?.job_id };
+            if (result && typeof result === 'object') payload.result = result;
+            return sendResult({ content: [{ type: 'text', text: JSON.stringify(payload) }] });
+          } catch (e: any) {
+            // Timed out – return accepted with polling info
+            addThought(args as ThoughtInput, session);
+            return sendResult({ content: [{ type: 'text', text: JSON.stringify({ ok: true, status: 'accepted', correlation_id: correlationId, job_id: job?.id || job?.job_id, poll: `/modal/job/${correlationId}` }) }] });
+          } finally {
+            jobWaiters.delete(correlationId);
+          }
+        } catch (err: any) {
+          return sendError(-32000, 'Failed to submit Modal job', { message: err?.message });
+        }
       }
 
+      // Default: record per-step without LangDB
       addThought(args as ThoughtInput, session);
-      // Return minimal per-step shape; include provider meta if available
-      const payload: Record<string, unknown> = { ok: true, status: 'recorded' }
-      if (providerMeta) Object.assign(payload, providerMeta)
-      return sendResult({ content: [{ type: 'text', text: JSON.stringify(payload) }] });
+      return sendResult({ content: [{ type: 'text', text: JSON.stringify({ ok: true, status: 'recorded', source: 'stub' }) }] });
     }
 
     if (method === 'prompts/list') {
@@ -324,9 +354,25 @@ export function setupRoutes(app: FastifyInstance) {
       return reply.code(401).send({ error: 'Invalid signature' });
     }
 
-    // Broadcast event to any listening SSE client if desired
-    // For now, just ack and rely on clients to refresh/stream
+    const body = (req.body as any) || {};
+    const correlationId = body?.payload?.correlation_id || body?.correlation_id || body?.job_id;
+    const result = body?.result ?? body;
+    if (correlationId) {
+      const waiter = jobWaiters.get(correlationId);
+      if (waiter) {
+        waiter.resolve(result);
+        jobWaiters.delete(correlationId);
+      }
+      jobResults.set(correlationId, { done: true, result, createdAt: Date.now() });
+    }
     return { ok: true };
+  });
+
+  app.get('/modal/job/:id', async (req: FastifyRequest, reply: FastifyReply) => {
+    const id = (req.params as any)?.id as string;
+    const item = jobResults.get(id);
+    if (!item) return { ok: true, done: false };
+    return { ok: true, done: item.done, result: item.result };
   });
 }
 

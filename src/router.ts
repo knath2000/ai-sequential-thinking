@@ -230,11 +230,12 @@ export function setupRoutes(app: FastifyInstance) {
             try {
               const finalResult = await Promise.race([resultPromise, timed]);
               // webhook returned result within sync window
-              return sendResult({ jsonrpc: '2.0', id, result: { ok: true, status: 'completed', correlation_id: correlationId, job_id: correlationId, result: finalResult } });
+              console.info('[router] modal job completed within sync window', { correlationId });
+              return sendResult({ ok: true, status: 'completed', correlation_id: correlationId, job_id: correlationId, result: finalResult });
             } catch (e) {
-              // timed out waiting for webhook – return accepted with poll info
+              // timed out waiting for webhook – return accepted with poll info (HTTP 202)
               console.info('[router] modal job sync wait timed out, returning accepted', { correlationId });
-              return sendResult({ ok: true, status: 'accepted', correlation_id: correlationId, job_id: correlationId, poll: `/modal/job/${correlationId}` });
+              return reply.code(202).send({ jsonrpc: '2.0', id, result: { ok: true, status: 'accepted', correlation_id: correlationId, job_id: correlationId, poll: `/modal/job/${correlationId}` } });
             }
           } catch (e) {
             let errorMessage = 'Failed to submit Modal job';

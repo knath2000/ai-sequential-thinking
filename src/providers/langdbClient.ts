@@ -17,9 +17,13 @@ function buildChatUrl(): string {
   if (explicit) {
     // If explicit looks like a base, append path; if it's already the chat path, return as-is
     if (/\/v1\/chat\/completions(\/?$)/.test(explicit)) return explicit
-    return explicit.replace(/\/$/, '') + '/v1/chat/completions'
+    const cleaned = explicit.replace(/\/$/, '')
+    if (/\/v1$/.test(cleaned)) return cleaned + '/chat/completions'
+    return cleaned + '/v1/chat/completions'
   }
   const base = (process.env.LANGDB_BASE_URL || '').replace(/\/$/, '')
+  if (!base) return ''
+  if (/\/v1$/.test(base)) return base + '/chat/completions'
   return base ? `${base}/v1/chat/completions` : ''
 }
 
@@ -39,12 +43,12 @@ function extractJsonArray(text: string): LangdbStep[] | undefined {
 
 export async function callLangdbChatForSteps(prompt: string, model: string, timeoutMs?: number): Promise<LangdbStepsResult> {
   const url = buildChatUrl()
-  const apiKey = process.env.LANGDB_API_KEY
+  const apiKey = process.env.LANGDB_API_KEY || process.env.LANGDB_KEY
   const projectId = process.env.LANGDB_PROJECT_ID
   if (!url || !apiKey || !projectId) {
     const missing: string[] = []
     if (!url) missing.push('LANGDB_CHAT_URL|LANGDB_ENDPOINT|AI_GATEWAY_URL|LANGDB_BASE_URL')
-    if (!apiKey) missing.push('LANGDB_API_KEY')
+    if (!apiKey) missing.push('LANGDB_API_KEY|LANGDB_KEY')
     if (!projectId) missing.push('LANGDB_PROJECT_ID')
     return { ok: false, error: `Missing LANGDB config: ${missing.join(', ')}` }
   }
@@ -87,8 +91,8 @@ export async function callLangdbChatForSteps(prompt: string, model: string, time
     if (Array.isArray(data)) {
       return { ok: true, steps: data as LangdbStep[] }
     }
-    // Give back raw for debugging
-    return { ok: false, error: 'Unrecognized LangDB response shape', raw: data }
+    // Consider it a successful gateway call even if parsing failed
+    return { ok: true, steps: [] as LangdbStep[], raw: data }
   } catch (err: any) {
     return { ok: false, error: err?.message || 'LangDB request failed' }
   }

@@ -39,6 +39,28 @@ Improvements_Identified_For_Consolidation:
 ---
 
 ---
+Date: 2025-08-14
+TaskRef: "Ensure LangDB usage and implement Modal-offloaded flow"
+
+Learnings:
+- Server-side envs must be set on Railway; client `~/.cursor/mcp.json` envs do not affect the server.
+- Explicit diagnostics endpoints (`/diag`, `/diag/langdb`) accelerate env/probe verification.
+- For reliability: timeouts, retries, and correlation IDs are essential when offloading to Modal.
+
+Difficulties:
+- Intermittent 502 were from server not responding (timeouts) and missing env in the deployed instance.
+- Early LangDB calls returned stub due to missing env/varying URL shapes.
+
+Successes:
+- Added LangDB client with robust URL assembly and API key/project handling; source reporting improved.
+- Implemented Modal-only LangDB path with webhook + poll; deployed Modal app and obtained submit URL.
+
+Improvements_Identified_For_Consolidation:
+- Pattern: add `/diag` endpoints for env previews and active probes in production.
+- Offload design: accept→poll pattern with webhook, correlation IDs, and HMAC signing.
+---
+
+---
 Date: 2025-08-13
 TaskRef: "Implement JSON-RPC MCP server, Cursor integration, and auto-orchestrator"
 

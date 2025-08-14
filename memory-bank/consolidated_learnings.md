@@ -13,6 +13,15 @@
 **Cursor-first MCP validation**
 - Validate tool behavior by invoking the MCP tool directly in Cursor chat once the server is active.
 - Expect minimal per-step "recorded" responses; rely on the Agent for chaining. Helps detect protocol mismatches early.
+
+## Diagnostics & Offload Patterns
+**Production diagnostics endpoints**
+- Add `/diag` for non-secret env previews and `/diag/langdb` to actively probe external gateways with short timeouts.
+
+**Modal offload pattern**
+- When external gateway calls must be isolated, route requests to Modal with `correlation_id`, perform the gateway call there, then post results back to the server webhook.
+- Return `{ status: "accepted", correlation_id, poll }` immediately; allow polling and/or synchronization with a capped timeout.
+- Sign webhook callbacks with HMAC and implement retries with backoff.
 # Consolidated Learnings
 
 ## MCP + Cursor Interop

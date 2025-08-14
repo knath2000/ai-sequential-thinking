@@ -16,11 +16,15 @@
 - Fixed protocol compliance: `protocolVersion` and `inputSchema` casing
 - Repository pushed to GitHub: `https://github.com/knath2000/ai-sequential-thinking` (`main`)
 - In-Cursor validation: 3 `sequential_thinking` tool calls recorded successfully
+- Added diagnostics endpoints `/diag` and `/diag/langdb`
+- Modal-only LangDB integration with webhook + optional sync wait; Modal app deployed; submit URL configured
+- Tool call now supports `use_langdb:true` to offload via Modal (returns accepted + poll or final with source: "langdb")
 - GitHub pushes for all changes
 
 ### Next
-- Wire provider client (LangDB Claude et al.) and Perplexity enrichment in orchestrator path
-- Railway deploy, then test in Cursor Agent mode both flows
+ - CI: add GitHub Actions to deploy Modal on push to `main`
+ - Add MCP tool to fetch session `generate_summary`
+ - End-to-end logs verification on LangDB dashboard after Modal callback
 
 ### Known Issues
 - No standard JSON-RPC field to force client auto-follow-up; rely on Agent mode or single-call auto

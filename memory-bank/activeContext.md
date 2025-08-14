@@ -24,6 +24,8 @@
 ### Validation (this session)
 - Repo pushed to GitHub (`main`)
 - In-Cursor test: invoked `sequential_thinking` three times; each returned `{ ok: true, status: "recorded" }`
+ - Added `/diag` and `/diag/langdb`; verified env presence and active LangDB probe
+ - Implemented Modal-offloaded LangDB flow; tool now returns `{ status: "accepted", correlation_id, poll }` then final via webhook
 
 ### Next Steps
 1. FINALIZED: Adopted per-step parity with minimal return shape; client (Agent) controls chaining.

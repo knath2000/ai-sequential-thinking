@@ -209,6 +209,14 @@ export function setupRoutes(app: FastifyInstance) {
           provider,
           session_id: session,
           correlation_id: correlationId,
+          // pass through envs to Modal worker
+          langdb_chat_url: process.env.LANGDB_CHAT_URL,
+          langdb_endpoint: process.env.LANGDB_ENDPOINT,
+          ai_gateway_url: process.env.AI_GATEWAY_URL,
+          langdb_base_url: process.env.LANGDB_BASE_URL,
+          langdb_api_key: process.env.LANGDB_API_KEY,
+          langdb_key: process.env.LANGDB_KEY,
+          langdb_project_id: process.env.LANGDB_PROJECT_ID,
         };
         try {
           const job = await submitModalJob({ task: 'langdb_chat_steps', payload: modalPayload, callbackPath: '/webhook/modal' });

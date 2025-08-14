@@ -1,6 +1,7 @@
 import time
 import hmac
 import json
+import uuid
 import hashlib
 import requests
 import modal
@@ -17,25 +18,72 @@ image = modal.Image.debian_slim().pip_install(
 
 @app.function(image=image, gpu="A10G", timeout=900)
 def run_llm_task(payload: dict, callback_url: str, webhook_secret: Optional[str] = None):
-    # Simulated heavy work (replace with actual LLM inference)
-    time.sleep(2)
-    result = {
-        "echo": payload,
-        "processed_at": int(time.time()),
-        "notes": "Replace with HF/LLM inference and stream partials via chunked callbacks if desired.",
+    correlation_id = payload.get("correlation_id") or str(uuid.uuid4())
+    model = payload.get("model") or "claude-3-5-sonnet-latest"
+    # Build LangDB endpoint
+    base = (
+        payload.get("langdb_chat_url")
+        or payload.get("langdb_endpoint")
+        or payload.get("ai_gateway_url")
+        or payload.get("langdb_base_url")
+    )
+    if base and base.endswith("/v1"):
+        url = base + "/chat/completions"
+    elif base:
+        url = base.rstrip("/") + "/v1/chat/completions"
+    else:
+        url = "https://api.us-east-1.langdb.ai/v1/chat/completions"
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {payload.get('langdb_api_key') or payload.get('langdb_key')}",
+        "x-project-id": payload.get("langdb_project_id", ""),
+    }
+    body_req = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": "You are a planner. Return JSON array of steps."},
+            {"role": "user", "content": f"Produce steps for: {payload.get('thought','')}"},
+        ],
+        "stream": False,
     }
 
-    body = json.dumps({"ok": True, "result": result})
-    headers = {"content-type": "application/json"}
-    if webhook_secret:
-        signature = hmac.new(webhook_secret.encode("utf-8"), body.encode("utf-8"), hashlib.sha256).hexdigest()
-        headers["x-signature"] = signature
-
+    ok = True
+    result = None
+    error = None
     try:
-        requests.post(callback_url, headers=headers, data=body, timeout=10)
+        resp = requests.post(url, headers=headers, json=body_req, timeout=10)
+        if resp.status_code >= 200 and resp.status_code < 300:
+            result = resp.json()
+        else:
+            ok = False
+            error = f"LangDB HTTP {resp.status_code}: {resp.text[:256]}"
     except Exception as e:
-        # Best-effort; in production add retry/backoff
-        print(f"Callback POST failed: {e}")
+        ok = False
+        error = str(e)
+
+    callback_body = json.dumps({
+        "ok": ok,
+        "correlation_id": correlation_id,
+        "result": result,
+        "error": error,
+    })
+    headers_cb = {"content-type": "application/json"}
+    if webhook_secret:
+        signature = hmac.new(webhook_secret.encode("utf-8"), callback_body.encode("utf-8"), hashlib.sha256).hexdigest()
+        headers_cb["x-signature"] = signature
+
+    # Retry/backoff up to 3 attempts
+    backoffs = [0.2, 0.5, 1.0]
+    for attempt, delay in enumerate(backoffs, start=1):
+        try:
+            r = requests.post(callback_url, headers=headers_cb, data=callback_body, timeout=5)
+            if r.status_code in (200, 201, 202):
+                break
+        except Exception as e:
+            if attempt == len(backoffs):
+                print(f"Final callback POST failed: {e}")
+        time.sleep(delay)
 
 
 @app.function(image=image)

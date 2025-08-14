@@ -75,6 +75,32 @@ export function setupRoutes(app: FastifyInstance) {
     }
   })
 
+  // Actively attempt a LangDB request to surface status/errors
+  app.get('/diag/langdb', async () => {
+    const { getProviderConfig } = await import('./provider')
+    const { model } = getProviderConfig()
+    // Derive endpoint preview similar to client
+    const explicit = process.env.LANGDB_CHAT_URL || process.env.LANGDB_ENDPOINT || process.env.AI_GATEWAY_URL
+    const base = process.env.LANGDB_BASE_URL
+    const endpointDerived = explicit
+      ? /\/v1\/chat\/completions(\/?$)/.test(explicit) ? explicit : explicit.replace(/\/$/, '') + (/\/v1$/.test(explicit) ? '/chat/completions' : '/v1/chat/completions')
+      : base
+        ? base.replace(/\/$/, '') + (/\/v1$/.test(base) ? '/chat/completions' : '/v1/chat/completions')
+        : ''
+    try {
+      const { callLangdbChatForSteps } = await import('./providers/langdbClient')
+      const res = await callLangdbChatForSteps('diagnostic', model, 4000)
+      return {
+        ok: res.ok,
+        hasSteps: Boolean(res.steps && res.steps.length > 0),
+        error: res.error,
+        endpointDerivedPreview: endpointDerived ? (endpointDerived.length > 80 ? endpointDerived.slice(0,80) + '…' : endpointDerived) : '',
+      }
+    } catch (e: any) {
+      return { ok: false, error: e?.message || 'diag_call_failed', endpointDerivedPreview: endpointDerived }
+    }
+  })
+
   // Provide SSE on common paths to avoid 404 during probing
   app.get('/', async (req: FastifyRequest, reply: FastifyReply) => {
     return sequentialHandler(req, reply);

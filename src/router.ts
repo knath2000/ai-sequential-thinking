@@ -5,6 +5,7 @@ import type { ThoughtInput } from './types';
 import crypto from 'crypto';
 import { submitModalJob } from './mcpTools/modalClient';
 import { getProviderConfig } from './provider';
+import { callLangdbChatForSteps } from './providers/langdbClient';
 
 export function setupRoutes(app: FastifyInstance) {
   // Simple in-memory rate limiter per key (sessionId or IP)

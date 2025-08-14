@@ -4,9 +4,17 @@ export interface SubmitModalJobArgs {
   task: string;
   payload: Record<string, unknown>;
   callbackPath: string; // e.g. '/webhook/modal'
+  correlationId?: string;
+  /**
+   * If provided, the caller intends to wait synchronously for up to this many ms
+   * for the Modal job to finish. This library currently passes the value through
+   * to the Modal submit endpoint but leaves the actual polling/waiting logic to
+   * the caller.
+   */
+  syncWaitMs?: number;
 }
 
-export async function submitModalJob({ task, payload, callbackPath }: SubmitModalJobArgs) {
+export async function submitModalJob({ task, payload, callbackPath, correlationId, syncWaitMs }: SubmitModalJobArgs) {
   const publicBaseUrl = process.env.PUBLIC_BASE_URL;
   if (!publicBaseUrl) throw new Error('Missing PUBLIC_BASE_URL');
   const callback_url = new URL(callbackPath, publicBaseUrl).toString();
@@ -20,6 +28,8 @@ export async function submitModalJob({ task, payload, callbackPath }: SubmitModa
       payload,
       callback_url,
       webhook_secret: webhookSecret,
+      correlation_id: correlationId,
+      sync_wait_ms: syncWaitMs,
     }, {
       headers: { 'Content-Type': 'application/json' },
       timeout: 15000,
@@ -28,7 +38,7 @@ export async function submitModalJob({ task, payload, callbackPath }: SubmitModa
     if (data?.ok !== true) {
       throw new Error(`Modal submit endpoint error: ${typeof data === 'object' ? JSON.stringify(data) : String(data)}`);
     }
-    return { id: payload?.['correlation_id'] || undefined };
+    return { id: correlationId || (payload?.['correlation_id'] as string | undefined) };
   }
 
   // Fallback: call Modal API directly (requires token and appropriate API support)
@@ -41,6 +51,8 @@ export async function submitModalJob({ task, payload, callbackPath }: SubmitModa
     payload,
     callback_url,
     webhook_secret: webhookSecret,
+    correlation_id: correlationId,
+    sync_wait_ms: syncWaitMs,
   }, {
     headers: {
       Authorization: `Bearer ${token}`,

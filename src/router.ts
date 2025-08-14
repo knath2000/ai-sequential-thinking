@@ -209,21 +209,49 @@ export function setupRoutes(app: FastifyInstance) {
 
           const syncWait = Number(process.env.MODAL_SYNC_TIMEOUT_MS || 60000);
           console.info('[router] submitModalJob sync wait ms', { correlationId, syncWait });
-          const result = await submitModalJob({
-            task: 'langdb_chat_steps',
-            payload: modalPayload,
-            callbackPath: '/webhook/modal',
-            correlationId,
-            syncWaitMs: syncWait,
+
+          // Register waiter for webhook callback
+          const resultPromise: Promise<unknown> = new Promise((resolve, reject) => {
+            jobWaiters.set(correlationId, { resolve, reject, createdAt: Date.now() });
           });
 
-          return sendResult({
-            ok: true,
-            status: result.status,
-            correlation_id: correlationId,
-            job_id: correlationId,
-            poll: `/modal/job/${correlationId}`
-          });
+          let submitRes: any;
+          try {
+            submitRes = await submitModalJob({
+              task: 'langdb_chat_steps',
+              payload: modalPayload,
+              callbackPath: '/webhook/modal',
+              correlationId,
+              syncWaitMs: syncWait,
+            });
+
+            // Wait for callback or timeout
+            const timed = new Promise<undefined>((_r, reject) => setTimeout(() => reject(new Error('sync_timeout')), syncWait));
+            try {
+              const finalResult = await Promise.race([resultPromise, timed]);
+              // webhook returned result within sync window
+              return sendResult({ jsonrpc: '2.0', id, result: { ok: true, status: 'completed', correlation_id: correlationId, job_id: correlationId, result: finalResult } });
+            } catch (e) {
+              // timed out waiting for webhook – return accepted with poll info
+              console.info('[router] modal job sync wait timed out, returning accepted', { correlationId });
+              return sendResult({ ok: true, status: 'accepted', correlation_id: correlationId, job_id: correlationId, poll: `/modal/job/${correlationId}` });
+            }
+          } catch (e) {
+            let errorMessage = 'Failed to submit Modal job';
+            if (e && typeof e === 'object' && 'message' in e && typeof (e as { message: string }).message === 'string') {
+              errorMessage = (e as { message: string }).message;
+            }
+            return sendError(-32000, `Failed to submit Modal job: ${errorMessage}`);
+          } finally {
+            // cleanup waiter if still present after sync window
+            if (jobWaiters.has(correlationId)) {
+              // don't reject; leave to webhook to resolve later
+              // but remove to avoid memory leak
+              const w = jobWaiters.get(correlationId);
+              // we avoid calling reject here to let webhook handle late arrivals
+              jobWaiters.delete(correlationId);
+            }
+          }
         } catch (e) {
           let errorMessage = 'Failed to submit Modal job';
           if (e && typeof e === 'object' && 'message' in e && typeof (e as { message: string }).message === 'string') {

@@ -22,7 +22,7 @@ def run_llm_task(payload: dict, callback_url: str, webhook_secret: Optional[str]
     # Lazy import to avoid local import error during modal deploy parsing
     import requests
     correlation_id = payload.get("correlation_id") or str(uuid.uuid4())
-    model = payload.get("model") or os.getenv("LANGDB_MODEL") or "gpt-4o-mini"
+    model = payload.get("model") or os.getenv("LANGDB_MODEL") or "gpt-5-mini"
     # Build LangDB endpoint
     chat_path = "/v1/chat/completions"
     base_raw = (
@@ -59,6 +59,19 @@ def run_llm_task(payload: dict, callback_url: str, webhook_secret: Optional[str]
         ],
         "stream": False,
     }
+
+    # Model-aware param filtering: omit temperature/top_p for gpt-5 unless explicitly allowed
+    is_gpt5 = str(model).lower().startswith('gpt-5') or 'gpt-5-mini' in str(model).lower()
+    allow_nondefault_temp = str(os.getenv('LANGDB_ALLOW_NONDEFAULT_TEMPERATURE', 'false')).lower() == 'true'
+
+    if not is_gpt5:
+        body_req["temperature"] = float(payload.get('temperature', os.getenv('LANGDB_TEMPERATURE', '0.2')))
+        body_req["top_p"] = float(payload.get('top_p', os.getenv('LANGDB_TOP_P', '1')))
+    else:
+        if allow_nondefault_temp:
+            # enforce model-allowed default values
+            body_req["temperature"] = float(os.getenv('LANGDB_TEMPERATURE', '1'))
+            body_req["top_p"] = float(os.getenv('LANGDB_TOP_P', '1'))
 
     # Configurable timeout and retry for LangDB requests
     langdb_timeout = int(os.getenv('LANGDB_TIMEOUT', '30'))

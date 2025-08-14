@@ -85,6 +85,32 @@ export async function callLangdbChatForSteps(prompt: string, model: string, time
   // Assign the correct token param dynamically
   body[tokenParamName] = max_tokens
 
+  // Model-aware param filtering: some models (e.g., gpt-5 family) do not accept custom temperature/top_p
+  const allowNonDefaultTemp = String(process.env.LANGDB_ALLOW_NONDEFAULT_TEMPERATURE || '').toLowerCase() === 'true'
+  const modelLower = String(effectiveModel || '').toLowerCase()
+  const isGpt5Family = modelLower.startsWith('gpt-5') || modelLower.includes('gpt-5-mini')
+
+  if (isGpt5Family) {
+    // remove params that GPT-5 models may reject unless explicitly opted-in
+    if (!allowNonDefaultTemp) {
+      delete body.temperature
+      delete body.top_p
+    } else {
+      // enforce allowed value (1) if opt-in flag is set to true
+      body.temperature = Number(process.env.LANGDB_TEMPERATURE ?? 1)
+      body.top_p = Number(process.env.LANGDB_TOP_P ?? 1)
+    }
+  } else {
+    // non-gpt5: ensure numeric values are present
+    body.temperature = Number(process.env.LANGDB_TEMPERATURE ?? body.temperature ?? 0.2)
+    body.top_p = Number(process.env.LANGDB_TOP_P ?? body.top_p ?? 1)
+  }
+
+  // Sanity log of payload keys (do not log secrets)
+  try {
+    console.info('[langdb] request model=', effectiveModel, 'payloadKeys=', Object.keys(body));
+  } catch (e) {}
+
   const https = require('https')
   const httpsAgent = new https.Agent({ keepAlive: true, family: 4 })
 

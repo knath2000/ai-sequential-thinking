@@ -3,10 +3,9 @@ import hmac
 import json
 import uuid
 import hashlib
-import requests
 import modal
 from typing import Optional
-from modal import fastapi_endpoint as web_endpoint
+from modal import fastapi_endpoint as web_endpoint, Retries
 
 app = modal.App("mcp_gpu_tasks")
 
@@ -16,8 +15,10 @@ image = modal.Image.debian_slim().pip_install(
 )
 
 
-@app.function(image=image, gpu="A10G", timeout=900)
+@app.function(image=image, timeout=900, retries=Retries(max_retries=3, backoff_coefficient=2.0, initial_delay=1.0, max_delay=30.0))
 def run_llm_task(payload: dict, callback_url: str, webhook_secret: Optional[str] = None):
+    # Lazy import to avoid local import error during modal deploy parsing
+    import requests
     correlation_id = payload.get("correlation_id") or str(uuid.uuid4())
     model = payload.get("model") or "claude-3-5-sonnet-latest"
     # Build LangDB endpoint
@@ -52,6 +53,7 @@ def run_llm_task(payload: dict, callback_url: str, webhook_secret: Optional[str]
     result = None
     error = None
     try:
+        print(f"[run_llm_task] cid={correlation_id} calling LangDB: {url} model={model}")
         resp = requests.post(url, headers=headers, json=body_req, timeout=10)
         if resp.status_code >= 200 and resp.status_code < 300:
             result = resp.json()
@@ -77,12 +79,13 @@ def run_llm_task(payload: dict, callback_url: str, webhook_secret: Optional[str]
     backoffs = [0.2, 0.5, 1.0]
     for attempt, delay in enumerate(backoffs, start=1):
         try:
+            print(f"[run_llm_task] cid={correlation_id} posting callback attempt={attempt} to {callback_url}")
             r = requests.post(callback_url, headers=headers_cb, data=callback_body, timeout=5)
             if r.status_code in (200, 201, 202):
                 break
         except Exception as e:
             if attempt == len(backoffs):
-                print(f"Final callback POST failed: {e}")
+                print(f"[run_llm_task] cid={correlation_id} final callback POST failed: {e}")
         time.sleep(delay)
 
 

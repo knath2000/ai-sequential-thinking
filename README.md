@@ -78,6 +78,29 @@ pnpm start
 - POST `/run` → minimal wrapper to record a thought
 - POST `/modal/submit` and `/webhook/modal` → Modal async job plumbing
 
+### Enhanced Sequential Thinking Schema
+
+When `USE_ENHANCED_SCHEMA=true` (default), the `sequential_thinking` tool returns a richer JSON structure wrapped in `content[]` for Cursor compatibility. Example:
+
+```json
+{
+  "thought": "Initial research step to understand X",
+  "thought_number": 1,
+  "total_thoughts": 5,
+  "next_thought_needed": true,
+  "current_step": {
+    "step_description": "Gather initial information",
+    "expected_outcome": "Clear understanding",
+    "recommended_tools": [
+      { "tool_name": "mcp_perplexity-ask", "confidence": 0.9, "rationale": "Search authoritative sources", "priority": 1 }
+    ],
+    "next_step_conditions": ["Verify accuracy"]
+  },
+  "previous_steps": [],
+  "remaining_steps": []
+}
+```
+
 ### SSE quick test
 ```bash
 curl -N http://localhost:3000/sequential?query=hello

@@ -29,4 +29,30 @@ export interface Summary {
   timeline: TimelineEntry[];
 }
 
+export interface RecommendedTool {
+  tool_name: string;
+  confidence: number; // 0..1
+  rationale?: string;
+  priority?: number; // 1 = highest
+  alternative_tools?: Array<{ tool_name: string; confidence: number }>;
+  suggested_params?: Record<string, unknown>;
+}
+
+export interface CurrentStep {
+  step_description: string;
+  expected_outcome?: string;
+  recommended_tools?: RecommendedTool[];
+  next_step_conditions?: string[];
+}
+
+export interface SequentialThinkingOutput {
+  thought: string;
+  thought_number: number;
+  total_thoughts: number;
+  next_thought_needed: boolean;
+  current_step?: CurrentStep;
+  previous_steps?: ThoughtEntry[];
+  remaining_steps?: string[];
+}
+
 

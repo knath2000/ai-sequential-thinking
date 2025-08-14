@@ -105,3 +105,30 @@ Improvements_Identified_For_Consolidation:
 - Decide final orchestration mode and standardize outputs
 - Add guardrails (rate limit, sanitization) and provider switch
 ---
+
+---
+Date: 2025-08-14
+TaskRef: "MCP sequential_thinking — GPT-5-mini migration & Cursor integration"
+
+Learnings:
+- Cursor requires `content[]` objects with explicit `type` (e.g., `{ type: 'text', text: '...' }`) for tool outputs to display reliably; returning only custom top-level fields can hide results.
+- LangDB model switching must be enforced across all execution paths (router payloads, Modal offload, LangDB client). Environment variables alone can be overridden by defaults; explicitly include `model` in payloads sent to Modal.
+- Newer GPT-5-family models use different parameter names (`max_completion_tokens` vs `max_tokens`) and stricter allowed values (e.g., `temperature` often must be default `1`). Implement model-aware param mapping and filtering.
+- Deploying Modal worker for LangDB offload simplifies GPU/long-running calls but requires careful payload propagation and HMAC-signed callbacks.
+
+Difficulties:
+- Multiple code paths (local client, router, Modal worker) had inconsistent defaults leading to fallback to `gpt-4o`.
+- Modal deployment initially failed due to a Python indentation error — resolved by fixing the worker.
+
+Successes:
+- Implemented `content[]` wrapping in `src/router.ts` and returned `type: 'text'` for Cursor compatibility.
+- Updated `src/providers/langdbClient.ts` to default to `gpt-5-mini`, add dynamic token param mapping (use `max_completion_tokens` for GPT-5), and model-aware param filtering (omit `temperature`/`top_p` for GPT-5 unless opted-in via `LANGDB_ALLOW_NONDEFAULT_TEMPERATURE`).
+- Updated `modal_app.py` to default to `gpt-5-mini`, enforce the same param filtering, add payload logging, and deployed it to Modal.
+- Tested end-to-end: `sequential_thinking` with `use_langdb=true` completed successfully and returned mirrored responses in Cursor.
+- Committed and pushed all changes to `origin main` and created a memory entry for tracking.
+
+Improvements_Identified_For_Consolidation:
+- Add `LANGDB_ALLOW_NONDEFAULT_TEMPERATURE` to `.env.example` with clear docs.
+- Add a post-deploy checklist: verify env vars in deployment platform (Railway/Modal) and run `/diag/langdb`.
+- Add more robust integration tests that validate payloads sent to LangDB via Modal (mock or staging).
+

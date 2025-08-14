@@ -284,10 +284,35 @@ export function setupRoutes(app: FastifyInstance) {
         }
       }
 
-      // Default: record per-step without LangDB
+      // Enhanced flow: record per-step, generate recommendations, and return structured output
       addThought(args as ThoughtInput, session);
-      // Return exact sequentialthinking_tools shape
+      // Build enhanced output when USE_ENHANCED_SCHEMA is true
+      const useEnhanced = String(process.env.USE_ENHANCED_SCHEMA || 'true').toLowerCase() === 'true';
       const history = getThoughts(session);
+      if (useEnhanced) {
+        // Generate current_step recommendations
+        try {
+          const available = (process.env.AVAILABLE_MCP_TOOLS || 'mcp_perplexity-ask').split(',').map(s => s.trim()).filter(Boolean);
+          const { recommendToolsForThought } = await import('./recommender');
+          const current_step = await recommendToolsForThought(String(args.thought || ''), available);
+
+          const out = {
+            thought: String(args.thought || ''),
+            thought_number: Number(args.thought_number),
+            total_thoughts: Number(args.total_thoughts),
+            next_thought_needed: Boolean(args.next_thought_needed),
+            current_step,
+            previous_steps: history,
+            remaining_steps: [],
+          };
+          return sendResult({ content: [{ type: 'text', text: JSON.stringify(out) }] });
+        } catch (e) {
+          console.warn('[router] recommender error', e);
+          // fallback to minimal shape
+        }
+      }
+
+      // Fallback minimal shape
       const out = {
         thought_number: Number(args.thought_number),
         total_thoughts: Number(args.total_thoughts),

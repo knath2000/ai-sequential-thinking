@@ -24,6 +24,19 @@ export async function sequentialHandler(req: FastifyRequest, reply: FastifyReply
 
   // Fetch provider-configured steps (stubbed for now)
   const { steps, provider, model, source } = await generateThinkingSteps(String(query || ''));
+  // If LangDB produced steps, we may want to enrich the first step with recommendations
+  try {
+    const available = (process.env.AVAILABLE_MCP_TOOLS || 'mcp_perplexity-ask').split(',').map(s => s.trim()).filter(Boolean);
+    const { recommendToolsForThought } = await import('./recommender');
+    if (steps && steps.length > 0) {
+      const first = steps[0];
+      const cs = await recommendToolsForThought(first.step_description || query, available);
+      // attach recommended_tools to first step if present
+      (first as any).recommended_tools = cs.recommended_tools;
+    }
+  } catch (e) {
+    // ignore recommender errors for SSE
+  }
   for (const s of steps) {
     await new Promise((r) => setTimeout(r, 200));
     sendEvent('step_update', s);

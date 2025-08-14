@@ -67,4 +67,17 @@ export async function submitModalJob({ task, payload, callbackPath, correlationI
   return data;
 }
 
+export function buildModalPayloadForLangdb(args: any) {
+  // Normalize and enforce model and langdb keys for Modal offload
+  const derivedLangdbUrl = (process.env.LANGDB_CHAT_URL || process.env.LANGDB_ENDPOINT || process.env.AI_GATEWAY_URL || process.env.LANGDB_BASE_URL) || '';
+  const payload = {
+    ...args,
+    langdb_api_key: process.env.LANGDB_API_KEY || process.env.LANGDB_KEY,
+    langdb_project_id: process.env.LANGDB_PROJECT_ID,
+    langdb_chat_url: derivedLangdbUrl,
+    model: process.env.LANGDB_MODEL || args.model || 'gpt-4o',
+  };
+  return payload;
+}
+
 

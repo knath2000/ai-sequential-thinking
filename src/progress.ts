@@ -2,6 +2,8 @@ import type { Summary, ThoughtEntry, ThoughtInput } from './types';
 
 const store = new Map<string, ThoughtEntry[]>();
 
+const MAX_HISTORY_SIZE = Number(process.env.MAX_HISTORY_SIZE || 1000);
+
 function getSessionId(sessionId?: string) {
   return sessionId || 'default';
 }
@@ -11,6 +13,11 @@ export function addThought(input: ThoughtInput, sessionId?: string) {
   const arr = store.get(id) || [];
   const entry: ThoughtEntry = { ...input, ts: Date.now() };
   arr.push(entry);
+  // Trim history if exceeding MAX_HISTORY_SIZE
+  if (arr.length > MAX_HISTORY_SIZE) {
+    const overflow = arr.length - MAX_HISTORY_SIZE;
+    arr.splice(0, overflow);
+  }
   store.set(id, arr);
   return entry;
 }
@@ -20,6 +27,16 @@ export function clearHistory(sessionId?: string) {
     store.delete(sessionId);
   } else {
     store.clear();
+  }
+}
+
+export function trimHistoryToLimit(sessionId?: string) {
+  const id = getSessionId(sessionId);
+  const arr = store.get(id) || [];
+  if (arr.length > MAX_HISTORY_SIZE) {
+    const overflow = arr.length - MAX_HISTORY_SIZE;
+    arr.splice(0, overflow);
+    store.set(id, arr);
   }
 }
 

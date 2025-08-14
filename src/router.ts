@@ -207,7 +207,7 @@ export function setupRoutes(app: FastifyInstance) {
           // Debug log to aid diagnosing incorrect endpoints/models in deployed logs
           console.info('[router] submitting Modal job', { derivedLangdbUrl: derivedLangdbUrl?.slice(0, 120), model: modalPayload.model });
 
-          const syncWait = Number(process.env.MODAL_SYNC_TIMEOUT_MS || 60000);
+          const syncWait = Number(process.env.MODAL_SYNC_TIMEOUT_MS || 120000);
           console.info('[router] submitModalJob sync wait ms', { correlationId, syncWait });
 
           // Register waiter for webhook callback
@@ -251,6 +251,7 @@ export function setupRoutes(app: FastifyInstance) {
               const w = jobWaiters.get(correlationId);
               // we avoid calling reject here to let webhook handle late arrivals
               jobWaiters.delete(correlationId);
+              console.info('[router] cleaned up waiter after sync window', { correlationId });
             }
           }
         } catch (e) {

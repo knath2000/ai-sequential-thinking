@@ -17,12 +17,12 @@ image = modal.Image.debian_slim().pip_install(
 )
 
 
-@app.function(image=image, timeout=900, retries=Retries(max_retries=3, backoff_coefficient=2.0, initial_delay=1.0, max_delay=30.0))
+@app.function(image=image, timeout=1800, retries=Retries(max_retries=3, backoff_coefficient=2.0, initial_delay=1.0, max_delay=30.0))
 def run_llm_task(payload: dict, callback_url: str, webhook_secret: Optional[str] = None):
     # Lazy import to avoid local import error during modal deploy parsing
     import requests
     correlation_id = payload.get("correlation_id") or str(uuid.uuid4())
-    model = payload.get("model") or os.getenv("LANGDB_MODEL") or "gpt-4o"
+    model = payload.get("model") or os.getenv("LANGDB_MODEL") or "gpt-4o-mini"
     # Build LangDB endpoint
     chat_path = "/v1/chat/completions"
     base_raw = (
@@ -54,7 +54,7 @@ def run_llm_task(payload: dict, callback_url: str, webhook_secret: Optional[str]
     body_req = {
         "model": model,
         "messages": [
-            {"role": "system", "content": "You are a planner. Return JSON array of steps."},
+            {"role": "system", "content": "Return ONLY a JSON array with 3 objects: {\"step_description\": string, \"progress_pct\": number}."},
             {"role": "user", "content": f"Produce steps for: {payload.get('thought','')}"},
         ],
         "stream": False,
@@ -70,7 +70,10 @@ def run_llm_task(payload: dict, callback_url: str, webhook_secret: Optional[str]
     for attempt in range(1, langdb_retries + 1):
         try:
             print(f"[run_llm_task] cid={correlation_id} calling LangDB (attempt {attempt}/{langdb_retries}): {url} model={model} timeout={langdb_timeout}s")
+            t0 = time.time()
             resp = requests.post(url, headers=headers, json=body_req, timeout=langdb_timeout)
+            elapsed = (time.time() - t0) * 1000.0
+            print(f"[run_llm_task] cid={correlation_id} LangDB elapsed_ms={elapsed:.1f}")
             print(f"[run_llm_task] cid={correlation_id} LangDB response status={resp.status_code} text={repr(resp.text[:400])}")
             if 200 <= resp.status_code < 300:
                 try:
@@ -202,6 +205,12 @@ def submit(body: dict):
     payload = body.get("payload", {})
     callback_url = body.get("callback_url")
     webhook_secret = body.get("webhook_secret")
+    corr = body.get("correlation_id")
+    if corr:
+        try:
+            payload["correlation_id"] = corr
+        except Exception:
+            pass
     if not callback_url:
         return {"ok": False, "error": "Missing callback_url"}
     run_llm_task.spawn(payload, callback_url, webhook_secret)

@@ -60,28 +60,50 @@ def run_llm_task(payload: dict, callback_url: str, webhook_secret: Optional[str]
         "stream": False,
     }
 
-    ok = True
+    # Configurable timeout and retry for LangDB requests
+    langdb_timeout = int(os.getenv('LANGDB_TIMEOUT', '30'))
+    langdb_retries = int(os.getenv('LANGDB_RETRIES', '3'))
+    langdb_base_delay = float(os.getenv('LANGDB_RETRY_BASE_DELAY', '2'))
     result = None
     error = None
-    try:
-        print(f"[run_llm_task] cid={correlation_id} calling LangDB: {url} model={model}")
-        resp = requests.post(url, headers=headers, json=body_req, timeout=15)
-        print(f"[run_llm_task] cid={correlation_id} LangDB response status={resp.status_code} text={repr(resp.text[:400])}")
-        if resp.status_code >= 200 and resp.status_code < 300:
-            try:
-                result = resp.json()
-            except Exception as parse_err:
+    ok = True
+    for attempt in range(1, langdb_retries + 1):
+        try:
+            print(f"[run_llm_task] cid={correlation_id} calling LangDB (attempt {attempt}/{langdb_retries}): {url} model={model} timeout={langdb_timeout}s")
+            resp = requests.post(url, headers=headers, json=body_req, timeout=langdb_timeout)
+            print(f"[run_llm_task] cid={correlation_id} LangDB response status={resp.status_code} text={repr(resp.text[:400])}")
+            if 200 <= resp.status_code < 300:
+                try:
+                    result = resp.json()
+                    error = None
+                    ok = True
+                    break
+                except Exception as parse_err:
+                    ok = False
+                    error = f"LangDB JSON parse error: {parse_err}"
+                    print(f"[run_llm_task] cid={correlation_id} parse error: {parse_err}")
+                    break
+            else:
                 ok = False
-                error = f"LangDB JSON parse error: {parse_err}"
-                print(f"[run_llm_task] cid={correlation_id} parse error: {parse_err}")
-        else:
+                error = f"LangDB HTTP {resp.status_code}: {resp.text[:512]}"
+                print(f"[run_llm_task] cid={correlation_id} non-2xx response: {resp.status_code}")
+        except Exception as e:
             ok = False
-            error = f"LangDB HTTP {resp.status_code}: {resp.text[:512]}"
-    except Exception as e:
-        ok = False
-        error = str(e)
-        print(f"[run_llm_task] cid={correlation_id} LangDB request exception: {e}")
+            error = str(e)
+            print(f"[run_llm_task] cid={correlation_id} LangDB request exception: {e}")
 
+        # Retry if not last attempt
+        if attempt < langdb_retries:
+            delay = min(langdb_base_delay * (2 ** (attempt - 1)), 60)
+            jitter = random.uniform(0, delay * 0.1)
+            sleep_time = delay + jitter
+            print(f"[run_llm_task] cid={correlation_id} retrying LangDB in {sleep_time:.2f}s (attempt {attempt + 1}/{langdb_retries})")
+            time.sleep(sleep_time)
+    # End retry loop
+    if result is None and error is None:
+        error = 'LangDB request failed without error message'
+
+    # Include LangDB outcome in callback payload to aid Router diagnosis
     callback_body = json.dumps({
         "ok": ok,
         "correlation_id": correlation_id,

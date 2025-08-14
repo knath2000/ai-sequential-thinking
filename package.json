@@ -6,6 +6,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "ts-node src/index.ts",
+    "prestart": "pnpm build",
     "build": "tsc",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit"

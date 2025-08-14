@@ -61,6 +61,20 @@ export function setupRoutes(app: FastifyInstance) {
     },
   }));
 
+  // Minimal diagnostics without leaking secrets
+  app.get('/diag', async () => {
+    const chatUrl = (process.env.LANGDB_CHAT_URL || process.env.LANGDB_ENDPOINT || process.env.AI_GATEWAY_URL || process.env.LANGDB_BASE_URL || '') as string
+    const preview = chatUrl ? (chatUrl.length > 60 ? chatUrl.slice(0, 60) + '…' : chatUrl) : ''
+    return {
+      hasLangdbKey: Boolean(process.env.LANGDB_API_KEY || process.env.LANGDB_KEY),
+      hasLangdbProjectId: Boolean(process.env.LANGDB_PROJECT_ID),
+      hasLangdbUrl: Boolean(chatUrl),
+      chatUrlPreview: preview,
+      port: process.env.PORT || '3000',
+      transport: process.env.TRANSPORT || 'sse',
+    }
+  })
+
   // Provide SSE on common paths to avoid 404 during probing
   app.get('/', async (req: FastifyRequest, reply: FastifyReply) => {
     return sequentialHandler(req, reply);

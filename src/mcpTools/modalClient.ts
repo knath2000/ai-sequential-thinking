@@ -7,24 +7,51 @@ export interface SubmitModalJobArgs {
 }
 
 export async function submitModalJob({ task, payload, callbackPath }: SubmitModalJobArgs) {
+  const publicBaseUrl = process.env.PUBLIC_BASE_URL;
+  if (!publicBaseUrl) throw new Error('Missing PUBLIC_BASE_URL');
+  const callback_url = new URL(callbackPath, publicBaseUrl).toString();
+
+  // Prefer calling our Modal web endpoint directly if provided
+  const submitUrl = process.env.MODAL_SUBMIT_URL;
+  const webhookSecret = process.env.MODAL_WEBHOOK_SECRET;
+  if (submitUrl) {
+    const { data } = await axios.post(submitUrl, {
+      task,
+      payload,
+      callback_url,
+      webhook_secret: webhookSecret,
+    }, {
+      headers: { 'Content-Type': 'application/json' },
+      timeout: 15000,
+      validateStatus: () => true,
+    });
+    if (data?.ok !== true) {
+      throw new Error(`Modal submit endpoint error: ${typeof data === 'object' ? JSON.stringify(data) : String(data)}`);
+    }
+    return { id: payload?.['correlation_id'] || undefined };
+  }
+
+  // Fallback: call Modal API directly (requires token and appropriate API support)
   const baseUrl = process.env.MODAL_BASE_URL || 'https://api.modal.run';
   const token = process.env.MODAL_API_TOKEN;
-  const publicBaseUrl = process.env.PUBLIC_BASE_URL;
-  if (!token || !publicBaseUrl) throw new Error('Missing MODAL_API_TOKEN or PUBLIC_BASE_URL');
-
-  const callback_url = new URL(callbackPath, publicBaseUrl).toString();
+  if (!token) throw new Error('Missing MODAL_API_TOKEN');
   const url = `${baseUrl}/v1/jobs`;
   const { data } = await axios.post(url, {
     task,
     payload,
     callback_url,
+    webhook_secret: webhookSecret,
   }, {
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
     timeout: 15000,
+    validateStatus: () => true,
   });
+  if (!data || (data.status && data.status !== 'ok')) {
+    throw new Error(`Modal API error: ${typeof data === 'object' ? JSON.stringify(data) : String(data)}`);
+  }
   return data;
 }
 

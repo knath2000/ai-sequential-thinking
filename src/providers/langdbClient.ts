@@ -13,8 +13,12 @@ export interface LangdbStepsResult {
 }
 
 function buildChatUrl(): string {
-  const explicit = process.env.LANGDB_CHAT_URL
-  if (explicit) return explicit
+  const explicit = process.env.LANGDB_CHAT_URL || process.env.LANGDB_ENDPOINT || process.env.AI_GATEWAY_URL
+  if (explicit) {
+    // If explicit looks like a base, append path; if it's already the chat path, return as-is
+    if (/\/v1\/chat\/completions(\/?$)/.test(explicit)) return explicit
+    return explicit.replace(/\/$/, '') + '/v1/chat/completions'
+  }
   const base = (process.env.LANGDB_BASE_URL || '').replace(/\/$/, '')
   return base ? `${base}/v1/chat/completions` : ''
 }
@@ -38,7 +42,11 @@ export async function callLangdbChatForSteps(prompt: string, model: string, time
   const apiKey = process.env.LANGDB_API_KEY
   const projectId = process.env.LANGDB_PROJECT_ID
   if (!url || !apiKey || !projectId) {
-    return { ok: false, error: 'Missing LANGDB config (LANGDB_CHAT_URL or LANGDB_BASE_URL, LANGDB_API_KEY, LANGDB_PROJECT_ID)' }
+    const missing: string[] = []
+    if (!url) missing.push('LANGDB_CHAT_URL|LANGDB_ENDPOINT|AI_GATEWAY_URL|LANGDB_BASE_URL')
+    if (!apiKey) missing.push('LANGDB_API_KEY')
+    if (!projectId) missing.push('LANGDB_PROJECT_ID')
+    return { ok: false, error: `Missing LANGDB config: ${missing.join(', ')}` }
   }
 
   const system = 'You are a planner. Return ONLY a JSON array with 3 objects: {"step_description": string, "progress_pct": number}. Use roughly 20, 45, and 80 for progress_pct.'

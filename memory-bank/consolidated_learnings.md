@@ -45,3 +45,22 @@
 
 ## Next Implementation
 - Choose and standardize one mode; add guardrails and provider switch (Claude/GPT/Gemini/DeepSeek).
+
+## Sequential Thinking Enhancements (2025-08-14)
+
+**Pattern: Enhanced per-step schema with tool recommendations**
+- Use a structured `SequentialThinkingOutput` that includes `current_step`, `recommended_tools` (with `confidence`, `rationale`, `priority`), `previous_steps`, and `remaining_steps`.
+- Wrap MCP tool outputs in `content[]` with `{ type: 'text', text: JSON.stringify(payload) }` for Cursor compatibility.
+
+**Pattern: Recommender & Modal Offload**
+- Centralize LangDB payload assembly for Modal offloads via `buildModalPayloadForLangdb`.
+- Implement a `recommender` module to call LangDB and produce `RecommendedTool` entries; fall back to heuristics if parsing fails.
+
+**Operational Notes**
+- Add `MAX_HISTORY_SIZE` env var (default 1000) and auto-trim histories in `addThought`.
+- Add `USE_ENHANCED_SCHEMA` feature flag to toggle enhanced outputs for backward compatibility.
+- Document `AVAILABLE_MCP_TOOLS` env variable to inform the recommender which tools exist.
+
+**Next steps for consolidation**
+- Improve LangDB prompt + parsing to return structured recommendations reliably.
+- Add unit tests and CI to validate schema, recommender parsing, and Modal callback flows.

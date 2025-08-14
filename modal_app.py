@@ -74,7 +74,56 @@ def run_llm_task(payload: dict, callback_url: str, webhook_secret: Optional[str]
             print(f"[run_llm_task] cid={correlation_id} LangDB response status={resp.status_code} text={repr(resp.text[:400])}")
             if 200 <= resp.status_code < 300:
                 try:
-                    result = resp.json()
+                    full = resp.json()
+                    # Try to extract assistant content (OpenAI-like shape)
+                    content = None
+                    try:
+                        content = full.get('choices', [])[0].get('message', {}).get('content')
+                    except Exception:
+                        content = None
+
+                    parsed_steps = None
+                    if isinstance(content, str) and content.strip():
+                        # Remove triple-backtick fences and optional language markers
+                        text = content.strip()
+                        if text.startswith('```'):
+                            # strip first and last code fences
+                            try:
+                                # find last ``` occurrence
+                                last = text.rfind('```')
+                                if last > 0:
+                                    # remove leading ```...\n and trailing ```
+                                    # find first newline after opening fence
+                                    first_nl = text.find('\n')
+                                    if first_nl != -1:
+                                        inner = text[first_nl+1:last]
+                                    else:
+                                        inner = text[3:last]
+                                else:
+                                    inner = text
+                            except Exception:
+                                inner = text
+                        else:
+                            inner = text
+
+                        # Attempt to extract JSON array from inner
+                        try:
+                            start = inner.find('[')
+                            end = inner.rfind(']')
+                            if start != -1 and end != -1 and end > start:
+                                json_slice = inner[start:end+1]
+                                parsed = json.loads(json_slice)
+                                if isinstance(parsed, list):
+                                    parsed_steps = parsed
+                        except Exception as e_parse:
+                            print(f"[run_llm_task] cid={correlation_id} failed to parse embedded JSON: {e_parse}")
+
+                    # If we have parsed steps, return them; otherwise return the full response
+                    if parsed_steps is not None:
+                        result = parsed_steps
+                    else:
+                        result = full
+
                     error = None
                     ok = True
                     break
@@ -82,7 +131,6 @@ def run_llm_task(payload: dict, callback_url: str, webhook_secret: Optional[str]
                     ok = False
                     error = f"LangDB JSON parse error: {parse_err}"
                     print(f"[run_llm_task] cid={correlation_id} parse error: {parse_err}")
-                    break
             else:
                 ok = False
                 error = f"LangDB HTTP {resp.status_code}: {resp.text[:512]}"

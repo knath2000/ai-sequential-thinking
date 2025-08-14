@@ -66,7 +66,10 @@ export async function callLangdbChatForSteps(prompt: string, model: string, time
   const presence_penalty = Number(process.env.LANGDB_PRESENCE_PENALTY ?? 0)
   const max_tokens = Number(process.env.LANGDB_MAX_TOKENS ?? 512)
 
-  const body = {
+  // Map token param name per-model: GPT-5 models expect max_completion_tokens
+  const tokenParamName = String(effectiveModel).toLowerCase().startsWith('gpt-5') ? 'max_completion_tokens' : 'max_tokens'
+
+  const body: any = {
     model: effectiveModel,
     messages: [
       { role: 'system', content: system },
@@ -76,9 +79,11 @@ export async function callLangdbChatForSteps(prompt: string, model: string, time
     top_p,
     frequency_penalty,
     presence_penalty,
-    max_tokens,
     stream: false,
   }
+
+  // Assign the correct token param dynamically
+  body[tokenParamName] = max_tokens
 
   const https = require('https')
   const httpsAgent = new https.Agent({ keepAlive: true, family: 4 })

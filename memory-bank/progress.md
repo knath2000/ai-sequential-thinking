@@ -20,11 +20,16 @@
 - Modal-only LangDB integration with webhook + optional sync wait; Modal app deployed; submit URL configured
 - Tool call now supports `use_langdb:true` to offload via Modal (returns accepted + poll or final with source: "langdb")
 - GitHub pushes for all changes
+ - Increased sync window (120s) and Modal timeout (1800s); simplified prompt/model for faster LangDB calls
+ - Cursor-compatible results: tool responses now wrapped in `content[]` text for both completed/accepted
+ - Added `scripts/poll_job_result.js` for manual polling when clients don’t auto-poll
 
 ### Next
  - CI: add GitHub Actions to deploy Modal on push to `main`
  - Add MCP tool to fetch session `generate_summary`
  - End-to-end logs verification on LangDB dashboard after Modal callback
+  - Optionally expose `/modal/job/:id` usage snippet in README for external polling clients
 
 ### Known Issues
 - No standard JSON-RPC field to force client auto-follow-up; rely on Agent mode or single-call auto
+ - Some clients may still not poll on accepted; use poll script as a workaround

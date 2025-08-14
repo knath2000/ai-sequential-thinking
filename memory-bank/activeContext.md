@@ -4,6 +4,7 @@
 - Establish repo structure and env scaffolding for the MCP server
 - Define Sequential Thinking tool schema and flow
 - Wire Claude Opus 4 (LangDB) client wrapper and Perplexity-Ask tool
+- Ensure Cursor compatibility for MCP tool responses and reliable LangDB offload via Modal
 
 ### Recent Changes
 - Initialized memory-bank with core documents
@@ -21,11 +22,19 @@
 - Matched protocolVersion to `2025-06-18` and corrected `inputSchema` casing
 - Compared behavior with third-party `sequentialthinking-tools`; documented no standard auto-chain field
 
+# Cursor compatibility + LangDB via Modal (latest)
+- Increased synchronous wait window in `src/router.ts` to 120s; Modal function timeout to 1800s in `modal_app.py`.
+- Defaulted model to `gpt-4o-mini` for faster completions; simplified system prompt to return only 3 JSON steps.
+- Wrapped tool results for `tools/call` in `content[]` with a single `{ type: 'text', text: stringifiedPayload }` block for both completed and accepted paths (prevents Cursor hang).
+- Added `scripts/poll_job_result.js` to manually poll `/modal/job/:id` when Cursor receives an accepted response.
+- Verified end-to-end in Cursor with `use_langdb: true` returning synchronous results; example `correlation_id` observed in logs.
+
 ### Validation (this session)
 - Repo pushed to GitHub (`main`)
 - In-Cursor test: invoked `sequential_thinking` three times; each returned `{ ok: true, status: "recorded" }`
  - Added `/diag` and `/diag/langdb`; verified env presence and active LangDB probe
  - Implemented Modal-offloaded LangDB flow; tool now returns `{ status: "accepted", correlation_id, poll }` then final via webhook
+  - Applied Cursor-compat response mapping (content[] text); Cursor now shows final results synchronously when within the 120s window
 
 ### Next Steps
 1. FINALIZED: Adopted per-step parity with minimal return shape; client (Agent) controls chaining.
@@ -33,9 +42,11 @@
 3. Implemented guardrails: rate limiting (env-tunable), input length caps, structured errors.
 4. TODO: Add provider switch (Claude Sonnet/Opus, GPT-4o/o1, Gemini 2.5, DeepSeek R1) and LangDB client wiring.
 5. TODO: Railway deploy and end-to-end tests in Cursor Agent mode; document test scripts.
+6. Optional: add first-class polling endpoint documentation in README for clients lacking native polling.
 
 ### Decisions & Considerations
 - Keep state in-memory initially; add persistence later if needed
 - Prefer streamable HTTP via mcp-remote compatibility
 - No standard JSON-RPC field to force client follow-up; client (Agent) drives chaining
 - Align tool response shape with third-party parity to avoid client confusion
+- Cursor expects `content[]` blocks; returning raw custom fields may lead to hidden/ignored results.

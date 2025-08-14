@@ -22,6 +22,12 @@
 - When external gateway calls must be isolated, route requests to Modal with `correlation_id`, perform the gateway call there, then post results back to the server webhook.
 - Return `{ status: "accepted", correlation_id, poll }` immediately; allow polling and/or synchronization with a capped timeout.
 - Sign webhook callbacks with HMAC and implement retries with backoff.
+
+## Cursor Interop Fix
+**Pattern: Wrap MCP tool outputs in `content[]` text**
+- For Cursor compatibility, always return `result` as `{ content: [{ type: 'text', text: JSON.stringify(payload) }] }` for both completed and accepted paths.
+- If synchronous completion may exceed typical client timeouts, increase server sync window (e.g., 120s) and simplify/accelerate the LLM path (faster model, smaller prompt).
+- Provide a documented polling fallback (e.g., `/modal/job/:id` and a small `scripts/poll_job_result.js`).
 # Consolidated Learnings
 
 ## MCP + Cursor Interop

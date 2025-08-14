@@ -61,6 +61,28 @@ Improvements_Identified_For_Consolidation:
 ---
 
 ---
+Date: 2025-08-14
+TaskRef: "Fix Cursor hang: ensure content[] mapping, increase sync window, add poll script"
+
+Learnings:
+- Cursor often expects tool results in `content[]` blocks; returning custom top-level fields can result in hidden outputs.
+- Increasing server sync wait (120s) and simplifying LLM prompt/model helps keep flows synchronous.
+- Providing a manual polling script unblocks clients lacking native polling on accepted async jobs.
+
+Difficulties:
+- Async path returned accepted but Cursor didn’t poll; results persisted yet not shown.
+
+Successes:
+- Wrapped results in `content[]` text for both completed/accepted; Cursor now displays results directly.
+- Modal worker timeout increased to 1800s; prompt simplified; model defaulted to `gpt-4o-mini` for speed.
+- End-to-end verified in Cursor with `use_langdb:true` (correlation_id observed).
+
+Improvements_Identified_For_Consolidation:
+- Pattern: Always return MCP tool outputs as `content[]` with text in Cursor contexts.
+- Add poll helper and document `/modal/job/:id`.
+---
+
+---
 Date: 2025-08-13
 TaskRef: "Implement JSON-RPC MCP server, Cursor integration, and auto-orchestrator"
 

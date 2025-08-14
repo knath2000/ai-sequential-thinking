@@ -225,38 +225,39 @@ export function setupRoutes(app: FastifyInstance) {
               syncWaitMs: syncWait,
             });
 
-            // Wait for callback or timeout
-            const timed = new Promise<undefined>((_r, reject) => setTimeout(() => reject(new Error('sync_timeout')), syncWait));
-            try {
-              const finalResult = await Promise.race([resultPromise, timed]);
-              // webhook returned result within sync window
-              console.info('[router] modal job completed within sync window', { correlationId });
-              // Mirror sequentialthinking_tools exact shape
-              const history = getThoughts(session);
-              const out = {
-                thought_number: Number(args.thought_number),
-                total_thoughts: Number(args.total_thoughts),
-                next_thought_needed: Boolean(args.next_thought_needed),
-                branches: [],
-                thought_history_length: Array.isArray(history) ? history.length : 0,
-                available_mcp_tools: ['mcp_perplexity-ask'],
-              };
-              return sendResult(out);
-            } catch (e) {
-              // timed out waiting for webhook – return accepted info as content (Cursor-friendly)
-              console.info('[router] modal job sync wait timed out, returning accepted', { correlationId });
-              // Even on accepted, mirror the expected structure without exposing job details
-              const history = getThoughts(session);
-              const out = {
-                thought_number: Number(args.thought_number),
-                total_thoughts: Number(args.total_thoughts),
-                next_thought_needed: Boolean(args.next_thought_needed),
-                branches: [],
-                thought_history_length: Array.isArray(history) ? history.length : 0,
-                available_mcp_tools: ['mcp_perplexity-ask'],
-              };
-              return sendResult(out);
-            }
+              // Wait for callback or timeout
+              const timed = new Promise<undefined>((_r, reject) => setTimeout(() => reject(new Error('sync_timeout')), syncWait));
+              try {
+                const finalResult = await Promise.race([resultPromise, timed]);
+                // webhook returned result within sync window
+                console.info('[router] modal job completed within sync window', { correlationId });
+                // Mirror sequentialthinking_tools exact shape
+                const history = getThoughts(session);
+                const out = {
+                  thought_number: Number(args.thought_number),
+                  total_thoughts: Number(args.total_thoughts),
+                  next_thought_needed: Boolean(args.next_thought_needed),
+                  branches: [],
+                  thought_history_length: Array.isArray(history) ? history.length : 0,
+                  available_mcp_tools: ['mcp_perplexity-ask'],
+                };
+                // Cursor expects displayable content in a `content[]` array for some transports.
+                return sendResult({ content: [{ text: JSON.stringify(out) }] });
+              } catch (e) {
+                // timed out waiting for webhook – return accepted info as content (Cursor-friendly)
+                console.info('[router] modal job sync wait timed out, returning accepted', { correlationId });
+                // Even on accepted, mirror the expected structure without exposing job details
+                const history = getThoughts(session);
+                const out = {
+                  thought_number: Number(args.thought_number),
+                  total_thoughts: Number(args.total_thoughts),
+                  next_thought_needed: Boolean(args.next_thought_needed),
+                  branches: [],
+                  thought_history_length: Array.isArray(history) ? history.length : 0,
+                  available_mcp_tools: ['mcp_perplexity-ask'],
+                };
+                return sendResult({ content: [{ text: JSON.stringify(out) }] });
+              }
           } catch (e) {
             let errorMessage = 'Failed to submit Modal job';
             if (e && typeof e === 'object' && 'message' in e && typeof (e as { message: string }).message === 'string') {
@@ -287,14 +288,15 @@ export function setupRoutes(app: FastifyInstance) {
       addThought(args as ThoughtInput, session);
       // Return exact sequentialthinking_tools shape
       const history = getThoughts(session);
-      return sendResult({
+      const out = {
         thought_number: Number(args.thought_number),
         total_thoughts: Number(args.total_thoughts),
         next_thought_needed: Boolean(args.next_thought_needed),
         branches: [],
         thought_history_length: Array.isArray(history) ? history.length : 0,
         available_mcp_tools: ['mcp_perplexity-ask'],
-      });
+      };
+      return sendResult({ content: [{ text: JSON.stringify(out) }] });
     }
 
     if (method === 'prompts/list') {

@@ -23,18 +23,26 @@ def run_llm_task(payload: dict, callback_url: str, webhook_secret: Optional[str]
     correlation_id = payload.get("correlation_id") or str(uuid.uuid4())
     model = payload.get("model") or os.getenv("LANGDB_MODEL") or "gpt-4o"
     # Build LangDB endpoint
-    base = (
+    chat_path = "/v1/chat/completions"
+    base_raw = (
         payload.get("langdb_chat_url")
         or payload.get("langdb_endpoint")
         or payload.get("ai_gateway_url")
         or payload.get("langdb_base_url")
-    )
-    if base and base.endswith("/v1"):
+    ) or ""
+    base = str(base_raw).rstrip("/")
+    # If caller provided full endpoint already including chat_path, use as-is
+    if base.endswith(chat_path):
+        url = base
+    elif base.endswith("/v1"):
         url = base + "/chat/completions"
     elif base:
-        url = base.rstrip("/") + "/v1/chat/completions"
+        url = base + chat_path
     else:
         url = "https://api.us-east-1.langdb.ai/v1/chat/completions"
+
+    # Debug: expose chosen final URL for logs (trim to avoid leaking secrets)
+    print(f"[run_llm_task] final url={url[:200]} model={model}")
 
     headers = {
         "Content-Type": "application/json",

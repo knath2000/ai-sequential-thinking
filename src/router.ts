@@ -195,13 +195,17 @@ export function setupRoutes(app: FastifyInstance) {
       if (args?.use_langdb === true) {
         try {
           const correlationId = crypto.randomUUID();
+          const derivedLangdbUrl = (process.env.LANGDB_CHAT_URL || process.env.LANGDB_ENDPOINT || process.env.AI_GATEWAY_URL || process.env.LANGDB_BASE_URL) || '';
           const modalPayload = {
             ...args,
             langdb_api_key: process.env.LANGDB_API_KEY || process.env.LANGDB_KEY,
             langdb_project_id: process.env.LANGDB_PROJECT_ID,
-            langdb_chat_url: process.env.LANGDB_CHAT_URL || process.env.LANGDB_ENDPOINT || process.env.AI_GATEWAY_URL || process.env.LANGDB_BASE_URL,
-            model: process.env.CLAUDE_MODEL || process.env.OPENAI_MODEL || process.env.GEMINI_MODEL || process.env.DEEPSEEK_MODEL || 'gpt-4o',
+            langdb_chat_url: derivedLangdbUrl,
+            // Enforce model fallback to LANGDB_MODEL or gpt-4o and prevent caller overrides
+            model: process.env.LANGDB_MODEL || 'gpt-4o',
           };
+          // Debug log to aid diagnosing incorrect endpoints/models in deployed logs
+          console.info('[router] submitting Modal job', { derivedLangdbUrl: derivedLangdbUrl?.slice(0, 120), model: modalPayload.model });
 
           const result = await submitModalJob({
             task: 'langdb_chat_steps',

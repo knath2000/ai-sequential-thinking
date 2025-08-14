@@ -80,33 +80,22 @@ export function setupRoutes(app: FastifyInstance) {
   })
 
   // Actively attempt a LangDB request to surface status/errors
-  app.get('/diag/langdb', async () => {
-    const { getProviderConfig } = await import('./provider')
-    const { model } = getProviderConfig()
-    // Derive endpoint preview similar to client
-    const explicit = process.env.LANGDB_CHAT_URL || process.env.LANGDB_ENDPOINT || process.env.AI_GATEWAY_URL
-    const base = process.env.LANGDB_BASE_URL
-    const endpointDerived = explicit
-      ? /\/v1\/chat\/completions(\/?$)/.test(explicit) ? explicit : explicit.replace(/\/$/, '') + (/\/v1$/.test(explicit) ? '/chat/completions' : '/v1/chat/completions')
-      : base
-        ? base.replace(/\/$/, '') + (/\/v1$/.test(base) ? '/chat/completions' : '/v1/chat/completions')
-        : ''
+  app.get('/diag/langdb', async (req: FastifyRequest, reply: FastifyReply) => {
     try {
-      const { callLangdbChatForSteps } = await import('./providers/langdbClient')
-      const res = await callLangdbChatForSteps('diagnostic', model, Number(process.env.DIAG_LANGDB_TIMEOUT_MS || 8000))
-      return {
-        ok: res.ok,
-        hasSteps: Boolean(res.steps && res.steps.length > 0),
-        error: res.error,
-        endpointDerivedPreview: endpointDerived ? (endpointDerived.length > 80 ? endpointDerived.slice(0,80) + '…' : endpointDerived) : '',
-        effectiveModel: model,
-        hasKey: Boolean(process.env.LANGDB_API_KEY || process.env.LANGDB_KEY),
-        hasProjectId: Boolean(process.env.LANGDB_PROJECT_ID),
+      const result = await callLangdbChatForSteps('test', 'gpt-4o', 8000);
+      if (result.ok && Array.isArray(result.steps)) {
+        return reply.send({ ok: true, hasSteps: result.steps.length > 0, steps: result.steps });
+      } else {
+        return reply.send({ ok: false, hasSteps: false, error: 'LangDB response invalid' });
       }
-    } catch (e: any) {
-      return { ok: false, error: e?.message || 'diag_call_failed', endpointDerivedPreview: endpointDerived, effectiveModel: model }
+    } catch (e) {
+      let errorMessage = 'Unknown error';
+      if (e && typeof e === 'object' && 'message' in e && typeof (e as { message: string }).message === 'string') {
+        errorMessage = (e as { message: string }).message;
+      }
+      return reply.send({ ok: false, hasSteps: false, error: `LangDB error: ${errorMessage}` });
     }
-  })
+  });
 
   // Provide SSE on common paths to avoid 404 during probing
   app.get('/', async (req: FastifyRequest, reply: FastifyReply) => {
@@ -202,48 +191,38 @@ export function setupRoutes(app: FastifyInstance) {
         return sendError(-32602, 'Thought too long', { maxLength: MAX_THOUGHT_LENGTH });
       }
       // If use_langdb flag is set, offload to Modal and await result (with timeout)
-      if (args.use_langdb === true) {
-        const correlationId = crypto.randomUUID();
-        const { model, provider } = getProviderConfig();
-        const modalPayload = {
-          kind: 'langdb_chat_steps',
-          thought,
-          model,
-          provider,
-          session_id: session,
-          correlation_id: correlationId,
-          // pass through envs to Modal worker
-          langdb_chat_url: process.env.LANGDB_CHAT_URL,
-          langdb_endpoint: process.env.LANGDB_ENDPOINT,
-          ai_gateway_url: process.env.AI_GATEWAY_URL,
-          langdb_base_url: process.env.LANGDB_BASE_URL,
-          langdb_api_key: process.env.LANGDB_API_KEY,
-          langdb_key: process.env.LANGDB_KEY,
-          langdb_project_id: process.env.LANGDB_PROJECT_ID,
-        };
+      if (args?.use_langdb === true) {
         try {
-          const job = await submitModalJob({ task: 'langdb_chat_steps', payload: modalPayload, callbackPath: '/webhook/modal' });
-          // Register waiter
-          const resultPromise = new Promise<unknown>((resolve, reject) => {
-            jobWaiters.set(correlationId, { resolve, reject, createdAt: Date.now() });
+          const correlationId = crypto.randomUUID();
+          const modalPayload = {
+            ...args,
+            langdb_api_key: process.env.LANGDB_API_KEY || process.env.LANGDB_KEY,
+            langdb_project_id: process.env.LANGDB_PROJECT_ID,
+            langdb_chat_url: process.env.LANGDB_CHAT_URL || process.env.LANGDB_ENDPOINT || process.env.AI_GATEWAY_URL || process.env.LANGDB_BASE_URL,
+            model: process.env.CLAUDE_MODEL || process.env.OPENAI_MODEL || process.env.GEMINI_MODEL || process.env.DEEPSEEK_MODEL || 'gpt-4o',
+          };
+
+          const result = await submitModalJob({
+            task: 'langdb_chat_steps',
+            payload: modalPayload,
+            callbackPath: '/webhook/modal',
+            correlationId,
+            syncWaitMs: Number(process.env.MODAL_SYNC_TIMEOUT_MS || 25000),
           });
-          const timeoutMs = Number(process.env.MODAL_SYNC_TIMEOUT_MS || 25000);
-          const timed = new Promise<undefined>((_r, reject) => setTimeout(() => reject(new Error('timeout')), timeoutMs));
-          try {
-            const result: any = await Promise.race([resultPromise, timed]);
-            addThought(args as ThoughtInput, session);
-            const payload: Record<string, unknown> = { ok: true, status: 'recorded', provider, model, source: 'langdb', correlation_id: correlationId, job_id: job?.id || job?.job_id };
-            if (result && typeof result === 'object') payload.result = result;
-            return sendResult({ content: [{ type: 'text', text: JSON.stringify(payload) }] });
-          } catch (e: any) {
-            // Timed out – return accepted with polling info
-            addThought(args as ThoughtInput, session);
-            return sendResult({ content: [{ type: 'text', text: JSON.stringify({ ok: true, status: 'accepted', correlation_id: correlationId, job_id: job?.id || job?.job_id, poll: `/modal/job/${correlationId}` }) }] });
-          } finally {
-            jobWaiters.delete(correlationId);
+
+          return sendResult({
+            ok: true,
+            status: result.status,
+            correlation_id: correlationId,
+            job_id: correlationId,
+            poll: `/modal/job/${correlationId}`
+          });
+        } catch (e) {
+          let errorMessage = 'Failed to submit Modal job';
+          if (e && typeof e === 'object' && 'message' in e && typeof (e as { message: string }).message === 'string') {
+            errorMessage = (e as { message: string }).message;
           }
-        } catch (err: any) {
-          return sendError(-32000, 'Failed to submit Modal job', { message: err?.message });
+          return sendError(-32000, `Failed to submit Modal job: ${errorMessage}`);
         }
       }
 
@@ -386,82 +365,45 @@ export function setupRoutes(app: FastifyInstance) {
     return { ok: true, done: item.done, result: item.result };
   });
 
-  app.get('/diag/net', async () => {
-    const dns = require('dns').promises
-    const net = require('net')
-    const tls = require('tls')
-    const https = require('https')
-    const axios = require('axios')
-
-    const host = 'api.us-east-1.langdb.ai'
-    const port = 443
-
-    const diag: Record<string, unknown> = {
-      proxyEnvs: {
-        HTTP_PROXY: process.env.HTTP_PROXY,
-        HTTPS_PROXY: process.env.HTTPS_PROXY,
-        NO_PROXY: process.env.NO_PROXY,
-      },
-    }
-
-    // DNS resolve4/6
+  app.get('/diag/net', async (req: FastifyRequest, reply: FastifyReply) => {
     try {
-      diag.resolve4 = await dns.resolve4(host)
-    } catch (e) {
-      diag.resolve4Error = e.message
-    }
-    try {
-      diag.resolve6 = await dns.resolve6(host)
-    } catch (e) {
-      diag.resolve6Error = e.message
-    }
+      const dns = require('dns');
+      const net = require('net');
+      const tls = require('tls');
+      const https = require('https');
 
-    // TCP connect timing (IPv4 first IP if resolved)
-    if (diag.resolve4?.length) {
-      const startTcp = Date.now()
-      const socket = net.connect(port, diag.resolve4[0], () => {
-        diag.tcpConnect = `connected in ${Date.now() - startTcp}ms`
-        socket.end()
-      })
-      socket.on('error', (e) => diag.tcpConnectError = e.message)
-    }
+      const results: Record<string, any> = {};
 
-    // TLS SNI probe
-    const startTls = Date.now()
-    const tlsSocket = tls.connect({ host, port, servername: host }, () => {
-      diag.tlsHandshake = `succeeded in ${Date.now() - startTls}ms`
-      tlsSocket.end()
-    })
-    tlsSocket.on('error', (e) => diag.tlsHandshakeError = e.message)
+      // DNS resolution
+      try {
+        const ipv4 = await dns.promises.resolve4('api.us-east-1.langdb.ai');
+        results.dns_ipv4 = ipv4;
+      } catch (e) {
+        results.dns_ipv4_error = e && typeof e === 'object' && 'message' in e ? (e as any).message : 'DNS failed';
+      }
 
-    // IPv4/IPv6 test fetches
-    const httpsAgent4 = new https.Agent({ family: 4, keepAlive: true })
-    const httpsAgent6 = new https.Agent({ family: 6, keepAlive: true })
-    try {
-      const { status } = await axios.get(`https://${host}/v1/models`, { httpsAgent: httpsAgent4, timeout: 3000 })
-      diag.ipv4Fetch = `HTTP ${status}`
+      // TCP connectivity
+      try {
+        const socket = net.createConnection(443, 'api.us-east-1.langdb.ai');
+        await new Promise((resolve, reject) => {
+          socket.on('connect', resolve);
+          socket.on('error', reject);
+          setTimeout(() => reject(new Error('TCP timeout')), 5000);
+        });
+        results.tcp_443 = 'connected';
+      } catch (e) {
+        results.tcp_443_error = e && typeof e === 'object' && 'message' in e ? (e as any).message : 'TCP failed';
+      }
+
+      return reply.send(results);
     } catch (e) {
-      diag.ipv4FetchError = e.message
+      let errorMessage = 'Unknown error';
+      if (e && typeof e === 'object' && 'message' in e && typeof (e as { message: string }).message === 'string') {
+        errorMessage = (e as { message: string }).message;
+      }
+      return reply.send({ error: errorMessage });
     }
-    try {
-      const { status } = await axios.get(`https://${host}/v1/models`, { httpsAgent: httpsAgent6, timeout: 3000 })
-      diag.ipv6Fetch = `HTTP ${status}`
-    } catch (e) {
-      diag.ipv6FetchError = e.message
-    }
-
-    // KeepAlive test (reuse socket)
-    try {
-      const startKa = Date.now()
-      await axios.get(`https://${host}/v1/models`, { httpsAgent: httpsAgent4, timeout: 3000 })
-      const reuseTime = Date.now() - startKa
-      diag.keepAliveTest = `reused socket in ${reuseTime}ms`
-    } catch (e) {
-      diag.keepAliveTestError = e.message
-    }
-
-    return diag
-  })
+  });
 }
 
 

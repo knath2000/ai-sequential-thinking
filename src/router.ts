@@ -81,9 +81,9 @@ export function setupRoutes(app: FastifyInstance) {
   })
 
   // Actively attempt a LangDB request to surface status/errors
-  app.get('/diag/langdb', async (req: FastifyRequest, reply: FastifyReply) => {
+      app.get('/diag/langdb', async (req: FastifyRequest, reply: FastifyReply) => {
     try {
-      const result = await callLangdbChatForSteps('test', 'gpt-4o', 8000);
+      const result = await callLangdbChatForSteps('test', 'gpt-5-mini', 8000);
       if (result.ok && Array.isArray(result.steps)) {
         return reply.send({ ok: true, hasSteps: result.steps.length > 0, steps: result.steps });
       } else {

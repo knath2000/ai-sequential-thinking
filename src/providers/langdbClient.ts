@@ -48,7 +48,7 @@ export async function callLangdbChatForSteps(prompt: string, model: string, time
   const url = buildChatUrl()
   const apiKey = process.env.LANGDB_API_KEY || process.env.LANGDB_KEY
   const projectId = process.env.LANGDB_PROJECT_ID
-  const effectiveModel = model || process.env.LANGDB_MODEL || 'gpt-4o'
+  const effectiveModel = model || process.env.LANGDB_MODEL || 'gpt-5-mini'
   if (!url || !apiKey || !projectId) {
     const missing: string[] = []
     if (!url) missing.push('LANGDB_CHAT_URL|LANGDB_ENDPOINT|AI_GATEWAY_URL|LANGDB_BASE_URL')
@@ -60,12 +60,23 @@ export async function callLangdbChatForSteps(prompt: string, model: string, time
   const system = 'You are a planner. Return ONLY a JSON array with 3 objects: {"step_description": string, "progress_pct": number}. Use roughly 20, 45, and 80 for progress_pct.'
   const user = `Produce steps for: ${prompt}`
 
+  const temperature = Number(process.env.LANGDB_TEMPERATURE ?? 0.2)
+  const top_p = Number(process.env.LANGDB_TOP_P ?? 1)
+  const frequency_penalty = Number(process.env.LANGDB_FREQUENCY_PENALTY ?? 0)
+  const presence_penalty = Number(process.env.LANGDB_PRESENCE_PENALTY ?? 0)
+  const max_tokens = Number(process.env.LANGDB_MAX_TOKENS ?? 512)
+
   const body = {
     model: effectiveModel,
     messages: [
       { role: 'system', content: system },
       { role: 'user', content: user },
     ],
+    temperature,
+    top_p,
+    frequency_penalty,
+    presence_penalty,
+    max_tokens,
     stream: false,
   }
 

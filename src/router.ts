@@ -207,12 +207,14 @@ export function setupRoutes(app: FastifyInstance) {
           // Debug log to aid diagnosing incorrect endpoints/models in deployed logs
           console.info('[router] submitting Modal job', { derivedLangdbUrl: derivedLangdbUrl?.slice(0, 120), model: modalPayload.model });
 
+          const syncWait = Number(process.env.MODAL_SYNC_TIMEOUT_MS || 60000);
+          console.info('[router] submitModalJob sync wait ms', { correlationId, syncWait });
           const result = await submitModalJob({
             task: 'langdb_chat_steps',
             payload: modalPayload,
             callbackPath: '/webhook/modal',
             correlationId,
-            syncWaitMs: Number(process.env.MODAL_SYNC_TIMEOUT_MS || 25000),
+            syncWaitMs: syncWait,
           });
 
           return sendResult({

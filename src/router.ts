@@ -343,29 +343,77 @@ export function setupRoutes(app: FastifyInstance) {
   app.post('/webhook/modal', async (req: FastifyRequest, reply: FastifyReply) => {
     const secret = process.env.MODAL_WEBHOOK_SECRET || '';
     const signature = (req.headers['x-signature'] as string) || '';
-    const raw = JSON.stringify(req.body || {});
+    const body = (req.body as any) || {};
+    const raw = JSON.stringify(body || {});
     const hmac = crypto.createHmac('sha256', secret).update(raw).digest('hex');
+    console.info('[webhook] Received callback', { path: '/webhook/modal', signature: !!signature });
     if (secret && signature !== hmac) {
+      console.warn('[webhook] Invalid HMAC signature');
       return reply.code(401).send({ error: 'Invalid signature' });
     }
 
-    const body = (req.body as any) || {};
-    const correlationId = body?.payload?.correlation_id || body?.correlation_id || body?.job_id;
-    const result = body?.result ?? body;
-    if (correlationId) {
-      const waiter = jobWaiters.get(correlationId);
-      if (waiter) {
-        waiter.resolve(result);
-        jobWaiters.delete(correlationId);
+    try {
+      const correlationId = body?.payload?.correlation_id || body?.correlation_id || body?.job_id;
+      const result = body?.result ?? body;
+
+      // Persist result to disk so it survives instance restarts
+      const storeDir = process.env.NODE_JOB_RESULTS_DIR || '/tmp/mcp_job_results';
+      const fs = await import('fs');
+      const path = await import('path');
+      try {
+        fs.mkdirSync(storeDir, { recursive: true });
+      } catch (e) {
+        // ignore
       }
-      jobResults.set(correlationId, { done: true, result, createdAt: Date.now() });
+
+      if (correlationId) {
+        const waiter = jobWaiters.get(correlationId);
+        if (waiter) {
+          try { waiter.resolve(result); } catch (e) { console.error('[webhook] waiter.resolve error', e); }
+          jobWaiters.delete(correlationId);
+        }
+        jobResults.set(correlationId, { done: true, result, createdAt: Date.now() });
+
+        const outPath = path.join(storeDir, `${correlationId}.json`);
+        try {
+          fs.writeFileSync(outPath, JSON.stringify({ done: true, result, ts: Date.now() }), { encoding: 'utf8' });
+          console.info('[webhook] persisted job result', { correlationId, outPath });
+        } catch (e) {
+          console.error('[webhook] failed to persist job result', e);
+        }
+      } else {
+        console.warn('[webhook] callback did not include correlation id', { bodyPreview: raw.slice(0,200) });
+      }
+
+      return reply.send({ ok: true });
+    } catch (e) {
+      console.error('[webhook] error handling callback', e);
+      return reply.code(500).send({ ok: false, error: String(e) });
     }
-    return { ok: true };
   });
 
   app.get('/modal/job/:id', async (req: FastifyRequest, reply: FastifyReply) => {
     const id = (req.params as any)?.id as string;
-    const item = jobResults.get(id);
+    let item = jobResults.get(id);
+    if (!item) {
+      // Try to read from persistent store
+      const storeDir = process.env.NODE_JOB_RESULTS_DIR || '/tmp/mcp_job_results';
+      try {
+        const path = await import('path');
+        const fs = await import('fs');
+        const p = path.join(storeDir, `${id}.json`);
+        if (fs.existsSync(p)) {
+          const raw = fs.readFileSync(p, 'utf8');
+          const parsed = JSON.parse(raw);
+          const newItem = { done: true, result: parsed.result, createdAt: parsed.ts } as { done: boolean; result?: unknown; createdAt: number };
+          item = newItem;
+          // rehydrate in-memory cache
+          jobResults.set(id, newItem);
+        }
+      } catch (e) {
+        console.error('[modal/job] error reading persisted job result', e);
+      }
+    }
     if (!item) return { ok: true, done: false };
     return { ok: true, done: item.done, result: item.result };
   });

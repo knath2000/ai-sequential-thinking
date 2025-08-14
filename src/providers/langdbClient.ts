@@ -13,18 +13,21 @@ export interface LangdbStepsResult {
 }
 
 function buildChatUrl(): string {
-  const explicit = process.env.LANGDB_CHAT_URL || process.env.LANGDB_ENDPOINT || process.env.AI_GATEWAY_URL
-  if (explicit) {
-    // If explicit looks like a base, append path; if it's already the chat path, return as-is
-    if (/\/v1\/chat\/completions(\/?$)/.test(explicit)) return explicit
-    const cleaned = explicit.replace(/\/$/, '')
-    if (/\/v1$/.test(cleaned)) return cleaned + '/chat/completions'
-    return cleaned + '/v1/chat/completions'
+  const chatPath = '/v1/chat/completions'
+  const explicitRaw = process.env.LANGDB_CHAT_URL || process.env.LANGDB_ENDPOINT || process.env.AI_GATEWAY_URL
+  if (explicitRaw && explicitRaw.length) {
+    const explicit = explicitRaw.replace(/\/$/, '') // trim trailing slash
+    // if explicit already ends with the chatPath, return as-is
+    if (explicit.endsWith(chatPath)) return explicit
+    // if explicit already ends with '/v1', append '/chat/completions'
+    if (explicit.endsWith('/v1')) return explicit + '/chat/completions'
+    // otherwise treat explicit as full endpoint or base and append chatPath
+    return explicit + chatPath
   }
-  const base = (process.env.LANGDB_BASE_URL || '').replace(/\/$/, '')
-  if (!base) return ''
-  if (/\/v1$/.test(base)) return base + '/chat/completions'
-  return base ? `${base}/v1/chat/completions` : ''
+  const baseRaw = (process.env.LANGDB_BASE_URL || '').replace(/\/$/, '')
+  if (!baseRaw) return ''
+  if (baseRaw.endsWith('/v1')) return baseRaw + '/chat/completions'
+  return `${baseRaw}${chatPath}`
 }
 
 function extractJsonArray(text: string): LangdbStep[] | undefined {

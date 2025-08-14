@@ -6,6 +6,7 @@ import hashlib
 import modal
 from typing import Optional
 from modal import fastapi_endpoint as web_endpoint, Retries
+import os
 
 app = modal.App("mcp_gpu_tasks")
 
@@ -20,7 +21,7 @@ def run_llm_task(payload: dict, callback_url: str, webhook_secret: Optional[str]
     # Lazy import to avoid local import error during modal deploy parsing
     import requests
     correlation_id = payload.get("correlation_id") or str(uuid.uuid4())
-    model = payload.get("model") or "claude-3-5-sonnet-latest"
+    model = payload.get("model") or os.getenv("LANGDB_MODEL") or "gpt-4o"
     # Build LangDB endpoint
     base = (
         payload.get("langdb_chat_url")

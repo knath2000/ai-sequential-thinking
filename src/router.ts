@@ -99,9 +99,12 @@ export function setupRoutes(app: FastifyInstance) {
         hasSteps: Boolean(res.steps && res.steps.length > 0),
         error: res.error,
         endpointDerivedPreview: endpointDerived ? (endpointDerived.length > 80 ? endpointDerived.slice(0,80) + '…' : endpointDerived) : '',
+        effectiveModel: model,
+        hasKey: Boolean(process.env.LANGDB_API_KEY || process.env.LANGDB_KEY),
+        hasProjectId: Boolean(process.env.LANGDB_PROJECT_ID),
       }
     } catch (e: any) {
-      return { ok: false, error: e?.message || 'diag_call_failed', endpointDerivedPreview: endpointDerived }
+      return { ok: false, error: e?.message || 'diag_call_failed', endpointDerivedPreview: endpointDerived, effectiveModel: model }
     }
   })
 
@@ -382,6 +385,83 @@ export function setupRoutes(app: FastifyInstance) {
     if (!item) return { ok: true, done: false };
     return { ok: true, done: item.done, result: item.result };
   });
+
+  app.get('/diag/net', async () => {
+    const dns = require('dns').promises
+    const net = require('net')
+    const tls = require('tls')
+    const https = require('https')
+    const axios = require('axios')
+
+    const host = 'api.us-east-1.langdb.ai'
+    const port = 443
+
+    const diag: Record<string, unknown> = {
+      proxyEnvs: {
+        HTTP_PROXY: process.env.HTTP_PROXY,
+        HTTPS_PROXY: process.env.HTTPS_PROXY,
+        NO_PROXY: process.env.NO_PROXY,
+      },
+    }
+
+    // DNS resolve4/6
+    try {
+      diag.resolve4 = await dns.resolve4(host)
+    } catch (e) {
+      diag.resolve4Error = e.message
+    }
+    try {
+      diag.resolve6 = await dns.resolve6(host)
+    } catch (e) {
+      diag.resolve6Error = e.message
+    }
+
+    // TCP connect timing (IPv4 first IP if resolved)
+    if (diag.resolve4?.length) {
+      const startTcp = Date.now()
+      const socket = net.connect(port, diag.resolve4[0], () => {
+        diag.tcpConnect = `connected in ${Date.now() - startTcp}ms`
+        socket.end()
+      })
+      socket.on('error', (e) => diag.tcpConnectError = e.message)
+    }
+
+    // TLS SNI probe
+    const startTls = Date.now()
+    const tlsSocket = tls.connect({ host, port, servername: host }, () => {
+      diag.tlsHandshake = `succeeded in ${Date.now() - startTls}ms`
+      tlsSocket.end()
+    })
+    tlsSocket.on('error', (e) => diag.tlsHandshakeError = e.message)
+
+    // IPv4/IPv6 test fetches
+    const httpsAgent4 = new https.Agent({ family: 4, keepAlive: true })
+    const httpsAgent6 = new https.Agent({ family: 6, keepAlive: true })
+    try {
+      const { status } = await axios.get(`https://${host}/v1/models`, { httpsAgent: httpsAgent4, timeout: 3000 })
+      diag.ipv4Fetch = `HTTP ${status}`
+    } catch (e) {
+      diag.ipv4FetchError = e.message
+    }
+    try {
+      const { status } = await axios.get(`https://${host}/v1/models`, { httpsAgent: httpsAgent6, timeout: 3000 })
+      diag.ipv6Fetch = `HTTP ${status}`
+    } catch (e) {
+      diag.ipv6FetchError = e.message
+    }
+
+    // KeepAlive test (reuse socket)
+    try {
+      const startKa = Date.now()
+      await axios.get(`https://${host}/v1/models`, { httpsAgent: httpsAgent4, timeout: 3000 })
+      const reuseTime = Date.now() - startKa
+      diag.keepAliveTest = `reused socket in ${reuseTime}ms`
+    } catch (e) {
+      diag.keepAliveTestError = e.message
+    }
+
+    return diag
+  })
 }
 
 

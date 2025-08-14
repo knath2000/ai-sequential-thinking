@@ -45,6 +45,7 @@ export async function callLangdbChatForSteps(prompt: string, model: string, time
   const url = buildChatUrl()
   const apiKey = process.env.LANGDB_API_KEY || process.env.LANGDB_KEY
   const projectId = process.env.LANGDB_PROJECT_ID
+  const effectiveModel = model || process.env.LANGDB_MODEL || 'gpt-4o'
   if (!url || !apiKey || !projectId) {
     const missing: string[] = []
     if (!url) missing.push('LANGDB_CHAT_URL|LANGDB_ENDPOINT|AI_GATEWAY_URL|LANGDB_BASE_URL')
@@ -57,13 +58,16 @@ export async function callLangdbChatForSteps(prompt: string, model: string, time
   const user = `Produce steps for: ${prompt}`
 
   const body = {
-    model,
+    model: effectiveModel,
     messages: [
       { role: 'system', content: system },
       { role: 'user', content: user },
     ],
     stream: false,
   }
+
+  const https = require('https')
+  const httpsAgent = new https.Agent({ keepAlive: true, family: 4 })
 
   const config: AxiosRequestConfig = {
     headers: {
@@ -72,7 +76,8 @@ export async function callLangdbChatForSteps(prompt: string, model: string, time
       Authorization: `Bearer ${apiKey}`,
       'X-Project-Id': projectId,
     },
-    timeout: typeof timeoutMs === 'number' ? timeoutMs : 10000,
+    httpsAgent,
+    timeout: typeof timeoutMs === 'number' ? timeoutMs : 12000,
     validateStatus: () => true,
   }
 

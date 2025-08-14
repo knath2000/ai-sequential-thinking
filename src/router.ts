@@ -242,7 +242,7 @@ export function setupRoutes(app: FastifyInstance) {
                   available_mcp_tools: ['mcp_perplexity-ask'],
                 };
                 // Cursor expects displayable content in a `content[]` array for some transports.
-                return sendResult({ content: [{ text: JSON.stringify(out) }] });
+                return sendResult({ content: [{ type: 'text', text: JSON.stringify(out) }] });
               } catch (e) {
                 // timed out waiting for webhook – return accepted info as content (Cursor-friendly)
                 console.info('[router] modal job sync wait timed out, returning accepted', { correlationId });
@@ -256,7 +256,7 @@ export function setupRoutes(app: FastifyInstance) {
                   thought_history_length: Array.isArray(history) ? history.length : 0,
                   available_mcp_tools: ['mcp_perplexity-ask'],
                 };
-                return sendResult({ content: [{ text: JSON.stringify(out) }] });
+                return sendResult({ content: [{ type: 'text', text: JSON.stringify(out) }] });
               }
           } catch (e) {
             let errorMessage = 'Failed to submit Modal job';
@@ -296,7 +296,7 @@ export function setupRoutes(app: FastifyInstance) {
         thought_history_length: Array.isArray(history) ? history.length : 0,
         available_mcp_tools: ['mcp_perplexity-ask'],
       };
-      return sendResult({ content: [{ text: JSON.stringify(out) }] });
+      return sendResult({ content: [{ type: 'text', text: JSON.stringify(out) }] });
     }
 
     if (method === 'prompts/list') {

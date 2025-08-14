@@ -4,6 +4,7 @@ import json
 import uuid
 import hashlib
 import modal
+import random
 from typing import Optional
 from modal import fastapi_endpoint as web_endpoint, Retries
 import os
@@ -65,14 +66,21 @@ def run_llm_task(payload: dict, callback_url: str, webhook_secret: Optional[str]
     try:
         print(f"[run_llm_task] cid={correlation_id} calling LangDB: {url} model={model}")
         resp = requests.post(url, headers=headers, json=body_req, timeout=15)
+        print(f"[run_llm_task] cid={correlation_id} LangDB response status={resp.status_code} text={repr(resp.text[:400])}")
         if resp.status_code >= 200 and resp.status_code < 300:
-            result = resp.json()
+            try:
+                result = resp.json()
+            except Exception as parse_err:
+                ok = False
+                error = f"LangDB JSON parse error: {parse_err}"
+                print(f"[run_llm_task] cid={correlation_id} parse error: {parse_err}")
         else:
             ok = False
-            error = f"LangDB HTTP {resp.status_code}: {resp.text[:256]}"
+            error = f"LangDB HTTP {resp.status_code}: {resp.text[:512]}"
     except Exception as e:
         ok = False
         error = str(e)
+        print(f"[run_llm_task] cid={correlation_id} LangDB request exception: {e}")
 
     callback_body = json.dumps({
         "ok": ok,
@@ -85,18 +93,37 @@ def run_llm_task(payload: dict, callback_url: str, webhook_secret: Optional[str]
         signature = hmac.new(webhook_secret.encode("utf-8"), callback_body.encode("utf-8"), hashlib.sha256).hexdigest()
         headers_cb["x-signature"] = signature
 
-    # Retry/backoff up to 3 attempts
-    backoffs = [0.2, 0.5, 1.0]
-    for attempt, delay in enumerate(backoffs, start=1):
+    # Retry with exponential backoff + jitter
+    max_retries = 5
+    base_delay = 0.5
+    success = False
+    for attempt in range(1, max_retries + 1):
         try:
             print(f"[run_llm_task] cid={correlation_id} posting callback attempt={attempt} to {callback_url}")
-            r = requests.post(callback_url, headers=headers_cb, data=callback_body, timeout=5)
+            r = requests.post(callback_url, headers=headers_cb, data=callback_body, timeout=10)
+            # Log response status and truncated body for debugging
+            try:
+                resp_text = r.text
+            except Exception:
+                resp_text = '<no-text>'
+            print(f"[run_llm_task] cid={correlation_id} callback response status={r.status_code} text={repr(resp_text[:400])}")
             if r.status_code in (200, 201, 202):
+                success = True
                 break
+            else:
+                print(f"[run_llm_task] cid={correlation_id} callback non-2xx status: {r.status_code}")
         except Exception as e:
-            if attempt == len(backoffs):
-                print(f"[run_llm_task] cid={correlation_id} final callback POST failed: {e}")
-        time.sleep(delay)
+            print(f"[run_llm_task] cid={correlation_id} callback exception: {e}")
+
+        if attempt < max_retries:
+            delay = min(base_delay * (2 ** (attempt - 1)), 30)
+            jitter = random.uniform(0, delay * 0.1)
+            sleep_time = delay + jitter
+            print(f"[run_llm_task] cid={correlation_id} retrying callback in {sleep_time:.2f}s (attempt {attempt+1}/{max_retries})")
+            time.sleep(sleep_time)
+
+    if not success:
+        print(f"[run_llm_task] cid={correlation_id} final callback POST failed after {max_retries} attempts")
 
 
 @app.function(image=image)

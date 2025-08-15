@@ -1,9 +1,9 @@
 """
-Configuration settings for the FastAPI Admin Backend
+Configuration settings for the FastAPI Admin Backend (Pydantic v2)
 """
-import os
 from typing import Any, Dict, Optional
-from pydantic import BaseSettings, validator
+from pydantic import FieldValidationInfo, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -25,11 +25,20 @@ class Settings(BaseSettings):
     DATABASE_USER: str = "postgres"
     DATABASE_PASSWORD: str = ""
     
-    @validator("DATABASE_URL", pre=True)
-    def assemble_db_connection(cls, v: Optional[str], values: Dict[str, Any]) -> Any:
-        if isinstance(v, str):
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def assemble_db_connection(cls, v: Optional[str], info: FieldValidationInfo) -> Any:
+        # If full URL is provided, use it
+        if isinstance(v, str) and v:
             return v
-        return f"postgresql://{values.get('DATABASE_USER')}:{values.get('DATABASE_PASSWORD')}@{values.get('DATABASE_HOST')}:{values.get('DATABASE_PORT')}/{values.get('DATABASE_NAME')}"
+        # Otherwise build from individual parts
+        data: Dict[str, Any] = dict(info.data or {})
+        user = data.get("DATABASE_USER", "postgres")
+        password = data.get("DATABASE_PASSWORD", "")
+        host = data.get("DATABASE_HOST", "localhost")
+        port = data.get("DATABASE_PORT", 5432)
+        name = data.get("DATABASE_NAME", "mcp_admin")
+        return f"postgresql://{user}:{password}@{host}:{port}/{name}"
     
     # Redis Settings
     REDIS_URL: str = "redis://localhost:6379/0"
@@ -67,9 +76,8 @@ class Settings(BaseSettings):
     # CORS Settings
     BACKEND_CORS_ORIGINS: list = ["http://localhost:3000", "http://localhost:8080"]
     
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+    # Pydantic v2 settings config
+    model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
 
 
 # Global settings instance

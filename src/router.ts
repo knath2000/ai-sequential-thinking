@@ -6,6 +6,7 @@ import crypto from 'crypto';
 import { submitModalJob } from './mcpTools/modalClient';
 import { getProviderConfig } from './provider';
 import { callLangdbChatForSteps } from './providers/langdbClient';
+import { getEffectiveModel } from './config';
 
 export function setupRoutes(app: FastifyInstance) {
   // Simple in-memory rate limiter per key (sessionId or IP)
@@ -85,6 +86,7 @@ export function setupRoutes(app: FastifyInstance) {
     model?: string;
     use_modal?: boolean;
     timeout_ms?: number;
+    use_user_model?: boolean;
   }
 
   // Actively attempt a LangDB request to surface status/errors
@@ -104,7 +106,7 @@ export function setupRoutes(app: FastifyInstance) {
   }
 
   // Then access properties safely with defaults
-  const diagModel = requestBody.model || process.env.LANGDB_MODEL || 'openrouter/o4-mini-high';
+  const diagModel = getEffectiveModel(requestBody.model, requestBody.use_user_model === true);
   const useModal = requestBody.use_modal === true;
   const timeout = Number(requestBody.timeout_ms || process.env.LANGDB_TIMEOUT_MS || 30000); // Increased default
 
@@ -174,6 +176,7 @@ export function setupRoutes(app: FastifyInstance) {
         body: {
           model: 'openrouter/o4-mini-high',
           use_modal: true,
+          use_user_model: true,
           timeout_ms: 30000,
         },
       },
@@ -285,13 +288,15 @@ export function setupRoutes(app: FastifyInstance) {
         try {
           const correlationId = crypto.randomUUID();
           const derivedLangdbUrl = (process.env.LANGDB_CHAT_URL || process.env.LANGDB_ENDPOINT || process.env.AI_GATEWAY_URL || process.env.LANGDB_BASE_URL) || '';
+          const requestedModel = typeof args.model === 'string' ? args.model : undefined;
+          const modalModel = getEffectiveModel(requestedModel, Boolean((args as any).use_user_model));
           const modalPayload = {
             ...args,
             langdb_api_key: process.env.LANGDB_API_KEY || process.env.LANGDB_KEY,
             langdb_project_id: process.env.LANGDB_PROJECT_ID,
             langdb_chat_url: derivedLangdbUrl,
-            // Enforce model fallback to LANGDB_MODEL or gpt-4o and prevent caller overrides
-            model: process.env.LANGDB_MODEL || 'gpt-4o',
+            // Model selection with Railway-first precedence + optional user override
+            model: modalModel,
           };
           // Debug log to aid diagnosing incorrect endpoints/models in deployed logs
           console.info('[router] submitting Modal job', { derivedLangdbUrl: derivedLangdbUrl?.slice(0, 120), model: modalPayload.model });

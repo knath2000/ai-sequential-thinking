@@ -1,4 +1,5 @@
 import axios, { AxiosRequestConfig } from 'axios'
+import { getLangDBConfig, getEffectiveModel } from '../config'
 
 export interface LangdbStep {
   step_description: string
@@ -13,9 +14,13 @@ export interface LangdbStepsResult {
 }
 
 function buildChatUrl(): string {
+  const { baseUrl, projectId } = (() => {
+    const cfg = getLangDBConfig()
+    return { baseUrl: cfg.baseUrl, projectId: cfg.projectId }
+  })()
   const chatPath = '/v1/chat/completions'
   const explicitRaw = process.env.LANGDB_CHAT_URL || process.env.LANGDB_ENDPOINT || process.env.AI_GATEWAY_URL
-  const projectId = process.env.LANGDB_PROJECT_ID || ''
+  const pid = projectId || ''
   if (explicitRaw && explicitRaw.length) {
     let explicit = explicitRaw.replace(/\/$/, '') // trim trailing slash
     // If explicit already ends with the chatPath, return as-is
@@ -23,22 +28,22 @@ function buildChatUrl(): string {
     // If explicit already ends with '/v1', append '/chat/completions'
     if (explicit.endsWith('/v1')) {
       // ensure project id present
-      if (projectId && !explicit.includes(`/${projectId}/`)) explicit = explicit.replace('/v1', `/${projectId}/v1`)
+      if (pid && !explicit.includes(`/${pid}/`)) explicit = explicit.replace('/v1', `/${pid}/v1`)
       return explicit + '/chat/completions'
     }
     // otherwise treat explicit as full endpoint or base and append chatPath
     // insert project id if provided
-    if (projectId && !explicit.includes(`/${projectId}/`)) {
-      explicit = explicit.replace(/\/$/, '') + `/${projectId}`
+    if (pid && !explicit.includes(`/${pid}/`)) {
+      explicit = explicit.replace(/\/$/, '') + `/${pid}`
     }
     return explicit + chatPath
   }
-  const baseRaw = (process.env.LANGDB_BASE_URL || '').replace(/\/$/, '')
+  const baseRaw = (baseUrl || '').replace(/\/$/, '')
   if (!baseRaw) return ''
   // include project id if present
-  if (projectId && !baseRaw.includes(`/${projectId}/`)) {
-    if (baseRaw.endsWith('/v1')) return `${baseRaw.replace('/v1', `/${projectId}/v1`)}/chat/completions`
-    return `${baseRaw}/${projectId}${chatPath}`
+  if (pid && !baseRaw.includes(`/${pid}/`)) {
+    if (baseRaw.endsWith('/v1')) return `${baseRaw.replace('/v1', `/${pid}/v1`)}/chat/completions`
+    return `${baseRaw}/${pid}${chatPath}`
   }
   if (baseRaw.endsWith('/v1')) return baseRaw + '/chat/completions'
   return `${baseRaw}${chatPath}`
@@ -118,8 +123,9 @@ export async function callLangdbChatForSteps(
   const maxAllowedOutput = 100_000 - inputTokens;
   const safeMaxTokens = Math.min(maxAllowedOutput, 50_000);
 
+  const effectiveModel = getEffectiveModel(model)
   const body: any = {
-    model,
+    model: effectiveModel,
     messages: [{ role: 'user', content: prompt }],
     max_tokens: safeMaxTokens,
     temperature: 0.2,
@@ -127,7 +133,7 @@ export async function callLangdbChatForSteps(
   };
 
   // Strip unsupported params for Anthropic
-  if (model.startsWith('anthropic/')) {
+  if (effectiveModel.startsWith('anthropic/')) {
     delete body.top_p;
     delete body.frequency_penalty;
     delete body.presence_penalty;
@@ -141,7 +147,7 @@ export async function callLangdbChatForSteps(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.LANGDB_API_KEY}`,
+        Authorization: `Bearer ${getLangDBConfig().apiKey}`,
       },
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(timeoutMs),

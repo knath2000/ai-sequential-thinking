@@ -1,5 +1,242 @@
 # ai-sequential-thinking
 
+An MCP (Model Context Protocol) server that combines sequential thinking with intelligent MCP tool recommendations. It helps break down complex problems into manageable steps and suggests which tools to use at each step with confidence scores and rationales. Designed to work seamlessly with Cursor/Claude MCP over HTTP (JSON-RPC) and SSE, and deployable on Railway with Railway-first environment configuration.
+
+<a href="https://glama.ai/mcp/servers/zl990kfusy">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/zl990kfusy/badge" />
+</a>
+
+## Features
+
+- 🤔 Dynamic, reflective problem-solving via sequential thoughts
+- 🔄 Flexible thinking that adapts and evolves over time
+- 🌳 Support for branching and revising prior thoughts
+- 🛠️ LLM-driven intelligent tool recommendations for each step
+- 📊 Confidence scoring and clear rationale for tool suggestions
+- 📝 Step tracking with expected outcomes and conditions
+- 🔄 Progress monitoring: previous and remaining steps
+- 🧠 Memory management with configurable history limits (`MAX_HISTORY_SIZE`)
+- 🧩 Cursor- and MCP-compatible responses (wrapped in `content[]`)
+- 🧪 Diagnostics endpoints (`/diag`, `/diag/langdb`, `/routes`) for quick validation
+
+## How It Works
+
+This server facilitates sequential thinking and coordinates MCP tool usage. The LLM evaluates available tools and proposes which to use per step. The server tracks recommendations, maintains context across steps, and enforces guardrails (rate limits, input caps, structured errors).
+
+Workflow overview:
+1. Client (Cursor) lists available MCP tools
+2. Server receives a thought step; LLM (or heuristic) recommends tools
+3. Server records state, manages memory, and returns structured guidance
+4. Client executes recommended tools and continues with the next step
+
+Each recommendation typically includes:
+- `confidence` (0–1)
+- `rationale` explaining why the tool is helpful
+- `priority` suggesting execution order
+- Optional `suggested_params`
+
+## Example Output
+
+When `USE_ENHANCED_SCHEMA=true` (default), the tool returns a richer structure like:
+
+```json
+{
+  "thought": "Initial research step to understand X",
+  "current_step": {
+    "step_description": "Gather initial information",
+    "expected_outcome": "Clear understanding",
+    "recommended_tools": [
+      { "tool_name": "mcp_perplexity-ask", "confidence": 0.9, "rationale": "Search authoritative sources", "priority": 1 }
+    ],
+    "next_step_conditions": ["Verify accuracy"]
+  },
+  "previous_steps": [],
+  "remaining_steps": [],
+  "thought_number": 1,
+  "total_thoughts": 5,
+  "next_thought_needed": true
+}
+```
+
+If enhanced schema is disabled, the server returns minimal per-step metadata aligned with agent-driven chaining.
+
+## Configuration (Cursor MCP)
+
+Use a remote configuration so no local server is required. Keep secrets in Railway; do not put LangDB credentials in `mcp.json`.
+
+Project-level (`.cursor/mcp.json`) or global (`~/.cursor/mcp.json`) example:
+
+```json
+{
+  "mcpServers": {
+    "ai-sequential-thinking": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://ai-sequential-thinking-production.up.railway.app"],
+      "env": {
+        "NODE_ENV": "production",
+        "USER_MODEL": "openrouter/o4-mini-high",
+        "MAX_HISTORY_SIZE": "1000"
+      }
+    }
+  }
+}
+```
+
+Notes:
+- Remove duplicate LangDB creds from `mcp.json`. Railway holds `LANGDB_*` secrets.
+- `USER_MODEL` lets the user override the default model without exposing credentials.
+- The server gives Railway env precedence and falls back to `USER_MODEL`/defaults.
+
+## API (MCP Tool)
+
+Tool name: `sequential_thinking`
+
+Parameters (superset; not all are required at once):
+- `thought` (string, required): Current thinking step
+- `next_thought_needed` (boolean, required)
+- `thought_number` (number, required)
+- `total_thoughts` (number, required)
+- `is_revision` (boolean, optional)
+- `revises_thought` (number, optional)
+- `branch_from_thought` (number, optional)
+- `branch_id` (string, optional)
+- `needs_more_thoughts` (boolean, optional)
+- `session_id` (string, optional)
+- Enhanced schema fields (server-produced): `current_step`, `previous_steps`, `remaining_steps`
+
+Server behavior:
+- Minimal per-step returns when enhanced schema is off (agent drives chaining)
+- Enhanced structured output when `USE_ENHANCED_SCHEMA=true`
+
+## Railway‑First Environment
+
+The server reads environment from Railway first, then standard env, then user overrides:
+
+Model precedence:
+1. Railway/`LANGDB_*` and server defaults
+2. `USER_MODEL` from client `mcp.json` (optional override)
+3. Fallback to a sensible default (e.g., `openrouter/o4-mini-high`)
+
+Do not include `LANGDB_*` credentials in `mcp.json`. Keep them in Railway.
+
+## HTTP Endpoints
+
+Public endpoints (for diagnostics and demos):
+- `GET /health` → `{ ok: true }`
+- `GET /capabilities` → advertised tools
+- `GET /server-info` → name/version/transports
+- `GET /sequential` → SSE demo (streams stubbed steps)
+- `GET /` and `GET /sse` → SSE (compat paths)
+- `POST /` → JSON-RPC 2.0 root (MCP streamable HTTP)
+- `POST /process_thought` → record a thought (REST helper)
+- `GET /generate_summary` → derive summary from recorded thoughts
+- `POST /clear_history` → clear session history
+- `POST /run` → minimal wrapper to record a thought
+- `POST /diag/langdb` → actively probe LangDB (POST JSON)
+- `GET /diag/langdb` → usage hint (use POST)
+- `GET /diag` → non-secret env preview
+- `GET /routes` → print registered routes (debug)
+- `POST /modal/submit`, `POST /webhook/modal`, `GET /modal/job/:id` → async offload plumbing
+
+### Diagnostics
+
+POST example (Railway defaults):
+```bash
+curl -X POST https://<railway-app>/diag/langdb \
+  -H 'Content-Type: application/json' \
+  -d '{}'
+```
+
+POST with user override:
+```bash
+curl -X POST https://<railway-app>/diag/langdb \
+  -H 'Content-Type: application/json' \
+  -d '{"use_user_model":true}'
+```
+
+GET hint:
+```bash
+curl https://<railway-app>/diag/langdb
+```
+
+## Guardrails
+
+- Simple in-memory rate limiting per session/IP (window/max via env)
+- Input length caps (e.g., `MAX_THOUGHT_LENGTH`)
+- Structured error envelopes for consistent client handling
+
+## Development
+
+### Requirements
+- Node.js >= 18, pnpm
+
+### Install & Run
+```bash
+pnpm i
+pnpm dev
+```
+
+### Build & Start
+```bash
+pnpm typecheck
+pnpm build
+pnpm start
+```
+
+## Design & Architecture
+
+- Fastify HTTP with SSE endpoints and JSON-RPC 2.0 root for MCP streamable HTTP
+- In-memory state for recorded thoughts; summary derivation
+- Minimal per-step (agent-chained) vs. enhanced structured outputs
+- Provider/model selection via env with Railway-first precedence and optional `USER_MODEL`
+- Modal offload for long-running calls with HMAC-signed callbacks
+
+Key files:
+- `src/index.ts` → bootstrap, env load, Fastify startup
+- `src/router.ts` → routes (health, SSE, JSON-RPC, diagnostics, Modal webhook)
+- `src/sequentialTool.ts` → SSE handler (streams provider stub steps)
+- `src/progress.ts` → in-memory store and summary generation
+- `src/provider.ts` → provider/model config and step generation stub
+- `src/mcpTools/perplexityAsk.ts` → outbound helper (optional)
+- `src/mcpTools/modalClient.ts` → Modal job submit helper (optional)
+- `src/providers/langdbClient.ts` → LangDB client w/ Railway-first config
+- `src/config.ts` → Railway-first env precedence & `USER_MODEL` override
+
+## Memory Management
+
+- History limit via `MAX_HISTORY_SIZE` (default 1000)
+- Automatic trimming when limits are exceeded
+- Manual cleanup via `POST /clear_history`
+
+Example (Cursor `mcp.json`):
+```json
+{
+  "mcpServers": {
+    "ai-sequential-thinking": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://ai-sequential-thinking-production.up.railway.app"],
+      "env": { "MAX_HISTORY_SIZE": "500" }
+    }
+  }
+}
+```
+
+## Security & Deployment
+
+- Never commit secrets; keep LangDB creds in Railway
+- Prefer HTTPS; set `PUBLIC_BASE_URL` in Railway for Modal callbacks
+- Consider body size/timeouts of proxies to match `/diag/langdb` 30s client timeout
+
+## Contributing
+
+Contributions are welcome! Feel free to open issues or PRs.
+
+## License
+
+MIT
+
+# ai-sequential-thinking
+
 AI-driven Model Context Protocol (MCP) server that provides a structured, step-by-step reasoning tool (`sequential_thinking`). Built with Fastify, exposes Server-Sent Events (SSE) for live updates and a JSON-RPC 2.0 endpoint compatible with MCP streamable HTTP transports. Designed to run locally and integrate seamlessly with Cursor/Claude MCP.
 
 ## Features

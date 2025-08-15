@@ -74,7 +74,13 @@ class Settings(BaseSettings):
     METRICS_UPDATE_INTERVAL: int = 60
     
     # CORS Settings
-    BACKEND_CORS_ORIGINS: list = ["http://localhost:3000", "http://localhost:8080"]
+    BACKEND_CORS_ORIGINS: list = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "https://gallant-reflection-production.up.railway.app"
+    ]
     
     # Pydantic v2 settings config
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)

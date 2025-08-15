@@ -82,48 +82,58 @@ export function setupRoutes(app: FastifyInstance) {
 
   // Actively attempt a LangDB request to surface status/errors
       app.get('/diag/langdb', async (req: FastifyRequest, reply: FastifyReply) => {
-    try {
-      const diagModel = process.env.LANGDB_MODEL || 'gpt-5-mini';
-      const useModal = String((req.query as any)?.use_modal || 'false').toLowerCase() === 'true';
-      console.info('[diag/langdb] probing LangDB with model', { model: diagModel, use_modal: useModal });
+  try {
+    const diagModel = process.env.LANGDB_MODEL || 'openrouter/o4-mini-high';
+    const useModal = String(req.query.use_modal).toLowerCase() === 'true';
+    const timeout = Number(process.env.LANGDB_TIMEOUT_MS || 15_000);
 
-      if (useModal) {
-        // Submit to Modal and wait for callback (reuse submitModalJob)
-        const correlationId = crypto.randomUUID();
-        const derivedLangdbUrl = (process.env.LANGDB_CHAT_URL || process.env.LANGDB_BASE_URL || process.env.LANGDB_ENDPOINT || process.env.AI_GATEWAY_URL || process.env.LANGDB_BASE_URL) || '';
-        const modalPayload = {
-          prompt: 'test',
-          langdb_api_key: process.env.LANGDB_API_KEY || process.env.LANGDB_KEY,
-          langdb_project_id: process.env.LANGDB_PROJECT_ID,
-          langdb_chat_url: derivedLangdbUrl,
-          model: diagModel,
-        };
-        try {
-          await submitModalJob({ task: 'langdb_chat_steps', payload: modalPayload, callbackPath: '/webhook/modal', correlationId, syncWaitMs: Number(process.env.MODAL_SYNC_TIMEOUT_MS || 120000) });
-          // If submit succeeded, return accepted with model
-          return reply.send({ ok: true, accepted: true, model: diagModel, source: 'modal', correlationId });
-        } catch (e) {
-          return reply.send({ ok: false, hasSteps: false, error: `Modal submit failed: ${(e && (e as Error).message) || String(e)}`, model: diagModel });
-        }
-      }
+    if (useModal) {
+      const correlationId = crypto.randomUUID();
+      const modalPayload = buildModalPayloadForLangdb({
+        thought: 'test',
+        model: diagModel,
+        timeout: timeout,
+      });
 
-      const result = await callLangdbChatForSteps('test', String(diagModel), 8000);
-      if (result.ok && Array.isArray(result.steps)) {
-        return reply.send({ ok: true, hasSteps: result.steps.length > 0, steps: result.steps, model: diagModel });
-      } else {
-        // include raw preview if available for debugging
-        const rawPreview = result.raw ? (typeof result.raw === 'string' ? result.raw.slice(0, 800) : JSON.stringify(result.raw).slice(0, 800)) : undefined;
-        const errorMsg = result.error || 'LangDB response invalid';
-        return reply.send({ ok: false, hasSteps: false, error: errorMsg, model: diagModel, raw_preview: rawPreview });
-      }
-    } catch (e) {
-      let errorMessage = 'Unknown error';
-      if (e && typeof e === 'object' && 'message' in e && typeof (e as { message: string }).message === 'string') {
-        errorMessage = (e as { message: string }).message;
-      }
-      return reply.send({ ok: false, hasSteps: false, error: `LangDB error: ${errorMessage}` });
+      const resultPromise = new Promise((resolve, reject) => {
+        jobWaiters.set(correlationId, { resolve, reject, createdAt: Date.now() });
+      });
+
+      await submitModalJob({
+        task: 'langdb_chat_steps',
+        payload: modalPayload,
+        callbackPath: '/webhook/modal',
+        correlationId,
+        syncWaitMs: timeout,
+      });
+
+      const result = await Promise.race([
+        resultPromise,
+        new Promise((_r, reject) => setTimeout(() => reject(new Error('sync_timeout')), timeout)),
+      ]);
+
+      return reply.send({
+        ok: true,
+        model: diagModel,
+        timeout_ms: timeout,
+        result,
+      });
+    } else {
+      const result = await callLangdbChatForSteps('test', diagModel, timeout);
+      return reply.send({
+        ok: result.ok,
+        model: diagModel,
+        timeout_ms: timeout,
+        ...result,
+      });
     }
-  });
+  } catch (e: any) {
+    return reply.send({
+      ok: false,
+      error: e.message || 'LangDB error',
+    });
+  }
+});
 
   // Provide SSE on common paths to avoid 404 during probing
   app.get('/', async (req: FastifyRequest, reply: FastifyReply) => {

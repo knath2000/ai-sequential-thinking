@@ -198,7 +198,7 @@ def run_llm_task(payload: dict, callback_url: str, webhook_secret: Optional[str]
                 break
             else:
                 print(f"[run_llm_task] cid={correlation_id} callback non-2xx status: {r.status_code}")
-    except Exception as e:
+        except Exception as e:
             print(f"[run_llm_task] cid={correlation_id} callback exception: {e}")
 
         if attempt < max_retries:

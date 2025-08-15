@@ -80,13 +80,35 @@ export function setupRoutes(app: FastifyInstance) {
     }
   })
 
-  // Actively attempt a LangDB request to surface status/errors
-      app.get('/diag/langdb', async (req: FastifyRequest, reply: FastifyReply) => {
-  try {
-    const diagModel = process.env.LANGDB_MODEL || 'openrouter/o4-mini-high';
-    const useModal = String((req.query as any)?.use_modal || 'false').toLowerCase() === 'true';
-    const timeout = Number(process.env.LANGDB_TIMEOUT_MS || 15_000);
+  // Add interface before the route
+  interface DiagLangdbBody {
+    model?: string;
+    use_modal?: boolean;
+    timeout_ms?: number;
+  }
 
+  // Actively attempt a LangDB request to surface status/errors
+      app.post('/diag/langdb', async (req: FastifyRequest, reply: FastifyReply) => {
+  // Add raw body logging
+  const requestBody = req.body as DiagLangdbBody;
+
+  console.log('Raw request body:', requestBody);
+
+  // Validate incoming payload
+  if (!requestBody || typeof requestBody !== 'object') {
+    console.error('Invalid or empty JSON payload received');
+    return reply.status(400).send({
+      ok: false,
+      error: 'Invalid or empty JSON payload received'
+    });
+  }
+
+  // Then access properties safely with defaults
+  const diagModel = requestBody.model || process.env.LANGDB_MODEL || 'openrouter/o4-mini-high';
+  const useModal = requestBody.use_modal === true;
+  const timeout = Number(requestBody.timeout_ms || process.env.LANGDB_TIMEOUT_MS || 30000); // Increased default
+
+  try {
     if (useModal) {
       const correlationId = crypto.randomUUID();
       // Import buildModalPayloadForLangdb from correct path
@@ -129,9 +151,14 @@ export function setupRoutes(app: FastifyInstance) {
       };
     }
   } catch (e: any) {
-    return reply.send({
+    console.error('LangDB processing error:', e);
+    console.error('Received payload:', JSON.stringify(requestBody, null, 2));
+
+    return reply.status(500).send({
       ok: false,
       error: e.message || 'LangDB error',
+      received: JSON.stringify(requestBody).substring(0, 200) + '...',
+      stack: process.env.NODE_ENV === 'development' ? e.stack : undefined
     });
   }
 });

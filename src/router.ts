@@ -83,11 +83,13 @@ export function setupRoutes(app: FastifyInstance) {
   // Actively attempt a LangDB request to surface status/errors
       app.get('/diag/langdb', async (req: FastifyRequest, reply: FastifyReply) => {
     try {
-      const result = await callLangdbChatForSteps('test', 'gpt-5-mini', 8000);
+      const diagModel = process.env.LANGDB_MODEL || 'gpt-5-mini';
+      console.info('[diag/langdb] probing LangDB with model', { model: diagModel });
+      const result = await callLangdbChatForSteps('test', String(diagModel), 8000);
       if (result.ok && Array.isArray(result.steps)) {
-        return reply.send({ ok: true, hasSteps: result.steps.length > 0, steps: result.steps });
+        return reply.send({ ok: true, hasSteps: result.steps.length > 0, steps: result.steps, model: diagModel });
       } else {
-        return reply.send({ ok: false, hasSteps: false, error: 'LangDB response invalid' });
+        return reply.send({ ok: false, hasSteps: false, error: 'LangDB response invalid', model: diagModel });
       }
     } catch (e) {
       let errorMessage = 'Unknown error';

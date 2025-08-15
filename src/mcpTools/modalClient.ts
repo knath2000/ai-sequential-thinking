@@ -75,7 +75,8 @@ export function buildModalPayloadForLangdb(args: any) {
     langdb_api_key: process.env.LANGDB_API_KEY || process.env.LANGDB_KEY,
     langdb_project_id: process.env.LANGDB_PROJECT_ID,
     langdb_chat_url: derivedLangdbUrl,
-    model: process.env.LANGDB_MODEL || args.model || 'gpt-4o',
+    // Prefer explicit caller model, then env; fallback to a sane high-quality default
+    model: (args && args.model) || process.env.LANGDB_MODEL || 'anthropic/claude-opus-4.1',
   };
   return payload;
 }

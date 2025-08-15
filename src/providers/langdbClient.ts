@@ -48,7 +48,8 @@ export async function callLangdbChatForSteps(prompt: string, model: string, time
   const url = buildChatUrl()
   const apiKey = process.env.LANGDB_API_KEY || process.env.LANGDB_KEY
   const projectId = process.env.LANGDB_PROJECT_ID
-  const effectiveModel = model || process.env.LANGDB_MODEL || 'gpt-5-mini'
+  // Determine effective model: prefer caller `model`, then env, then sensible default
+  const effectiveModel = (model && String(model).trim()) || process.env.LANGDB_MODEL || 'gpt-5-mini'
   if (!url || !apiKey || !projectId) {
     const missing: string[] = []
     if (!url) missing.push('LANGDB_CHAT_URL|LANGDB_ENDPOINT|AI_GATEWAY_URL|LANGDB_BASE_URL')

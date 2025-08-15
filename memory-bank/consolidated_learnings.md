@@ -17,11 +17,17 @@
 ## Diagnostics & Offload Patterns
 **Production diagnostics endpoints**
 - Add `/diag` for non-secret env previews and `/diag/langdb` to actively probe external gateways with short timeouts.
+ - For diagnostic routes expecting POST JSON, provide a GET fallback that returns a hint and example payload to reduce developer confusion.
+ - Validate request bodies and log a truncated raw payload to speed up diagnosing JSON parsing issues (avoid logging secrets).
+ - Default diagnostic timeouts to ~30s to reduce false negatives when upstreams are slow.
 
 **Modal offload pattern**
 - When external gateway calls must be isolated, route requests to Modal with `correlation_id`, perform the gateway call there, then post results back to the server webhook.
 - Return `{ status: "accepted", correlation_id, poll }` immediately; allow polling and/or synchronization with a capped timeout.
 - Sign webhook callbacks with HMAC and implement retries with backoff.
+
+**Deployment-time route verification**
+- Provide a `/routes` debug endpoint during active development to verify route registration quickly in deployed environments; remove or guard it for production.
 
 ## Cursor Interop Fix
 **Pattern: Wrap MCP tool outputs in `content[]` text**

@@ -127,17 +127,25 @@ export async function callLangdbChatForSteps(
   const body: any = {
     model: effectiveModel,
     messages: [{ role: 'user', content: prompt }],
-    max_tokens: safeMaxTokens,
-    temperature: 0.2,
     stream: false,
   };
 
-  // Strip unsupported params for Anthropic
-  if (effectiveModel.startsWith('anthropic/')) {
+  // Handle model-specific parameter requirements
+  if (effectiveModel.includes('o4-mini') || effectiveModel.includes('o1-')) {
+    // OpenAI o1-series models use max_completion_tokens and don't support temperature/top_p
+    body.max_completion_tokens = safeMaxTokens;
+    // o1 models ignore temperature, top_p, frequency_penalty, presence_penalty
+  } else if (effectiveModel.startsWith('anthropic/')) {
+    // Anthropic models
+    body.max_tokens = safeMaxTokens;
     delete body.top_p;
     delete body.frequency_penalty;
     delete body.presence_penalty;
     body.include_reasoning = true;
+  } else {
+    // Standard OpenAI models and others
+    body.max_tokens = safeMaxTokens;
+    body.temperature = 0.2;
   }
 
   console.log(`[LangDB] tokens → input:${inputTokens} max_output:${safeMaxTokens} timeout:${timeoutMs}ms`);

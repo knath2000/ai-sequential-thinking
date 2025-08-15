@@ -21,6 +21,13 @@
 - Removed `auto`/`auto_chain` paths to align with per-step parity
 - Matched protocolVersion to `2025-06-18` and corrected `inputSchema` casing
 - Compared behavior with third-party `sequentialthinking-tools`; documented no standard auto-chain field
+ - Implemented diagnostic plan for LangDB endpoint failures
+   - Converted `/diag/langdb` from GET to POST for JSON payload handling
+   - Added robust validation/logging (raw body logging, empty/invalid payload handling, increased default timeout)
+   - Introduced GET fallback for `/diag/langdb` that hints proper POST usage
+   - Added `/routes` endpoint to print registered routes for debugging
+   - Fixed TypeScript body typing via `DiagLangdbBody` interface
+   - Ensured build passes (`pnpm build`) and pushed to GitHub (`main`, commit `03ad2f1`)
 
 # Cursor compatibility + LangDB via Modal (latest)
 - Increased synchronous wait window in `src/router.ts` to 120s; Modal function timeout to 1800s in `modal_app.py`.
@@ -28,6 +35,11 @@
 - Wrapped tool results for `tools/call` in `content[]` with a single `{ type: 'text', text: stringifiedPayload }` block for both completed and accepted paths (prevents Cursor hang).
 - Added `scripts/poll_job_result.js` to manually poll `/modal/job/:id` when Cursor receives an accepted response.
 - Verified end-to-end in Cursor with `use_langdb: true` returning synchronous results; example `correlation_id` observed in logs.
+
+## Diagnostics (this session)
+- Verified `/diag/langdb` POST with minimal and valid payloads
+- Confirmed GET now returns a 405-style hint with example POST body
+- Added `/routes` for route auditing; confirmed route registration order and presence
 
 ### Validation (this session)
 - Repo pushed to GitHub (`main`)

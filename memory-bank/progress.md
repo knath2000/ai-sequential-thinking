@@ -23,13 +23,20 @@
  - Increased sync window (120s) and Modal timeout (1800s); simplified prompt/model for faster LangDB calls
  - Cursor-compatible results: tool responses now wrapped in `content[]` text for both completed/accepted
  - Added `scripts/poll_job_result.js` for manual polling when clients don’t auto-poll
+ - `/diag/langdb` diagnostics hardened:
+  - Switched to POST for payload handling; added GET fallback with usage hint
+  - Added `/routes` debug endpoint
+  - Request body validation, raw body logging, and increased default timeout (30s)
+  - Fixed TypeScript typing via `DiagLangdbBody`; verified build success (`pnpm build`)
 
 ### Next
  - CI: add GitHub Actions to deploy Modal on push to `main`
  - Add MCP tool to fetch session `generate_summary`
  - End-to-end logs verification on LangDB dashboard after Modal callback
   - Optionally expose `/modal/job/:id` usage snippet in README for external polling clients
+ - Add automated tests for `/diag/langdb` (valid/invalid/empty payloads) and route presence; document POST requirement in README
 
 ### Known Issues
 - No standard JSON-RPC field to force client auto-follow-up; rely on Agent mode or single-call auto
  - Some clients may still not poll on accepted; use poll script as a workaround
+ - Ensure proxy limits (body size/timeout) align with 30s client timeout in hosted environments

@@ -20,6 +20,29 @@ Improvements_Identified_For_Consolidation:
 ---
 
 ---
+Date: 2025-08-15
+TaskRef: "Harden /diag/langdb, add route debugging, and push fixes"
+
+Learnings:
+- Changing diag routes from GET to POST requires clear fallbacks for browser users; a GET hint endpoint reduces confusion.
+- Validating request bodies and logging a truncated raw payload accelerates diagnosing JSON parsing issues.
+- Increasing default diagnostic timeouts (30s) reduces false negatives from slower upstreams.
+- Adding `/routes` makes route registration issues immediately visible in deployed environments.
+
+Difficulties:
+- Initial TypeScript errors arose from accessing properties on untyped `object`; resolved with a request body interface and type assertion.
+- A 404 for GET `/diag/langdb` after switching to POST created confusion; GET fallback resolved developer experience.
+
+Successes:
+- Build passed after fixes; endpoint works with POST and provides actionable error messages on invalid payloads.
+- Changes pushed to GitHub; validated in Cursor with sequential_thinking tool functioning as expected.
+
+Improvements_Identified_For_Consolidation:
+- Pattern: For diagnostic endpoints, always provide a GET fallback hinting correct usage and example payload.
+- Pattern: Include `/routes` or equivalent route introspection endpoint during active development.
+---
+
+---
 Date: 2025-08-13
 TaskRef: "Push to GitHub and validate MCP tool inside Cursor"
 

@@ -32,11 +32,15 @@ Sequence:
 - Graceful error objects streamed over SSE
 - Timeouts and retries for external calls
 - Input validation and structured error responses
+ - Diagnostics endpoints should avoid hard failures: validate payloads, log raw request body (truncated), and return actionable errors (e.g., include `received` snippet)
+ - Provide GET fallback for diagnostic POST routes to guide users (e.g., `/diag/langdb` returns 405-style hint with example payload)
 
 ### Configuration & Secrets
 - `.env` for LANGDB and Perplexity URLs/keys
 - No secrets in client-visible responses
+ - Increase default diagnostic timeout to 30s to accommodate slower upstreams
 
 ### Extensibility
 - Add new tools via `src/mcpTools/*`
 - Swap transports or add adapters behind clean interfaces
+ - Add `/routes` debug endpoint for transient route auditing during deployments

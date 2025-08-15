@@ -283,8 +283,9 @@ export function setupRoutes(app: FastifyInstance) {
       if (thought.length > MAX_THOUGHT_LENGTH) {
         return sendError(-32602, 'Thought too long', { maxLength: MAX_THOUGHT_LENGTH });
       }
-      // If use_langdb flag is set, offload to Modal and await result (with timeout)
-      if (args?.use_langdb === true) {
+      // If use_langdb flag is set OR LANGDB env var is true, offload to Modal and await result (with timeout)
+      const shouldUseLangdb = args?.use_langdb === true || String(process.env.LANGDB || '').toLowerCase() === 'true';
+      if (shouldUseLangdb) {
         try {
           const correlationId = crypto.randomUUID();
           const derivedLangdbUrl = (process.env.LANGDB_CHAT_URL || process.env.LANGDB_ENDPOINT || process.env.AI_GATEWAY_URL || process.env.LANGDB_BASE_URL) || '';

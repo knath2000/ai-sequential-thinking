@@ -163,6 +163,30 @@ export function setupRoutes(app: FastifyInstance) {
   }
 });
 
+  // GET fallback for browser/manual testing to hint proper usage
+  app.get('/diag/langdb', async (req: FastifyRequest, reply: FastifyReply) => {
+    return reply.code(405).send({
+      ok: true,
+      message: 'Use POST method for LangDB diagnostics',
+      example: {
+        method: 'POST',
+        path: '/diag/langdb',
+        body: {
+          model: 'openrouter/o4-mini-high',
+          use_modal: true,
+          timeout_ms: 30000,
+        },
+      },
+    });
+  });
+
+  // Route listing endpoint for debugging
+  app.get('/routes', async () => {
+    // printRoutes returns a string; return it as-is
+    const routes = (app as any).printRoutes ? (app as any).printRoutes() : 'printRoutes not available';
+    return { routes };
+  });
+
   // Provide SSE on common paths to avoid 404 during probing
   app.get('/', async (req: FastifyRequest, reply: FastifyReply) => {
     return sequentialHandler(req, reply);

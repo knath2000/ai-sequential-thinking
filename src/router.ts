@@ -283,8 +283,14 @@ export function setupRoutes(app: FastifyInstance) {
       if (thought.length > MAX_THOUGHT_LENGTH) {
         return sendError(-32602, 'Thought too long', { maxLength: MAX_THOUGHT_LENGTH });
       }
-      // If use_langdb flag is set OR LANGDB env var is true, offload to Modal and await result (with timeout)
-      const shouldUseLangdb = args?.use_langdb === true || String(process.env.LANGDB || '').toLowerCase() === 'true';
+      // Always use Modal for LangDB requests by default (since LANGDB=true is set in mcp.json)
+      // Can be overridden by setting use_langdb=false explicitly
+      const shouldUseLangdb = args?.use_langdb !== false; // Default to true unless explicitly disabled
+      console.log('[DEBUG] Modal offload check:', { 
+        argsUseLangdb: args?.use_langdb, 
+        shouldUseLangdb,
+        note: 'Always using Modal by default (can disable with use_langdb=false)'
+      });
       if (shouldUseLangdb) {
         try {
           const correlationId = crypto.randomUUID();

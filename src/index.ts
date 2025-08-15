@@ -6,7 +6,7 @@ dotenv.config();
 
 async function main() {
   const transport = process.env.TRANSPORT || 'sse';
-  const fastify = Fastify({ logger: true });
+  const fastify = Fastify({ logger: true, ignoreTrailingSlash: true });
 
   setupRoutes(fastify);
 

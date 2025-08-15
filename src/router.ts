@@ -84,12 +84,37 @@ export function setupRoutes(app: FastifyInstance) {
       app.get('/diag/langdb', async (req: FastifyRequest, reply: FastifyReply) => {
     try {
       const diagModel = process.env.LANGDB_MODEL || 'gpt-5-mini';
-      console.info('[diag/langdb] probing LangDB with model', { model: diagModel });
+      const useModal = String((req.query as any)?.use_modal || 'false').toLowerCase() === 'true';
+      console.info('[diag/langdb] probing LangDB with model', { model: diagModel, use_modal: useModal });
+
+      if (useModal) {
+        // Submit to Modal and wait for callback (reuse submitModalJob)
+        const correlationId = crypto.randomUUID();
+        const derivedLangdbUrl = (process.env.LANGDB_CHAT_URL || process.env.LANGDB_BASE_URL || process.env.LANGDB_ENDPOINT || process.env.AI_GATEWAY_URL || process.env.LANGDB_BASE_URL) || '';
+        const modalPayload = {
+          prompt: 'test',
+          langdb_api_key: process.env.LANGDB_API_KEY || process.env.LANGDB_KEY,
+          langdb_project_id: process.env.LANGDB_PROJECT_ID,
+          langdb_chat_url: derivedLangdbUrl,
+          model: diagModel,
+        };
+        try {
+          await submitModalJob({ task: 'langdb_chat_steps', payload: modalPayload, callbackPath: '/webhook/modal', correlationId, syncWaitMs: Number(process.env.MODAL_SYNC_TIMEOUT_MS || 120000) });
+          // If submit succeeded, return accepted with model
+          return reply.send({ ok: true, accepted: true, model: diagModel, source: 'modal', correlationId });
+        } catch (e) {
+          return reply.send({ ok: false, hasSteps: false, error: `Modal submit failed: ${(e && (e as Error).message) || String(e)}`, model: diagModel });
+        }
+      }
+
       const result = await callLangdbChatForSteps('test', String(diagModel), 8000);
       if (result.ok && Array.isArray(result.steps)) {
         return reply.send({ ok: true, hasSteps: result.steps.length > 0, steps: result.steps, model: diagModel });
       } else {
-        return reply.send({ ok: false, hasSteps: false, error: 'LangDB response invalid', model: diagModel });
+        // include raw preview if available for debugging
+        const rawPreview = result.raw ? (typeof result.raw === 'string' ? result.raw.slice(0, 800) : JSON.stringify(result.raw).slice(0, 800)) : undefined;
+        const errorMsg = result.error || 'LangDB response invalid';
+        return reply.send({ ok: false, hasSteps: false, error: errorMsg, model: diagModel, raw_preview: rawPreview });
       }
     } catch (e) {
       let errorMessage = 'Unknown error';

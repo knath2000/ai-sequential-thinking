@@ -7,6 +7,7 @@ import { submitModalJob } from './mcpTools/modalClient';
 import { getProviderConfig } from './provider';
 import { callLangdbChatForSteps } from './providers/langdbClient';
 import { getEffectiveModel } from './config';
+import { analyticsClient } from './services/analyticsClient';
 
 export function setupRoutes(app: FastifyInstance) {
   // Simple in-memory rate limiter per key (sessionId or IP)
@@ -269,18 +270,29 @@ export function setupRoutes(app: FastifyInstance) {
     }
 
     if (method === 'tools/call') {
+      const startTime = Date.now();
       const toolName = params?.name || params?.tool;
       const args = params?.arguments || params?.args || {};
+      const session = (req.headers['x-session-id'] as string) || (req.query as any)?.session_id || args.session_id || crypto.randomUUID();
+      
       if (toolName !== 'sequential_thinking') {
+        // Log unknown tool attempt
+        analyticsClient.logToolCall(session, toolName || 'unknown', Date.now() - startTime, false, 'Tool not found');
         return sendError(-32601, 'Tool not found');
       }
-      const session = (req.headers['x-session-id'] as string) || (req.query as any)?.session_id || args.session_id;
+      
       const required = ['thought', 'thought_number', 'total_thoughts', 'next_thought_needed'];
       for (const k of required) {
-        if (!(k in args)) return sendError(-32602, `Missing argument: ${k}`);
+        if (!(k in args)) {
+          // Log missing argument error
+          analyticsClient.logToolCall(session, toolName, Date.now() - startTime, false, `Missing argument: ${k}`);
+          return sendError(-32602, `Missing argument: ${k}`);
+        }
       }
       const thought = String(args.thought || '');
       if (thought.length > MAX_THOUGHT_LENGTH) {
+        // Log input too long error
+        analyticsClient.logToolCall(session, toolName, Date.now() - startTime, false, 'Thought too long');
         return sendError(-32602, 'Thought too long', { maxLength: MAX_THOUGHT_LENGTH });
       }
       // Always use Modal for LangDB requests by default (since LANGDB=true is set in mcp.json)
@@ -384,11 +396,29 @@ export function setupRoutes(app: FastifyInstance) {
                   }
                 };
                 
+                // Log successful Modal completion
+                analyticsClient.logToolCall(session, toolName, Date.now() - startTime, true, undefined, {
+                  used_modal: true,
+                  correlation_id: correlationId,
+                  steps_count: processedSteps.length,
+                  model: modalModel
+                });
+                
                 // Cursor expects displayable content in a `content[]` array for some transports.
                 return sendResult({ content: [{ type: 'text', text: JSON.stringify(out) }] });
               } catch (e) {
                 // timed out waiting for webhook – return accepted info as content (Cursor-friendly)
                 console.info('[router] modal job sync wait timed out, returning accepted', { correlationId });
+                
+                // Log timeout/accepted response
+                analyticsClient.logToolCall(session, toolName, Date.now() - startTime, true, undefined, {
+                  used_modal: true,
+                  correlation_id: correlationId,
+                  timeout: true,
+                  sync_wait_ms: syncWait,
+                  model: modalModel
+                });
+                
                 // Even on accepted, mirror the expected structure without exposing job details
                 const history = getThoughts(session);
                 const out = {
@@ -406,6 +436,14 @@ export function setupRoutes(app: FastifyInstance) {
             if (e && typeof e === 'object' && 'message' in e && typeof (e as { message: string }).message === 'string') {
               errorMessage = (e as { message: string }).message;
             }
+            
+            // Log Modal job failure
+            analyticsClient.logToolCall(session, toolName, Date.now() - startTime, false, errorMessage, {
+              used_modal: true,
+              error_type: 'modal_submission_failed',
+              model: modalModel
+            });
+            
             return sendError(-32000, `Failed to submit Modal job: ${errorMessage}`);
           } finally {
             // cleanup waiter if still present after sync window
@@ -448,6 +486,12 @@ export function setupRoutes(app: FastifyInstance) {
             previous_steps: history,
             remaining_steps: [],
           };
+          // Log successful local processing
+          analyticsClient.logToolCall(session, toolName, Date.now() - startTime, true, undefined, {
+            used_modal: false,
+            processing_type: 'local_enhanced'
+          });
+          
           return sendResult({ content: [{ type: 'text', text: JSON.stringify(out) }] });
         } catch (e) {
           console.warn('[router] recommender error', e);
@@ -464,6 +508,13 @@ export function setupRoutes(app: FastifyInstance) {
         thought_history_length: Array.isArray(history) ? history.length : 0,
         available_mcp_tools: ['mcp_perplexity-ask'],
       };
+      
+      // Log successful fallback processing
+      analyticsClient.logToolCall(session, toolName, Date.now() - startTime, true, undefined, {
+        used_modal: false,
+        processing_type: 'local_fallback'
+      });
+      
       return sendResult({ content: [{ type: 'text', text: JSON.stringify(out) }] });
     }
 
@@ -572,14 +623,21 @@ export function setupRoutes(app: FastifyInstance) {
 
   // Webhook receiver for Modal job completion
   app.post('/webhook/modal', async (req: FastifyRequest, reply: FastifyReply) => {
+    const startTime = Date.now();
     const secret = process.env.MODAL_WEBHOOK_SECRET || '';
     const signature = (req.headers['x-signature'] as string) || '';
     const body = (req.body as any) || {};
     const raw = JSON.stringify(body || {});
     const hmac = crypto.createHmac('sha256', secret).update(raw).digest('hex');
     console.info('[webhook] Received callback', { path: '/webhook/modal', signature: !!signature });
+    
     if (secret && signature !== hmac) {
       console.warn('[webhook] Invalid HMAC signature');
+      // Log webhook authentication failure
+      analyticsClient.logWebhookEvent('unknown', 'modal_webhook', false, Date.now() - startTime, {
+        error: 'Invalid HMAC signature',
+        signature_provided: !!signature
+      });
       return reply.code(401).send({ error: 'Invalid signature' });
     }
 
@@ -616,9 +674,23 @@ export function setupRoutes(app: FastifyInstance) {
         console.warn('[webhook] callback did not include correlation id', { bodyPreview: raw.slice(0,200) });
       }
 
+      // Log successful webhook processing
+      analyticsClient.logWebhookEvent(correlationId || 'unknown', 'modal_webhook', true, Date.now() - startTime, {
+        has_correlation_id: !!correlationId,
+        has_waiter: !!correlationId && jobWaiters.has(correlationId),
+        result_size: JSON.stringify(result).length
+      });
+      
       return reply.send({ ok: true });
     } catch (e) {
       console.error('[webhook] error handling callback', e);
+      
+      // Log webhook processing error
+      analyticsClient.logWebhookEvent('unknown', 'modal_webhook', false, Date.now() - startTime, {
+        error: String(e),
+        stack_trace: e instanceof Error ? e.stack : undefined
+      });
+      
       return reply.code(500).send({ ok: false, error: String(e) });
     }
   });

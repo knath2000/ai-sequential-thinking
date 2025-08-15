@@ -331,17 +331,59 @@ export function setupRoutes(app: FastifyInstance) {
               try {
                 const finalResult = await Promise.race([resultPromise, timed]);
                 // webhook returned result within sync window
-                console.info('[router] modal job completed within sync window', { correlationId });
-                // Mirror sequentialthinking_tools exact shape
+                console.info('[router] modal job completed within sync window', { correlationId, resultPreview: JSON.stringify(finalResult).slice(0, 200) });
+                
+                // Process the LangDB result from Modal and build enhanced response
                 const history = getThoughts(session);
+                let processedSteps: any[] = [];
+                
+                try {
+                  // Extract steps from LangDB response
+                  if (finalResult && typeof finalResult === 'object') {
+                    const result = finalResult as any;
+                    if (result.steps && Array.isArray(result.steps)) {
+                      processedSteps = result.steps;
+                    } else if (result.result && Array.isArray(result.result)) {
+                      processedSteps = result.result;
+                    } else if (Array.isArray(finalResult)) {
+                      processedSteps = finalResult;
+                    }
+                  }
+                  console.info('[router] processed Modal result steps', { stepCount: processedSteps.length, hasSteps: processedSteps.length > 0 });
+                } catch (e) {
+                  console.warn('[router] error processing Modal result steps', e);
+                }
+
+                // Build enhanced output with LangDB steps
                 const out = {
+                  thought: String(args.thought || ''),
                   thought_number: Number(args.thought_number),
                   total_thoughts: Number(args.total_thoughts),
                   next_thought_needed: Boolean(args.next_thought_needed),
-                  branches: [],
-                  thought_history_length: Array.isArray(history) ? history.length : 0,
-                  available_mcp_tools: ['mcp_perplexity-ask'],
+                  current_step: {
+                    step_description: `Perform: ${String(args.thought || '')}`,
+                    expected_outcome: "Gather initial results and identify follow-ups",
+                    recommended_tools: processedSteps.length > 0 ? 
+                      processedSteps.map((step: any, idx: number) => ({
+                        tool_name: "mcp_perplexity-ask",
+                        confidence: 0.9,
+                        rationale: step.step_description || `Step ${idx + 1}`,
+                        priority: idx + 1
+                      })) :
+                      [{ tool_name: "mcp_perplexity-ask", confidence: 0.9, rationale: "LLM suggestion", priority: 1 }],
+                    next_step_conditions: processedSteps.length > 0 ? 
+                      processedSteps.map((step: any) => step.step_description || "Check results") :
+                      ["Check results", "Decide whether to branch or continue"]
+                  },
+                  previous_steps: history,
+                  remaining_steps: processedSteps,
+                  modal_processing: {
+                    used_modal: true,
+                    correlation_id: correlationId,
+                    langdb_steps: processedSteps
+                  }
                 };
+                
                 // Cursor expects displayable content in a `content[]` array for some transports.
                 return sendResult({ content: [{ type: 'text', text: JSON.stringify(out) }] });
               } catch (e) {

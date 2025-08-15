@@ -12,7 +12,7 @@ interface UsageEventData {
   error_message?: string;
   user_agent?: string;
   ip_address?: string;
-  metadata?: Record<string, any>;
+  meta?: Record<string, any>;
 }
 
 interface PerformanceMetricData {
@@ -41,7 +41,7 @@ interface CostTrackingData {
   cost_usd: number;
   session_id?: string;
   request_id?: string;
-  metadata?: Record<string, any>;
+  meta?: Record<string, any>;
 }
 
 class AnalyticsClient {
@@ -116,7 +116,7 @@ class AnalyticsClient {
       response_time_ms: responseTimeMs,
       success,
       error_message: errorMessage,
-      metadata
+      meta: metadata
     });
   }
 
@@ -133,7 +133,7 @@ class AnalyticsClient {
       tool_name: webhookType,
       response_time_ms: processingTimeMs,
       success,
-      metadata
+      meta: metadata
     });
   }
 
@@ -153,7 +153,7 @@ class AnalyticsClient {
         cost_usd: costUsd,
         session_id: sessionId,
         request_id: requestId,
-        metadata
+        meta: metadata
       });
     }
   }
@@ -174,7 +174,7 @@ class AnalyticsClient {
         cost_usd: costUsd,
         session_id: sessionId,
         request_id: requestId,
-        metadata: { model, ...metadata }
+        meta: { model, ...metadata }
       });
     }
   }

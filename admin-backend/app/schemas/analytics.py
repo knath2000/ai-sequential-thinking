@@ -15,7 +15,7 @@ class UsageEventBase(BaseModel):
     error_message: Optional[str] = None
     user_agent: Optional[str] = None
     ip_address: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    meta: Optional[Dict[str, Any]] = None
 
 
 class UsageEventCreate(UsageEventBase):
@@ -79,7 +79,7 @@ class SessionBase(BaseModel):
     session_id: str
     user_agent: Optional[str] = None
     ip_address: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    meta: Optional[Dict[str, Any]] = None
 
 
 class SessionCreate(SessionBase):

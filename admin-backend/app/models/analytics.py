@@ -20,7 +20,7 @@ class UsageEvent(Base):
     error_message = Column(Text)
     user_agent = Column(String(500))
     ip_address = Column(String(50))
-    metadata = Column(JSON)  # Additional event-specific data
+    meta = Column(JSON)  # Additional event-specific data
     
     def __repr__(self):
         return f"<UsageEvent(id={self.id}, type={self.event_type}, tool={self.tool_name})>"
@@ -77,7 +77,7 @@ class Session(Base):
     total_requests = Column(Integer, default=0)
     total_errors = Column(Integer, default=0)
     total_processing_time_ms = Column(Integer, default=0)
-    metadata = Column(JSON)
+    meta = Column(JSON)
     
     def __repr__(self):
         return f"<Session(id={self.session_id})>"
@@ -95,7 +95,7 @@ class CostTracking(Base):
     cost_usd = Column(Float, nullable=False)
     session_id = Column(String(255), index=True)
     request_id = Column(String(255))
-    metadata = Column(JSON)
+    meta = Column(JSON)
     
     def __repr__(self):
         return f"<CostTracking(service={self.service_name}, cost=${self.cost_usd})>"

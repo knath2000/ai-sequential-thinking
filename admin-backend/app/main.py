@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 from .core.config import settings
 from .db.database import engine, Base
 from .api.endpoints import auth, analytics, admin
@@ -57,8 +58,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# Mount static files (robust path resolution)
+try:
+    # main.py is in admin-backend/app; static is at admin-backend/static
+    static_path = (Path(__file__).resolve().parent.parent / "static").resolve()
+    if static_path.exists() and static_path.is_dir():
+        app.mount("/static", StaticFiles(directory=str(static_path)), name="static")
+        logger.info(f"Mounted static files directory at: {static_path}")
+    else:
+        logger.warning(f"Static directory not found at {static_path}. Skipping static mount.")
+except Exception as e:
+    logger.error(f"Failed to mount static files: {e}")
 
 # Include routers
 app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["authentication"])

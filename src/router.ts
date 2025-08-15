@@ -84,11 +84,12 @@ export function setupRoutes(app: FastifyInstance) {
       app.get('/diag/langdb', async (req: FastifyRequest, reply: FastifyReply) => {
   try {
     const diagModel = process.env.LANGDB_MODEL || 'openrouter/o4-mini-high';
-    const useModal = String((req.query as any).use_modal).toLowerCase() === 'true';
+    const useModal = String((req.query as any)?.use_modal || 'false').toLowerCase() === 'true';
     const timeout = Number(process.env.LANGDB_TIMEOUT_MS || 15_000);
 
     if (useModal) {
       const correlationId = crypto.randomUUID();
+      // Import buildModalPayloadForLangdb from correct path
       const { buildModalPayloadForLangdb } = await import('./mcpTools/modalClient');
       const modalPayload = buildModalPayloadForLangdb({
         thought: 'test',
@@ -121,13 +122,11 @@ export function setupRoutes(app: FastifyInstance) {
       });
     } else {
       const result = await callLangdbChatForSteps('test', diagModel, timeout);
-      return reply.send({
-        ok: result.ok,
+      return {
+        ...result,
         model: diagModel,
         timeout_ms: timeout,
-        steps: result.steps,
-        error: result.error,
-      });
+      };
     }
   } catch (e: any) {
     return reply.send({

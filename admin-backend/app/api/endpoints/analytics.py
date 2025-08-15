@@ -4,6 +4,8 @@ Analytics endpoints for MCP server data
 from datetime import datetime, timedelta
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
+from starlette.responses import StreamingResponse
+import asyncio
 from sqlalchemy.orm import Session
 from ...db.database import get_db
 from ...api.deps.auth import get_current_active_user
@@ -150,6 +152,24 @@ async def get_dashboard_metrics(
     service = AnalyticsService(db)
     return service.get_dashboard_metrics()
 
+
+@router.get("/stream")
+async def stream_dashboard_metrics(
+    db: Session = Depends(get_db),
+    current_user: AdminUserResponse = Depends(get_current_active_user)
+):
+    """SSE stream for real-time dashboard metrics"""
+    service = AnalyticsService(db)
+
+    async def event_generator():
+        while True:
+            metrics = service.get_dashboard_metrics()
+            payload = AnalyticsSummary.model_json_schema()  # dummy to ensure pydantic import use
+            data = DashboardMetrics(**metrics.dict()).model_dump_json()
+            yield f"data: {data}\n\n"
+            await asyncio.sleep(5)
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 @router.get("/costs/summary")
 async def get_cost_summary(

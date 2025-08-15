@@ -32,16 +32,59 @@ function buildChatUrl(): string {
 
 function extractJsonArray(text: string): LangdbStep[] | undefined {
   try {
-    // naive extraction of first JSON array in text
-    const start = text.indexOf('[')
-    const end = text.lastIndexOf(']')
+    if (!text || typeof text !== 'string') return undefined
+    // Remove common markdown fences
+    let t = text.trim()
+    if (t.startsWith('```')) {
+      // strip fenced code block
+      const last = t.lastIndexOf('```')
+      if (last > 0) {
+        const firstNl = t.indexOf('\n')
+        if (firstNl !== -1) t = t.slice(firstNl + 1, last).trim()
+      }
+    }
+    // Try to find a JSON array using regex (non-greedy)
+    const arrMatch = t.match(/\[[\s\S]*?\]/)
+    if (arrMatch && arrMatch[0]) {
+      try {
+        const parsed = JSON.parse(arrMatch[0])
+        if (Array.isArray(parsed)) return parsed
+      } catch (e) {
+        // continue to other heuristics
+      }
+    }
+    // Fallback: look for bracket indices (previous behavior)
+    const start = t.indexOf('[')
+    const end = t.lastIndexOf(']')
     if (start >= 0 && end > start) {
-      const slice = text.slice(start, end + 1)
+      const slice = t.slice(start, end + 1)
       const parsed = JSON.parse(slice)
       if (Array.isArray(parsed)) return parsed
     }
   } catch {}
   return undefined
+}
+
+function getAssistantTextFromResponse(data: any): string | undefined {
+  if (!data) return undefined
+  // OpenAI-like
+  if (data.choices?.[0]?.message?.content) return String(data.choices[0].message.content)
+  if (data.choices?.[0]?.text) return String(data.choices[0].text)
+  // Anthropic-like shapes
+  try {
+    // LangDB/Anthropic may place assistant text in data.output or data.choices[].message
+    if (data.output && Array.isArray(data.output)) {
+      // find first content text
+      for (const item of data.output) {
+        if (item.content) {
+          if (typeof item.content === 'string') return item.content
+          if (Array.isArray(item.content) && item.content[0]?.text) return item.content[0].text
+        }
+      }
+    }
+  } catch (e) {}
+  // Last resort: stringify entire body
+  try { return JSON.stringify(data) } catch (e) { return undefined }
 }
 
 export async function callLangdbChatForSteps(prompt: string, model: string, timeoutMs?: number): Promise<LangdbStepsResult> {
@@ -133,18 +176,18 @@ export async function callLangdbChatForSteps(prompt: string, model: string, time
       return { ok: false, error: `LangDB HTTP ${status}`, raw: data }
     }
 
-    // Try OpenAI-like shape
-    const content: string | undefined = data?.choices?.[0]?.message?.content
-    if (typeof content === 'string') {
-      const steps = extractJsonArray(content)
+    // Extract assistant text robustly
+    const assistantText = getAssistantTextFromResponse(data)
+    if (assistantText) {
+      const steps = extractJsonArray(assistantText)
       if (steps?.length) return { ok: true, steps }
     }
     // Fallback: if response is already JSON array
     if (Array.isArray(data)) {
       return { ok: true, steps: data as LangdbStep[] }
     }
-    // Consider it a successful gateway call even if parsing failed
-    return { ok: true, steps: [] as LangdbStep[], raw: data }
+    // Return gateway response for debugging when parsing failed
+    return { ok: false, error: 'LangDB parse failed', raw: data }
   } catch (err: any) {
     return { ok: false, error: err?.message || 'LangDB request failed' }
   }

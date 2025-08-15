@@ -70,6 +70,20 @@ try:
 except Exception as e:
     logger.error(f"Failed to mount static files: {e}")
 
+# Mount SvelteKit dashboard build at /dashboard (if present)
+try:
+    # repoRoot/admin-dashboard/build
+    dashboard_build_path = (
+        Path(__file__).resolve().parent.parent.parent / "admin-dashboard" / "build"
+    ).resolve()
+    if dashboard_build_path.exists() and dashboard_build_path.is_dir():
+        app.mount("/dashboard", StaticFiles(directory=str(dashboard_build_path), html=True), name="dashboard")
+        logger.info(f"Mounted dashboard at: {dashboard_build_path}")
+    else:
+        logger.warning(f"Dashboard build not found at {dashboard_build_path}. Skipping dashboard mount.")
+except Exception as e:
+    logger.error(f"Failed to mount dashboard: {e}")
+
 # Include routers
 app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["authentication"])
 app.include_router(analytics.router, prefix=f"{settings.API_V1_STR}/analytics", tags=["analytics"])

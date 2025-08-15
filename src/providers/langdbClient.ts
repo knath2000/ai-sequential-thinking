@@ -15,17 +15,31 @@ export interface LangdbStepsResult {
 function buildChatUrl(): string {
   const chatPath = '/v1/chat/completions'
   const explicitRaw = process.env.LANGDB_CHAT_URL || process.env.LANGDB_ENDPOINT || process.env.AI_GATEWAY_URL
+  const projectId = process.env.LANGDB_PROJECT_ID || ''
   if (explicitRaw && explicitRaw.length) {
-    const explicit = explicitRaw.replace(/\/$/, '') // trim trailing slash
-    // if explicit already ends with the chatPath, return as-is
+    let explicit = explicitRaw.replace(/\/$/, '') // trim trailing slash
+    // If explicit already ends with the chatPath, return as-is
     if (explicit.endsWith(chatPath)) return explicit
-    // if explicit already ends with '/v1', append '/chat/completions'
-    if (explicit.endsWith('/v1')) return explicit + '/chat/completions'
+    // If explicit already ends with '/v1', append '/chat/completions'
+    if (explicit.endsWith('/v1')) {
+      // ensure project id present
+      if (projectId && !explicit.includes(`/${projectId}/`)) explicit = explicit.replace('/v1', `/${projectId}/v1`)
+      return explicit + '/chat/completions'
+    }
     // otherwise treat explicit as full endpoint or base and append chatPath
+    // insert project id if provided
+    if (projectId && !explicit.includes(`/${projectId}/`)) {
+      explicit = explicit.replace(/\/$/, '') + `/${projectId}`
+    }
     return explicit + chatPath
   }
   const baseRaw = (process.env.LANGDB_BASE_URL || '').replace(/\/$/, '')
   if (!baseRaw) return ''
+  // include project id if present
+  if (projectId && !baseRaw.includes(`/${projectId}/`)) {
+    if (baseRaw.endsWith('/v1')) return `${baseRaw.replace('/v1', `/${projectId}/v1`)}/chat/completions`
+    return `${baseRaw}/${projectId}${chatPath}`
+  }
   if (baseRaw.endsWith('/v1')) return baseRaw + '/chat/completions'
   return `${baseRaw}${chatPath}`
 }
@@ -150,6 +164,17 @@ export async function callLangdbChatForSteps(prompt: string, model: string, time
     body.top_p = Number(process.env.LANGDB_TOP_P ?? body.top_p ?? 1)
   }
 
+  // Anthropic-specific adjustments: some params may be unsupported and Anthropic expects include_reasoning
+  const isAnthropic = String(effectiveModel || '').toLowerCase().startsWith('anthropic/')
+  if (isAnthropic) {
+    // remove params that Anthropic/LangDB may reject
+    delete body.top_p
+    delete body.frequency_penalty
+    delete body.presence_penalty
+    // optional helper param supported by LangDB for Claude Opus
+    body.include_reasoning = true
+  }
+
   // Sanity log of payload keys (do not log secrets)
   try {
     console.info('[langdb] request model=', effectiveModel, 'payloadKeys=', Object.keys(body));
@@ -176,7 +201,14 @@ export async function callLangdbChatForSteps(prompt: string, model: string, time
       return { ok: false, error: `LangDB HTTP ${status}`, raw: data }
     }
 
+    // If LangDB returns structured error object, bubble it up
+    if (data && data.error) {
+      return { ok: false, error: data.error?.message || JSON.stringify(data.error), raw: data }
+    }
+
     // Extract assistant text robustly
+    // Log truncated raw response for debugging (avoid leaking secrets)
+    try { console.info('[langdb] raw_response_preview=', JSON.stringify(data).slice(0,800)) } catch (e) {}
     const assistantText = getAssistantTextFromResponse(data)
     if (assistantText) {
       const steps = extractJsonArray(assistantText)

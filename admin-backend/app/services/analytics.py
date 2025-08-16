@@ -123,6 +123,12 @@ class AnalyticsService:
     # Sessions
     def create_session(self, session_data: SessionCreate) -> SessionResponse:
         """Create a new session"""
+        # Idempotent create: return existing if present
+        existing = self.db.query(SessionModel).filter(
+            SessionModel.session_id == session_data.session_id
+        ).first()
+        if existing:
+            return SessionResponse.from_orm(existing)
         db_session = SessionModel(**session_data.dict())
         self.db.add(db_session)
         self.db.commit()

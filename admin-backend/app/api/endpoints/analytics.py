@@ -17,7 +17,8 @@ from ...schemas.analytics import (
     ErrorLogCreate, ErrorLogResponse,
     CostTrackingCreate, CostTrackingResponse,
     AnalyticsSummary, DashboardMetrics,
-    AdminUserResponse
+    AdminUserResponse,
+    SessionCreate, SessionResponse
 )
 
 router = APIRouter()
@@ -32,6 +33,17 @@ async def create_usage_event(
     """Create a new usage event"""
     service = AnalyticsService(db)
     return service.create_usage_event(event)
+
+
+@router.post("/sessions", response_model=SessionResponse)
+async def create_session(
+    session: SessionCreate,
+    db: Session = Depends(get_db),
+    current_user: Optional[AdminUserResponse] = Depends(get_ingest_or_user)
+):
+    """Create or return existing session"""
+    service = AnalyticsService(db)
+    return service.create_session(session)
 
 
 @router.get("/events", response_model=List[UsageEventResponse])

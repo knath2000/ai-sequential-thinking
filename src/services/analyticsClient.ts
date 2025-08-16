@@ -120,6 +120,15 @@ class AnalyticsClient {
     errorMessage?: string,
     metadata?: Record<string, any>
   ): Promise<void> {
+    // Ensure a session record exists/updated
+    try {
+      await axios.post(`${this.adminBackendUrl}/api/v1/analytics/sessions`, {
+        session_id: sessionId,
+        user_agent: metadata?.user_agent,
+        ip_address: metadata?.ip_address,
+        meta: metadata,
+      }, { headers: this.getHeaders(), timeout: 3000 });
+    } catch {}
     await this.logUsageEvent({
       session_id: sessionId,
       event_type: 'tool_call',

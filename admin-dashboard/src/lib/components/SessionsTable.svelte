@@ -22,7 +22,7 @@
 
   async function openSessionDetail(sessionId: string) {
     try {
-      const r = await fetch(`${API_BASE_URL}/sessions/${sessionId}`)
+      const r = await fetch(`${API_BASE_URL}/analytics/sessions/${sessionId}`)
       if (!r.ok) throw new Error(`HTTP ${r.status}`)
       selectedSession = await r.json()
     } catch (e) {

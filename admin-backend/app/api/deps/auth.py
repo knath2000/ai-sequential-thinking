@@ -11,11 +11,11 @@ from ...db.database import get_db
 from ...models.analytics import AdminUser
 from ...schemas.analytics import AdminUserResponse
 
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),
     db: Session = Depends(get_db)
 ) -> AdminUserResponse:
     """Get the current authenticated user"""
@@ -25,6 +25,9 @@ async def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
     
+    if credentials is None:
+        raise credentials_exception
+
     # Verify token
     username = verify_token(credentials.credentials)
     if username is None:
@@ -58,7 +61,7 @@ async def get_current_active_user(
 
 async def get_ingest_or_user(
     x_analytics_ingest_key: str | None = Header(default=None, alias="X-Analytics-Ingest-Key"),
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),
     db: Session = Depends(get_db)
 ):
     """Allow either a special ingest key header or a valid bearer user."""

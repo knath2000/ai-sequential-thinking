@@ -47,37 +47,48 @@ interface CostTrackingData {
 class AnalyticsClient {
   private adminBackendUrl: string;
   private apiKey: string;
+  private ingestKey: string;
   private enabled: boolean;
 
   constructor() {
-    this.adminBackendUrl = process.env.ADMIN_BACKEND_URL || '';
+    // Default to production admin-backend if not provided
+    this.adminBackendUrl = process.env.ADMIN_BACKEND_URL || 'https://gallant-reflection-production.up.railway.app';
     this.apiKey = process.env.ADMIN_API_KEY || '';
-    this.enabled = Boolean(this.adminBackendUrl && this.apiKey);
+    this.ingestKey = process.env.ANALYTICS_INGEST_KEY || process.env.ADMIN_INGEST_KEY || '';
+    this.enabled = Boolean(this.adminBackendUrl && (this.apiKey || this.ingestKey));
     
     if (!this.enabled) {
-      console.warn('[AnalyticsClient] Admin backend URL or API key not configured. Analytics disabled.');
+      console.warn('[AnalyticsClient] Admin backend URL or auth not configured. Analytics disabled.', {
+        hasUrl: Boolean(this.adminBackendUrl),
+        hasBearer: Boolean(this.apiKey),
+        hasIngest: Boolean(this.ingestKey)
+      });
     }
   }
 
   private getHeaders() {
-    return {
-      'Authorization': `Bearer ${this.apiKey}`,
-      'Content-Type': 'application/json'
-    };
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (this.ingestKey) headers['X-Analytics-Ingest-Key'] = this.ingestKey;
+    if (this.apiKey) headers['Authorization'] = `Bearer ${this.apiKey}`;
+    return headers;
   }
 
   private async makeRequest(endpoint: string, data: any): Promise<void> {
     if (!this.enabled) return;
 
     try {
-      await axios.post(`${this.adminBackendUrl}/api/v1/analytics/${endpoint}`, data, {
-        headers: this.getHeaders(),
+      const url = `${this.adminBackendUrl}/api/v1/analytics/${endpoint}`;
+      const headers = this.getHeaders();
+      await axios.post(url, data, {
+        headers,
         timeout: 5000
       });
     } catch (error) {
       // Log analytics errors but don't throw - we don't want analytics to break the main flow
       if (error instanceof AxiosError) {
-        console.warn(`[AnalyticsClient] Failed to send ${endpoint}:`, error.message);
+        const status = error.response?.status;
+        const dataPreview = typeof error.response?.data === 'string' ? error.response?.data.slice(0, 200) : JSON.stringify(error.response?.data || {}).slice(0, 200);
+        console.warn(`[AnalyticsClient] Failed to send ${endpoint}:`, { status, message: error.message, dataPreview });
       } else {
         console.warn(`[AnalyticsClient] Unexpected error sending ${endpoint}:`, error);
       }

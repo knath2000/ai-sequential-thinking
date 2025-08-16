@@ -1,4 +1,51 @@
 ---
+Date: 2025-08-16
+TaskRef: "Build live analytics dashboard, fix CORS/auth, and instrument logging"
+
+Learnings:
+- SvelteKit + Tailwind + Flowbite is a fast path to a modern dashboard; ECharts can be added for trends.
+- Use SSE for live KPI tiles; provide REST time-series for historical charts. Mount static build under `/dashboard`.
+- For local dev, a Vite proxy (`/api` → Railway host) eliminates CORS; default API base to `/api` in dev.
+- FastAPI CORS must allow localhost ports (5173/3000) and production host; SSE works fine once allowed origins are set.
+- Starlette `StaticFiles` should be guarded: resolve absolute path and skip mount if dir missing to avoid boot crashes.
+- Request logging middleware is invaluable on Railway to trace REQ/RES lines and status codes.
+- 403s on analytics were due to auth; adding `X-Analytics-Ingest-Key` header support (with optional bearer) unblocked ingestion.
+- Tool-side analytics client should enable by default: default backend URL to Railway and accept either bearer or ingest key.
+
+Difficulties:
+- Initial CORS and 403s blocked dev; Vite proxy + ingest key path resolved both without interactive auth.
+- SSE path worked but dashboard build wasn’t mounted on server; added guarded mount and base path.
+
+Successes:
+- Live dashboard updating via SSE; analytics POSTs visible in Railway logs.
+- Local dev proxy and production config co-exist cleanly; no CORS errors.
+- Sequential_thinking runs now reflect in requests/min, success rate, and cost (when logged).
+
+Improvements_Identified_For_Consolidation:
+- Pattern: Provide an ingest header (e.g., `X-Analytics-Ingest-Key`) for non-interactive analytics writes; make bearer optional when header matches.
+- Pattern: In dev, proxy API via Vite and set frontend API base to `/api`; in prod, use same-origin `/api/v1` or env override.
+- Pattern: Always add a lightweight REQ/RES logging middleware in FastAPI during active development.
+---
+
+Date: 2025-08-15
+TaskRef: "Railway crash: StaticFiles mount failing due to missing 'static' dir"
+
+Learnings:
+- Uvicorn/Starlette raises RuntimeError at import time if `StaticFiles(directory=...)` points to a non-existent folder.
+- Relative paths differ in container; resolving static path via `Path(__file__).parent.parent / 'static'` is robust for `admin-backend/app/main.py`.
+- Skipping the mount when the directory is absent prevents boot crashes in ephemeral builds (Railway), enabling app to start.
+
+Difficulties:
+- Logs showed immediate crash loops; needed to guard the mount and log a warning instead.
+
+Successes:
+- Implemented existence check and safe mount with absolute path; added logging. Pushed fix to trigger Railway redeploy.
+
+Improvements_Identified_For_Consolidation:
+- Pattern: Always guard static mounts in FastAPI/Starlette apps; resolve absolute path and skip if missing to avoid startup failures in production containers.
+---
+
+---
 Date: 2025-08-13
 TaskRef: "Finalize per-step behavior, add guardrails, prep provider switch"
 

@@ -35,6 +35,18 @@
 - If synchronous completion may exceed typical client timeouts, increase server sync window (e.g., 120s) and simplify/accelerate the LLM path (faster model, smaller prompt).
 - Provide a documented polling fallback (e.g., `/modal/job/:id` and a small `scripts/poll_job_result.js`).
 # Consolidated Learnings
+## Live Analytics Dashboard (SvelteKit + FastAPI)
+**Patterns:**
+- Serve SvelteKit build via FastAPI `StaticFiles` mounted at `/dashboard`; set Svelte base path to `/dashboard`.
+- Use SSE for live KPIs and REST for historical charts; test SSE with `curl -N`.
+- In dev, set Vite proxy `/api` → production host and default frontend API base to `/api` to avoid CORS.
+- Guard static mounts with absolute paths and skip if missing to prevent startup crashes.
+- Add simple REQ/RES logging middleware in FastAPI during active dev to trace status codes in Railway.
+
+**Auth & Ingestion:**
+- Support analytics ingestion with either `Authorization: Bearer <token>` or `X-Analytics-Ingest-Key: <secret>`; make bearer optional when ingest key matches.
+- Tool-side analytics client should enable automatically: default backend URL to production and send either bearer or ingest key header.
+
 
 ## MCP + Cursor Interop
 - Use JSON-RPC streamable HTTP with `protocolVersion: 2025-06-18`; implement `initialize`, `tools/list`, `tools/call`, 204 for `notifications/initialized`.

@@ -54,8 +54,8 @@
       </thead>
       <tbody>
         {#each rows as s}
-          <tr class="border-t border-gray-800 hover:bg-gray-800/40">
-            <td class="px-3 py-2 font-mono">{s.session_id}</td>
+          <tr class="border-t border-gray-800 hover:bg-gray-800/40 cursor-pointer" on:click={() => (window.location.href = `/session/${encodeURIComponent(s.session_id)}`)}>
+            <td class="px-3 py-2 font-mono text-blue-400 underline">{s.session_id}</td>
             <td class="px-3 py-2">{new Date(s.created_at).toLocaleString()}</td>
             <td class="px-3 py-2">{s.total_requests}</td>
             <td class="px-3 py-2">{s.total_errors}</td>

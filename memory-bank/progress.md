@@ -31,6 +31,14 @@
   - Fixed TypeScript typing via `DiagLangdbBody`; verified build success (`pnpm build`)
 
 ### Session Achievements (Jan 15, 2025)
+### Session Achievements (Aug 16, 2025)
+1. **Live Dashboard**: SvelteKit app with Tailwind/Flowbite, mounted at `/dashboard`, SSE KPIs working
+2. **CORS-Free Dev**: Vite proxy `/api` → Railway and default API base to `/api`
+3. **SSE Endpoint**: `/api/v1/analytics/stream` added; snapshot at `/dashboard` tiles updates live
+4. **Auth for Analytics**: Ingest header `X-Analytics-Ingest-Key` accepted; bearer optional
+5. **Tool Analytics Client**: Defaults to Railway URL; sends bearer or ingest header automatically
+6. **Logging**: Request logging middleware added; Railway logs now show REQ/RES for analytics POSTs
+
 1. **Modal Integration Resolution**: Fixed environment variable propagation issue by implementing always-on Modal logic
 2. **o4-mini-high Model Support**: Resolved max_tokens parameter error by implementing max_completion_tokens for o1-series models
 3. **Rich Response Processing**: Fixed Modal result parsing to extract and return complete LangDB step descriptions

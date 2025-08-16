@@ -218,6 +218,20 @@ async def get_recent_logs(
     ]
 
 
+@router.get("/sessions/{session_id}")
+async def get_session_detail(
+    session_id: str,
+    db: Session = Depends(get_db),
+    current_user: Optional[AdminUserResponse] = Depends(get_current_active_user) if not settings.ANALYTICS_PUBLIC_READ else None
+):
+    """Return a single session row with recent events and metrics."""
+    service = AnalyticsService(db)
+    detail = service.get_session_detail(session_id)
+    if not detail:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return detail
+
+
 @router.get("/costs/summary")
 async def get_cost_summary(
     start_date: Optional[datetime] = Query(None),

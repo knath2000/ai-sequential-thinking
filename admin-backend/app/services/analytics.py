@@ -57,6 +57,20 @@ class AnalyticsService:
         
         events = query.order_by(desc(UsageEvent.timestamp)).offset(skip).limit(limit).all()
         return [UsageEventResponse.from_orm(event) for event in events]
+
+    def get_session_detail(self, session_id: str) -> Dict[str, Any]:
+        """Return session row + recent events and metrics for a given session."""
+        out: Dict[str, Any] = {}
+        sess = self.db.query(SessionModel).filter(SessionModel.session_id == session_id).first()
+        if not sess:
+            return out
+        out["session"] = SessionResponse.from_orm(sess)
+        ev = self.db.query(UsageEvent).filter(UsageEvent.session_id == session_id).order_by(desc(UsageEvent.timestamp)).limit(100).all()
+        out["events"] = [UsageEventResponse.from_orm(e) for e in ev]
+        # For metrics, we currently don't associate by session_id, but include recent global metrics for context
+        mets = self.db.query(PerformanceMetric).order_by(desc(PerformanceMetric.timestamp)).limit(100).all()
+        out["metrics"] = [PerformanceMetricResponse.from_orm(m) for m in mets]
+        return out
     
     # Performance Metrics
     def create_performance_metric(self, metric_data: PerformanceMetricCreate) -> PerformanceMetricResponse:

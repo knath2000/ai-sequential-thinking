@@ -57,9 +57,9 @@
 5. ✅ **Enhanced Tool Recommendations**: LangDB steps converted to intelligent tool suggestions
 6. ✅ **Complete Testing**: End-to-end validation with rich responses and Modal processing metadata
 7. ✅ **Debug Logging**: Comprehensive tracking of Modal offload decisions and result processing
-8. ✅ **Admin Backend Architecture**: Complete FastAPI backend with PostgreSQL/TimescaleDB for analytics
-9. ✅ **Analytics Integration**: Full data collection hooks in MCP server with comprehensive tracking
-10. ✅ **Production-Ready Admin**: JWT authentication, API endpoints, and monitoring capabilities
+8. ✅ **Admin Backend Architecture**: FastAPI analytics backend with SSE and request logging middleware
+9. ✅ **Analytics Integration**: Tool auto-sends analytics to Railway via bearer or ingest key
+10. ✅ **Dashboard**: SvelteKit dashboard mounted at `/dashboard`, live KPIs via SSE, Vite proxy for dev CORS-free
 
 ### Current Status
 - **Production Ready**: Full Railway deployment with Modal GPU processing

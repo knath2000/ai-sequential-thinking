@@ -3,6 +3,8 @@
   import { fetchJson, connectSSE } from '../lib/api'
   import type { DashboardMetrics } from '../lib/types'
   import Tile from '../lib/components/Tile.svelte'
+  import RecentLogs from '../lib/components/RecentLogs.svelte'
+  import SessionsTable from '../lib/components/SessionsTable.svelte'
 
   let metrics: DashboardMetrics | null = null
   let error: string | null = null
@@ -54,6 +56,11 @@
       <Tile title="Active sessions" value={metrics?.active_sessions} />
       <Tile title="Cost today (USD)" value={metrics?.total_cost_today} />
       <Tile title="Top errors" value={metrics?.top_errors?.[0] ?? '-'} />
+    </div>
+
+    <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <RecentLogs />
+      <SessionsTable />
     </div>
   </div>
 </div>

@@ -3,7 +3,7 @@ FastAPI Admin Backend for ai-sequential-thinking MCP Server
 """
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
@@ -57,6 +57,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Simple request logging middleware
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    logger.info(f"REQ {request.method} {request.url}")
+    response = await call_next(request)
+    logger.info(f"RES {request.method} {request.url.path} -> {response.status_code}")
+    return response
 
 # Mount static files (robust path resolution)
 try:

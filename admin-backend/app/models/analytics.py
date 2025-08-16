@@ -36,6 +36,8 @@ class PerformanceMetric(Base):
     metric_value = Column(Float, nullable=False)
     metric_unit = Column(String(50))  # ms, percent, count, etc.
     tags = Column(JSON)  # Additional metric tags
+    # Optional session_id for easier lookups (nullable for backward compatibility)
+    session_id = Column(String(255), index=True, nullable=True)
     
     def __repr__(self):
         return f"<PerformanceMetric(name={self.metric_name}, value={self.metric_value})>"

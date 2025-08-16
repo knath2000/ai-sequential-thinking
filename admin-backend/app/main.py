@@ -59,6 +59,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+# Global exception handler to ensure JSON error responses and allow CORSMiddleware to add headers
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    import traceback
+    logger.error("Unhandled exception: %s", traceback.format_exc())
+    # Return JSON response; CORSMiddleware will append CORS headers
+    from fastapi.responses import JSONResponse
+    return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})
+
 # Attach in-memory log handler for dashboard retrieval
 _inmem_handler = InMemoryLogHandler(capacity=2000)
 _inmem_handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))

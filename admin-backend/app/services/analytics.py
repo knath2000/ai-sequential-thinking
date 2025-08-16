@@ -350,11 +350,13 @@ class AnalyticsService:
         events = [UsageEventResponse.from_orm(e) for e in events_q]
 
         # Metrics (limit 1000)
-        metrics_q = self.db.query(PerformanceMetric).filter(PerformanceMetric.tags['session_id'].astext == session_id if hasattr(PerformanceMetric, 'tags') else False).order_by(desc(PerformanceMetric.timestamp)).limit(1000).all()
-        # Fallback: if tags-based lookup not supported, filter by SessionModel.session_id equality on a session_id column if present
-        if not metrics_q:
+        # Prefer session_id column lookup for compatibility; fallback to tags JSON lookup if necessary
+        try:
+            metrics_q = self.db.query(PerformanceMetric).filter(PerformanceMetric.session_id == session_id).order_by(desc(PerformanceMetric.timestamp)).limit(1000).all()
+        except Exception:
+            # Last-resort: attempt tags JSON lookup if DB supports it
             try:
-                metrics_q = self.db.query(PerformanceMetric).filter(PerformanceMetric.session_id == session_id).order_by(desc(PerformanceMetric.timestamp)).limit(1000).all()
+                metrics_q = self.db.query(PerformanceMetric).filter(PerformanceMetric.tags['session_id'].astext == session_id).order_by(desc(PerformanceMetric.timestamp)).limit(1000).all()
             except Exception:
                 metrics_q = []
 

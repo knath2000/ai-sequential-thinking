@@ -50,6 +50,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "change-this-secret-key-in-production"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    ANALYTICS_INGEST_KEY: str = ""
     
     # MCP Server Integration
     MCP_SERVER_URL: str = ""

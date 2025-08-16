@@ -8,7 +8,7 @@ from starlette.responses import StreamingResponse
 import asyncio
 from sqlalchemy.orm import Session
 from ...db.database import get_db
-from ...api.deps.auth import get_current_active_user
+from ...api.deps.auth import get_current_active_user, get_ingest_or_user
 from ...core.config import settings
 from ...services.analytics import AnalyticsService
 from ...schemas.analytics import (
@@ -27,7 +27,7 @@ router = APIRouter()
 async def create_usage_event(
     event: UsageEventCreate,
     db: Session = Depends(get_db),
-    current_user: AdminUserResponse = Depends(get_current_active_user)
+    current_user: Optional[AdminUserResponse] = Depends(get_ingest_or_user)
 ):
     """Create a new usage event"""
     service = AnalyticsService(db)
@@ -61,7 +61,7 @@ async def get_usage_events(
 async def create_performance_metric(
     metric: PerformanceMetricCreate,
     db: Session = Depends(get_db),
-    current_user: AdminUserResponse = Depends(get_current_active_user)
+    current_user: Optional[AdminUserResponse] = Depends(get_ingest_or_user)
 ):
     """Create a new performance metric"""
     service = AnalyticsService(db)
@@ -91,7 +91,7 @@ async def get_performance_metrics(
 async def create_error_log(
     error: ErrorLogCreate,
     db: Session = Depends(get_db),
-    current_user: AdminUserResponse = Depends(get_current_active_user)
+    current_user: Optional[AdminUserResponse] = Depends(get_ingest_or_user)
 ):
     """Create a new error log"""
     service = AnalyticsService(db)
@@ -125,7 +125,7 @@ async def get_error_logs(
 async def create_cost_tracking(
     cost: CostTrackingCreate,
     db: Session = Depends(get_db),
-    current_user: AdminUserResponse = Depends(get_current_active_user)
+    current_user: Optional[AdminUserResponse] = Depends(get_ingest_or_user)
 ):
     """Create a new cost tracking entry"""
     service = AnalyticsService(db)

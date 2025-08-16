@@ -2,10 +2,11 @@
 Authentication dependencies for FastAPI routes
 """
 from typing import Optional
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Header
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from ...core.security import verify_token
+from ...core.config import settings
 from ...db.database import get_db
 from ...models.analytics import AdminUser
 from ...schemas.analytics import AdminUserResponse
@@ -54,6 +55,16 @@ async def get_current_active_user(
         )
     return current_user
 
+
+async def get_ingest_or_user(
+    x_analytics_ingest_key: str | None = Header(default=None, alias="X-Analytics-Ingest-Key"),
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db)
+):
+    """Allow either a special ingest key header or a valid bearer user."""
+    if settings.ANALYTICS_INGEST_KEY and x_analytics_ingest_key == settings.ANALYTICS_INGEST_KEY:
+        return None
+    return await get_current_user(credentials, db)
 
 async def get_current_superuser(
     current_user: AdminUserResponse = Depends(get_current_user)

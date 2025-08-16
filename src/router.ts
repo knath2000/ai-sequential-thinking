@@ -397,11 +397,18 @@ export function setupRoutes(app: FastifyInstance) {
                 };
                 
                 // Log successful Modal completion
-                analyticsClient.logToolCall(session, toolName, Date.now() - startTime, true, undefined, {
+                const elapsedMs = Date.now() - startTime
+                analyticsClient.logToolCall(session, toolName, elapsedMs, true, undefined, {
                   used_modal: true,
                   correlation_id: correlationId,
                   steps_count: processedSteps.length,
                   model: modalModel
+                });
+                analyticsClient.logPerformanceMetric({
+                  metric_name: 'tool_response_time_ms',
+                  metric_value: elapsedMs,
+                  metric_unit: 'ms',
+                  tags: { tool: toolName, used_modal: true, model: modalModel }
                 });
                 
                 // Cursor expects displayable content in a `content[]` array for some transports.
@@ -411,12 +418,19 @@ export function setupRoutes(app: FastifyInstance) {
                 console.info('[router] modal job sync wait timed out, returning accepted', { correlationId });
                 
                 // Log timeout/accepted response
-                analyticsClient.logToolCall(session, toolName, Date.now() - startTime, true, undefined, {
+                const elapsedMs = Date.now() - startTime
+                analyticsClient.logToolCall(session, toolName, elapsedMs, true, undefined, {
                   used_modal: true,
                   correlation_id: correlationId,
                   timeout: true,
                   sync_wait_ms: syncWait,
                   model: modalModel
+                });
+                analyticsClient.logPerformanceMetric({
+                  metric_name: 'tool_response_time_ms',
+                  metric_value: elapsedMs,
+                  metric_unit: 'ms',
+                  tags: { tool: toolName, used_modal: true, model: modalModel, timeout: true }
                 });
                 
                 // Even on accepted, mirror the expected structure without exposing job details
@@ -487,9 +501,16 @@ export function setupRoutes(app: FastifyInstance) {
             remaining_steps: [],
           };
           // Log successful local processing
-          analyticsClient.logToolCall(session, toolName, Date.now() - startTime, true, undefined, {
+          const elapsedMs = Date.now() - startTime
+          analyticsClient.logToolCall(session, toolName, elapsedMs, true, undefined, {
             used_modal: false,
             processing_type: 'local_enhanced'
+          });
+          analyticsClient.logPerformanceMetric({
+            metric_name: 'tool_response_time_ms',
+            metric_value: elapsedMs,
+            metric_unit: 'ms',
+            tags: { tool: toolName, used_modal: false, processing_type: 'local_enhanced' }
           });
           
           return sendResult({ content: [{ type: 'text', text: JSON.stringify(out) }] });
@@ -510,9 +531,16 @@ export function setupRoutes(app: FastifyInstance) {
       };
       
       // Log successful fallback processing
-      analyticsClient.logToolCall(session, toolName, Date.now() - startTime, true, undefined, {
+      const elapsedMs = Date.now() - startTime
+      analyticsClient.logToolCall(session, toolName, elapsedMs, true, undefined, {
         used_modal: false,
         processing_type: 'local_fallback'
+      });
+      analyticsClient.logPerformanceMetric({
+        metric_name: 'tool_response_time_ms',
+        metric_value: elapsedMs,
+        metric_unit: 'ms',
+        tags: { tool: toolName, used_modal: false, processing_type: 'local_fallback' }
       });
       
       return sendResult({ content: [{ type: 'text', text: JSON.stringify(out) }] });

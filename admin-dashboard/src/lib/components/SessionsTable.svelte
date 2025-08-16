@@ -30,7 +30,7 @@
     }
   }
 
-  onMount(load)
+  onMount(() => { load() })
 </script>
 
 <div class="rounded-lg border border-gray-700 bg-gray-900/60">

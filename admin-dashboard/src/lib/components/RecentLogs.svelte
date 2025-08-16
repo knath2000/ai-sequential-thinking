@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onDestroy, onMount } from 'svelte'
+  import { onMount } from 'svelte'
   import { API_BASE_URL } from '../config'
 
   export let pollMs = 3000
@@ -27,7 +27,7 @@
   onMount(() => {
     load()
     const id = setInterval(load, pollMs)
-    onDestroy(() => clearInterval(id))
+    return () => clearInterval(id)
   })
 </script>
 

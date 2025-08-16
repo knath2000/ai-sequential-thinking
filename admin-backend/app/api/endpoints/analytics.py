@@ -53,7 +53,7 @@ async def list_sessions(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     db: Session = Depends(get_db),
-    current_user: AdminUserResponse = Depends(get_current_active_user)
+    current_user: Optional[AdminUserResponse] = Depends(get_current_active_user) if not settings.ANALYTICS_PUBLIC_READ else None
 ):
     """List sessions (most recent first)."""
     from ...models.analytics import Session as SessionModel

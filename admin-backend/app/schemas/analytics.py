@@ -107,6 +107,17 @@ class SessionResponse(SessionBase):
         from_attributes = True
 
 
+class SessionDetailResponse(BaseModel):
+    """Detailed session response including events, metrics and logs."""
+    session: SessionResponse
+    events: List[UsageEventResponse] = []
+    metrics: List[PerformanceMetricResponse] = []
+    logs: List[ErrorLogResponse] = []
+
+    class Config:
+        from_attributes = True
+
+
 class CostTrackingBase(BaseModel):
     service_name: str
     operation_type: str

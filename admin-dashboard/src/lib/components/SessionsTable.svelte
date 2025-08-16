@@ -16,6 +16,23 @@
   export let pageSize = 20
   let rows: SessionRow[] = []
   let error: string | null = null
+  let selectedSession: any = null
+
+  import SessionDetailModal from './SessionDetailModal.svelte'
+
+  async function openSessionDetail(sessionId: string) {
+    try {
+      const r = await fetch(`${API_BASE_URL}/sessions/${sessionId}`)
+      if (!r.ok) throw new Error(`HTTP ${r.status}`)
+      selectedSession = await r.json()
+    } catch (e) {
+      error = (e as Error).message
+    }
+  }
+
+  function closeSessionDetail() {
+    selectedSession = null
+  }
 
   async function load() {
     try {
@@ -54,8 +71,8 @@
       </thead>
       <tbody>
         {#each rows as s}
-          <tr class="border-t border-gray-800 hover:bg-gray-800/40 cursor-pointer" on:click={() => (window.location.href = `/session/${encodeURIComponent(s.session_id)}`)}>
-            <td class="px-3 py-2 font-mono text-blue-400 underline">{s.session_id}</td>
+          <tr class="border-t border-gray-800 hover:bg-gray-800/40 cursor-pointer" on:click={() => openSessionDetail(s.session_id)}>
+            <td class="px-3 py-2 font-mono">{s.session_id}</td>
             <td class="px-3 py-2">{new Date(s.created_at).toLocaleString()}</td>
             <td class="px-3 py-2">{s.total_requests}</td>
             <td class="px-3 py-2">{s.total_errors}</td>
@@ -66,5 +83,9 @@
     </table>
   </div>
 </div>
+
+{#if selectedSession}
+  <SessionDetailModal {sessionDetail} onClose={closeSessionDetail} />
+{/if}
 
 

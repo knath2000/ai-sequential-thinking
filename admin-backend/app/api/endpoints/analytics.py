@@ -18,7 +18,7 @@ from ...schemas.analytics import (
     CostTrackingCreate, CostTrackingResponse,
     AnalyticsSummary, DashboardMetrics,
     AdminUserResponse,
-    SessionCreate, SessionResponse
+    SessionCreate, SessionResponse, SessionDetailResponse,
 )
 import logging
 from ...core.log_buffer import InMemoryLogHandler
@@ -181,6 +181,21 @@ async def get_dashboard_metrics(
     return service.get_dashboard_metrics()
 
 
+
+@router.get("/sessions/{session_id}", response_model=SessionDetailResponse)
+async def get_session_detail(
+    session_id: str,
+    db: Session = Depends(get_db),
+    current_user: Optional[AdminUserResponse] = Depends(get_current_active_user) if not settings.ANALYTICS_PUBLIC_READ else None
+):
+    """Get detailed information for a single session: session metadata, events, metrics and logs."""
+    service = AnalyticsService(db)
+    detail = service.get_session_detail(session_id)
+    if not detail:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return detail
+
+
 @router.get("/stream")
 async def stream_dashboard_metrics(
     db: Session = Depends(get_db),
@@ -216,20 +231,6 @@ async def get_recent_logs(
         {"ts": e.ts.isoformat() + "Z", "level": e.level, "name": e.name, "message": e.message}
         for e in entries
     ]
-
-
-@router.get("/sessions/{session_id}")
-async def get_session_detail(
-    session_id: str,
-    db: Session = Depends(get_db),
-    current_user: Optional[AdminUserResponse] = Depends(get_current_active_user) if not settings.ANALYTICS_PUBLIC_READ else None
-):
-    """Return a single session row with recent events and metrics."""
-    service = AnalyticsService(db)
-    detail = service.get_session_detail(session_id)
-    if not detail:
-        raise HTTPException(status_code=404, detail="Session not found")
-    return detail
 
 
 @router.get("/costs/summary")

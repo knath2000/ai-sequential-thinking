@@ -57,20 +57,6 @@ class AnalyticsService:
         
         events = query.order_by(desc(UsageEvent.timestamp)).offset(skip).limit(limit).all()
         return [UsageEventResponse.from_orm(event) for event in events]
-
-    def get_session_detail(self, session_id: str) -> Dict[str, Any]:
-        """Return session row + recent events and metrics for a given session."""
-        out: Dict[str, Any] = {}
-        sess = self.db.query(SessionModel).filter(SessionModel.session_id == session_id).first()
-        if not sess:
-            return out
-        out["session"] = SessionResponse.from_orm(sess)
-        ev = self.db.query(UsageEvent).filter(UsageEvent.session_id == session_id).order_by(desc(UsageEvent.timestamp)).limit(100).all()
-        out["events"] = [UsageEventResponse.from_orm(e) for e in ev]
-        # For metrics, we currently don't associate by session_id, but include recent global metrics for context
-        mets = self.db.query(PerformanceMetric).order_by(desc(PerformanceMetric.timestamp)).limit(100).all()
-        out["metrics"] = [PerformanceMetricResponse.from_orm(m) for m in mets]
-        return out
     
     # Performance Metrics
     def create_performance_metric(self, metric_data: PerformanceMetricCreate) -> PerformanceMetricResponse:
@@ -351,3 +337,36 @@ class AnalyticsService:
             total_cost_today=round(float(total_cost_today), 2),
             top_errors=top_errors
         )
+
+    def get_session_detail(self, session_id: str) -> Optional[Dict[str, Any]]:
+        """Fetch session metadata, usage events, performance metrics and recent error logs for a session."""
+        # Load session
+        db_session = self.db.query(SessionModel).filter(SessionModel.session_id == session_id).first()
+        if not db_session:
+            return None
+
+        # Events (limit 1000)
+        events_q = self.db.query(UsageEvent).filter(UsageEvent.session_id == session_id).order_by(desc(UsageEvent.timestamp)).limit(1000).all()
+        events = [UsageEventResponse.from_orm(e) for e in events_q]
+
+        # Metrics (limit 1000)
+        metrics_q = self.db.query(PerformanceMetric).filter(PerformanceMetric.tags['session_id'].astext == session_id if hasattr(PerformanceMetric, 'tags') else False).order_by(desc(PerformanceMetric.timestamp)).limit(1000).all()
+        # Fallback: if tags-based lookup not supported, filter by SessionModel.session_id equality on a session_id column if present
+        if not metrics_q:
+            try:
+                metrics_q = self.db.query(PerformanceMetric).filter(PerformanceMetric.session_id == session_id).order_by(desc(PerformanceMetric.timestamp)).limit(1000).all()
+            except Exception:
+                metrics_q = []
+
+        metrics = [PerformanceMetricResponse.from_orm(m) for m in metrics_q]
+
+        # Logs (limit 500)
+        logs_q = self.db.query(ErrorLog).filter(ErrorLog.session_id == session_id).order_by(desc(ErrorLog.timestamp)).limit(500).all()
+        logs = [ErrorLogResponse.from_orm(l) for l in logs_q]
+
+        return {
+            "session": SessionResponse.from_orm(db_session),
+            "events": events,
+            "metrics": metrics,
+            "logs": logs,
+        }

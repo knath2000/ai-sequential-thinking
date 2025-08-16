@@ -352,12 +352,26 @@ class AnalyticsService:
         # Metrics (limit 1000)
         # Prefer session_id column lookup for compatibility; fallback to tags JSON lookup if necessary
         try:
-            metrics_q = self.db.query(PerformanceMetric).filter(PerformanceMetric.session_id == session_id).order_by(desc(PerformanceMetric.timestamp)).limit(1000).all()
+            metrics_q = (
+                self.db.query(PerformanceMetric)
+                .filter(PerformanceMetric.session_id == session_id)
+                .order_by(desc(PerformanceMetric.timestamp))
+                .limit(1000)
+                .all()
+            )
         except Exception:
-            # Last-resort: attempt tags JSON lookup if DB supports it
+            # Rollback failed transaction so subsequent queries work
+            self.db.rollback()
             try:
-                metrics_q = self.db.query(PerformanceMetric).filter(PerformanceMetric.tags['session_id'].astext == session_id).order_by(desc(PerformanceMetric.timestamp)).limit(1000).all()
+                metrics_q = (
+                    self.db.query(PerformanceMetric)
+                    .filter(PerformanceMetric.tags['session_id'].astext == session_id)
+                    .order_by(desc(PerformanceMetric.timestamp))
+                    .limit(1000)
+                    .all()
+                )
             except Exception:
+                self.db.rollback()
                 metrics_q = []
 
         metrics = [PerformanceMetricResponse.from_orm(m) for m in metrics_q]

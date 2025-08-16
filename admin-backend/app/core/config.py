@@ -72,6 +72,7 @@ class Settings(BaseSettings):
     # Analytics
     ANALYTICS_RETENTION_DAYS: int = 90
     METRICS_UPDATE_INTERVAL: int = 60
+    ANALYTICS_PUBLIC_READ: bool = True
     
     # CORS Settings
     BACKEND_CORS_ORIGINS: list = [

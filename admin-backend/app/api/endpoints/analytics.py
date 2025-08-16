@@ -9,6 +9,7 @@ import asyncio
 from sqlalchemy.orm import Session
 from ...db.database import get_db
 from ...api.deps.auth import get_current_active_user
+from ...core.config import settings
 from ...services.analytics import AnalyticsService
 from ...schemas.analytics import (
     UsageEventCreate, UsageEventResponse,
@@ -146,7 +147,7 @@ async def get_analytics_summary(
 @router.get("/dashboard", response_model=DashboardMetrics)
 async def get_dashboard_metrics(
     db: Session = Depends(get_db),
-    current_user: AdminUserResponse = Depends(get_current_active_user)
+    current_user: Optional[AdminUserResponse] = Depends(get_current_active_user) if not settings.ANALYTICS_PUBLIC_READ else None
 ):
     """Get real-time dashboard metrics"""
     service = AnalyticsService(db)
@@ -156,7 +157,7 @@ async def get_dashboard_metrics(
 @router.get("/stream")
 async def stream_dashboard_metrics(
     db: Session = Depends(get_db),
-    current_user: AdminUserResponse = Depends(get_current_active_user)
+    current_user: Optional[AdminUserResponse] = Depends(get_current_active_user) if not settings.ANALYTICS_PUBLIC_READ else None
 ):
     """SSE stream for real-time dashboard metrics"""
     service = AnalyticsService(db)

@@ -18,7 +18,7 @@ image = modal.Image.debian_slim().pip_install(
 
 
 # --- GPU selection (default L4; override with env MODAL_GPU=A10G|A100|T4|L4) ---
-GPU_CHOICE = os.getenv("MODAL_GPU", "L4").upper()
+GPU_CHOICE = os.getenv("MODAL_GPU", "A10G").upper()
 if GPU_CHOICE == "A100":
     GPU_CONF = modal.gpu.A100()
 elif GPU_CHOICE == "A10G":

@@ -17,7 +17,27 @@ image = modal.Image.debian_slim().pip_install(
 )
 
 
-@app.function(image=image, timeout=1800, retries=Retries(max_retries=3, backoff_coefficient=2.0, initial_delay=1.0, max_delay=30.0))
+# --- GPU selection (default L4; override with env MODAL_GPU=A10G|A100|T4|L4) ---
+GPU_CHOICE = os.getenv("MODAL_GPU", "L4").upper()
+if GPU_CHOICE == "A100":
+    GPU_CONF = modal.gpu.A100()
+elif GPU_CHOICE == "A10G":
+    GPU_CONF = modal.gpu.A10G()
+elif GPU_CHOICE == "T4":
+    GPU_CONF = modal.gpu.T4()
+else:
+    GPU_CONF = modal.gpu.L4()
+
+KEEP_WARM = int(os.getenv("MODAL_KEEP_WARM", "1"))
+
+
+@app.function(
+    image=image,
+    gpu=GPU_CONF,
+    timeout=1800,
+    retries=Retries(max_retries=3, backoff_coefficient=2.0, initial_delay=1.0, max_delay=30.0),
+    keep_warm=KEEP_WARM,
+)
 def run_llm_task(payload: dict, callback_url: str, webhook_secret: Optional[str] = None):
     # Lazy import to avoid local import error during modal deploy parsing
     import requests
@@ -43,7 +63,7 @@ def run_llm_task(payload: dict, callback_url: str, webhook_secret: Optional[str]
         url = "https://api.us-east-1.langdb.ai/v1/chat/completions"
 
     # Debug: expose chosen final URL for logs (trim to avoid leaking secrets)
-    print(f"[run_llm_task] final url={url[:200]} model={model}")
+    print(f"[run_llm_task] final url={url[:200]} model={model} gpu={GPU_CHOICE} keep_warm={KEEP_WARM}")
 
     headers = {
         "Content-Type": "application/json",

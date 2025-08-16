@@ -20,6 +20,8 @@ from ...schemas.analytics import (
     AdminUserResponse,
     SessionCreate, SessionResponse
 )
+import logging
+from ...core.log_buffer import InMemoryLogHandler
 
 router = APIRouter()
 
@@ -44,6 +46,19 @@ async def create_session(
     """Create or return existing session"""
     service = AnalyticsService(db)
     return service.create_session(session)
+
+
+@router.get("/sessions", response_model=List[SessionResponse])
+async def list_sessions(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    db: Session = Depends(get_db),
+    current_user: AdminUserResponse = Depends(get_current_active_user)
+):
+    """List sessions (most recent first)."""
+    from ...models.analytics import Session as SessionModel
+    q = db.query(SessionModel).order_by(SessionModel.created_at.desc()).offset(skip).limit(limit).all()
+    return [SessionResponse.from_orm(s) for s in q]
 
 
 @router.get("/events", response_model=List[UsageEventResponse])
@@ -183,6 +198,25 @@ async def stream_dashboard_metrics(
             await asyncio.sleep(5)
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+
+@router.get("/logs")
+async def get_recent_logs(
+    limit: int = Query(200, ge=1, le=2000),
+    level: Optional[str] = Query(None),
+    current_user: Optional[AdminUserResponse] = Depends(get_current_active_user) if not settings.ANALYTICS_PUBLIC_READ else None
+):
+    """Return recent application logs for dashboard viewing."""
+    entries = []
+    for h in logging.getLogger().handlers:
+        if isinstance(h, InMemoryLogHandler):
+            entries = h.get_recent(limit=limit, level=level)
+            break
+    return [
+        {"ts": e.ts.isoformat() + "Z", "level": e.level, "name": e.name, "message": e.message}
+        for e in entries
+    ]
+
 
 @router.get("/costs/summary")
 async def get_cost_summary(

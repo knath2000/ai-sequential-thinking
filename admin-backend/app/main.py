@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from .core.config import settings
+from .core.log_buffer import InMemoryLogHandler
 from .db.database import engine, Base
 from .api.endpoints import auth, analytics, admin
 
@@ -57,6 +58,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Attach in-memory log handler for dashboard retrieval
+_inmem_handler = InMemoryLogHandler(capacity=2000)
+_inmem_handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
+logging.getLogger().addHandler(_inmem_handler)
 
 # Simple request logging middleware
 @app.middleware("http")

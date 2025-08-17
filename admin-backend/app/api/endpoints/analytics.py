@@ -2,7 +2,7 @@
 Analytics endpoints for MCP server data
 """
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, Query
 from starlette.responses import StreamingResponse
 import asyncio

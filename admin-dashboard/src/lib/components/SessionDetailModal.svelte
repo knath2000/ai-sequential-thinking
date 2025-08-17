@@ -48,7 +48,9 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <div>
           <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300">Metadata</h3>
-          <pre class="text-xs font-mono bg-gray-100 dark:bg-gray-800 p-2 rounded mt-2 overflow-auto max-h-32">{JSON.stringify(sessionDetail.session, null, 2)}</pre>
+          <pre class="text-xs font-mono bg-gray-100 dark:bg-gray-800 p-2 rounded mt-2 overflow-auto max-h-32 text-gray-800 dark:text-gray-200">
+            {JSON.stringify(sessionDetail.session, null, 2)}
+          </pre>
         </div>
         
         <div>
@@ -69,7 +71,7 @@
 
       <div class="mb-4">
         <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300">Events ({sessionDetail.events.length})</h3>
-        <div class="mt-2 max-h-48 overflow-auto text-xs font-mono bg-gray-50 dark:bg-gray-800 p-2 rounded">
+        <div class="mt-2 max-h-48 overflow-auto text-xs font-mono bg-gray-50 dark:bg-gray-800 p-2 rounded text-gray-800 dark:text-gray-200">
           {#if sessionDetail.events.length === 0}
             <div class="text-gray-500">No events</div>
           {:else}

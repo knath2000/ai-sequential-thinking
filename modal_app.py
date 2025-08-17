@@ -33,7 +33,6 @@ KEEP_WARM = int(os.getenv("MODAL_KEEP_WARM", "1"))
 
 @app.function(
     image=image,
-    gpu=GPU_CONF,
     timeout=1800,
     retries=Retries(max_retries=3, backoff_coefficient=2.0, initial_delay=1.0, max_delay=30.0),
     keep_warm=KEEP_WARM,

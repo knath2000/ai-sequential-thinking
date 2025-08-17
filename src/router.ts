@@ -8,8 +8,10 @@ import { getProviderConfig } from './provider';
 import { callLangdbChatForSteps } from './providers/langdbClient';
 import { getEffectiveModel } from './config';
 import { analyticsClient } from './services/analyticsClient';
+import { createErrorLogger } from './middleware/errorHandler';
 
 export function setupRoutes(app: FastifyInstance) {
+  const logError = createErrorLogger(analyticsClient);
   // Simple in-memory rate limiter per key (sessionId or IP)
   const requestsWindowMs = Number(process.env.RATE_LIMIT_WINDOW_MS || 60_000);
   const requestsMaxPerWindow = Number(process.env.RATE_LIMIT_MAX || 60);
@@ -202,364 +204,373 @@ export function setupRoutes(app: FastifyInstance) {
 
   // JSON-RPC 2.0 endpoint for MCP streamable HTTP transport
   app.post('/', async (req: FastifyRequest, reply: FastifyReply) => {
+    const startTime = Date.now();
     const limitCheck = checkAndIncrementRateLimit(req);
     if (!limitCheck.allowed) {
+      logError(new Error('Rate limit exceeded'), { requestPath: '/', requestMethod: 'POST', retryAfterMs: limitCheck.retryAfterMs });
       return reply.code(429).send({ jsonrpc: '2.0', error: { code: 429, message: 'Rate limit exceeded', data: { retryAfterMs: limitCheck.retryAfterMs } } });
     }
     const body = (req.body as any) || {};
     const hasId = Object.prototype.hasOwnProperty.call(body, 'id');
     const id = hasId ? body.id : undefined;
     const sendResult = (result: unknown) => reply.send({ jsonrpc: '2.0', id, result });
-    const sendError = (code: number, message: string, data?: unknown) => reply.send({ jsonrpc: '2.0', id, error: { code, message, data } });
+    const sendError = (code: number, message: string, data?: unknown) => {
+      logError(new Error(message), { requestPath: '/', requestMethod: 'POST', errorCode: code, errorData: data });
+      reply.send({ jsonrpc: '2.0', id, error: { code, message, data } });
+    };
 
-    if (body?.jsonrpc !== '2.0' || typeof body?.method !== 'string') {
-      return sendError(-32600, 'Invalid Request');
-    }
+    try {
+      if (body?.jsonrpc !== '2.0' || typeof body?.method !== 'string') {
+        return sendError(-32600, 'Invalid Request');
+      }
 
-    const method = body.method as string;
-    const params = (body.params as any) || {};
+      const method = body.method as string;
+      const params = (body.params as any) || {};
 
-    // Handle notifications (no id) without responding
-    if (!hasId) {
-      if (method === 'notifications/initialized') {
+      // Handle notifications (no id) without responding
+      if (!hasId) {
+        if (method === 'notifications/initialized') {
+          return reply.status(204).send();
+        }
         return reply.status(204).send();
       }
-      return reply.status(204).send();
-    }
 
-    if (method === 'initialize') {
-      return sendResult({
-        protocolVersion: '2025-06-18',
-        serverInfo: { name: 'ai-sequential-thinking', version: '0.1.0' },
-        capabilities: {
-          tools: {},
-          prompts: {},
-          resources: {},
-          logging: {},
-          roots: {},
-        },
-      });
-    }
-
-    if (method === 'tools/list') {
-      return sendResult({
-        tools: [
-          {
-            name: 'sequential_thinking',
-            description: 'Dynamic, reflective sequential thinking with branching, revisions, and tool recommendations.',
-            inputSchema: {
-              type: 'object',
-              properties: {
-                thought: { type: 'string' },
-                thought_number: { type: 'number' },
-                total_thoughts: { type: 'number' },
-                next_thought_needed: { type: 'boolean' },
-                is_revision: { type: 'boolean' },
-                revises_thought: { type: 'number' },
-                branch_from_thought: { type: 'number' },
-                branch_id: { type: 'string' },
-                needs_more_thoughts: { type: 'boolean' },
-                session_id: { type: 'string' },
-              },
-              required: ['thought', 'thought_number', 'total_thoughts', 'next_thought_needed'],
-              additionalProperties: true,
-            },
+      if (method === 'initialize') {
+        return sendResult({
+          protocolVersion: '2025-06-18',
+          serverInfo: { name: 'ai-sequential-thinking', version: '0.1.0' },
+          capabilities: {
+            tools: {},
+            prompts: {},
+            resources: {},
+            logging: {},
+            roots: {},
           },
-        ],
-      });
-    }
-
-    if (method === 'tools/call') {
-      const startTime = Date.now();
-      const toolName = params?.name || params?.tool;
-      const args = params?.arguments || params?.args || {};
-      const session = (req.headers['x-session-id'] as string) || (req.query as any)?.session_id || args.session_id || crypto.randomUUID();
-      
-      if (toolName !== 'sequential_thinking') {
-        // Log unknown tool attempt
-        analyticsClient.logToolCall(session, toolName || 'unknown', Date.now() - startTime, false, 'Tool not found');
-        return sendError(-32601, 'Tool not found');
+        });
       }
-      
-      const required = ['thought', 'thought_number', 'total_thoughts', 'next_thought_needed'];
-      for (const k of required) {
-        if (!(k in args)) {
-          // Log missing argument error
-          analyticsClient.logToolCall(session, toolName, Date.now() - startTime, false, `Missing argument: ${k}`);
-          return sendError(-32602, `Missing argument: ${k}`);
+
+      if (method === 'tools/list') {
+        return sendResult({
+          tools: [
+            {
+              name: 'sequential_thinking',
+              description: 'Dynamic, reflective sequential thinking with branching, revisions, and tool recommendations.',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  thought: { type: 'string' },
+                  thought_number: { type: 'number' },
+                  total_thoughts: { type: 'number' },
+                  next_thought_needed: { type: 'boolean' },
+                  is_revision: { type: 'boolean' },
+                  revises_thought: { type: 'number' },
+                  branch_from_thought: { type: 'number' },
+                  branch_id: { type: 'string' },
+                  needs_more_thoughts: { type: 'boolean' },
+                  session_id: { type: 'string' },
+                },
+                required: ['thought', 'thought_number', 'total_thoughts', 'next_thought_needed'],
+                additionalProperties: true,
+              },
+            },
+          ],
+        });
+      }
+
+      if (method === 'tools/call') {
+        const startTime = Date.now();
+        const toolName = params?.name || params?.tool;
+        const args = params?.arguments || params?.args || {};
+        const session = (req.headers['x-session-id'] as string) || (req.query as any)?.session_id || args.session_id || crypto.randomUUID();
+        
+        if (toolName !== 'sequential_thinking') {
+          logError(new Error('Tool not found'), { toolName, requestPath: '/', requestMethod: 'POST', session });
+          return sendError(-32601, 'Tool not found');
         }
-      }
-      const thought = String(args.thought || '');
-      if (thought.length > MAX_THOUGHT_LENGTH) {
-        // Log input too long error
-        analyticsClient.logToolCall(session, toolName, Date.now() - startTime, false, 'Thought too long');
-        return sendError(-32602, 'Thought too long', { maxLength: MAX_THOUGHT_LENGTH });
-      }
-      // Always use Modal for LangDB requests by default (since LANGDB=true is set in mcp.json)
-      // Can be overridden by setting use_langdb=false explicitly
-      const shouldUseLangdb = args?.use_langdb !== false; // Default to true unless explicitly disabled
-      console.log('[DEBUG] Modal offload check:', { 
-        argsUseLangdb: args?.use_langdb, 
-        shouldUseLangdb,
-        note: 'Always using Modal by default (can disable with use_langdb=false)'
-      });
-      if (shouldUseLangdb) {
-        try {
-          const correlationId = crypto.randomUUID();
-          const derivedLangdbUrl = (process.env.LANGDB_CHAT_URL || process.env.LANGDB_ENDPOINT || process.env.AI_GATEWAY_URL || process.env.LANGDB_BASE_URL) || '';
-          const requestedModel = typeof args.model === 'string' ? args.model : undefined;
-          const modalModel = getEffectiveModel(requestedModel, Boolean((args as any).use_user_model));
-          const modalPayload = {
-            ...args,
-            langdb_api_key: process.env.LANGDB_API_KEY || process.env.LANGDB_KEY,
-            langdb_project_id: process.env.LANGDB_PROJECT_ID,
-            langdb_chat_url: derivedLangdbUrl,
-            // Model selection with Railway-first precedence + optional user override
-            model: modalModel,
-          };
-          // Debug log to aid diagnosing incorrect endpoints/models in deployed logs
-          console.info('[router] submitting Modal job', { derivedLangdbUrl: derivedLangdbUrl?.slice(0, 120), model: modalPayload.model });
-
-          const syncWait = Number(process.env.MODAL_SYNC_TIMEOUT_MS || 120000);
-          console.info('[router] submitModalJob sync wait ms', { correlationId, syncWait });
-
-          // Register waiter for webhook callback
-          const resultPromise: Promise<unknown> = new Promise((resolve, reject) => {
-            jobWaiters.set(correlationId, { resolve, reject, createdAt: Date.now() });
-          });
-
-          let submitRes: any;
+        
+        const required = ['thought', 'thought_number', 'total_thoughts', 'next_thought_needed'];
+        for (const k of required) {
+          if (!(k in args)) {
+            logError(new Error(`Missing argument: ${k}`), { toolName, argument: k, requestPath: '/', requestMethod: 'POST', session });
+            return sendError(-32602, `Missing argument: ${k}`);
+          }
+        }
+        const thought = String(args.thought || '');
+        if (thought.length > MAX_THOUGHT_LENGTH) {
+          logError(new Error('Thought too long'), { toolName, maxLength: MAX_THOUGHT_LENGTH, currentLength: thought.length, requestPath: '/', requestMethod: 'POST', session });
+          return sendError(-32602, 'Thought too long', { maxLength: MAX_THOUGHT_LENGTH });
+        }
+        // Always use Modal for LangDB requests by default (since LANGDB=true is set in mcp.json)
+        // Can be overridden by setting use_langdb=false explicitly
+        const shouldUseLangdb = args?.use_langdb !== false; // Default to true unless explicitly disabled
+        console.log('[DEBUG] Modal offload check:', { 
+          argsUseLangdb: args?.use_langdb, 
+          shouldUseLangdb,
+          note: 'Always using Modal by default (can disable with use_langdb=false)'
+        });
+        if (shouldUseLangdb) {
           try {
-            submitRes = await submitModalJob({
-              task: 'langdb_chat_steps',
-              payload: modalPayload,
-              callbackPath: '/webhook/modal',
-              correlationId,
-              syncWaitMs: syncWait,
+            const correlationId = crypto.randomUUID();
+            const derivedLangdbUrl = (process.env.LANGDB_CHAT_URL || process.env.LANGDB_ENDPOINT || process.env.AI_GATEWAY_URL || process.env.LANGDB_BASE_URL) || '';
+            const requestedModel = typeof args.model === 'string' ? args.model : undefined;
+            const modalModel = getEffectiveModel(requestedModel, Boolean((args as any).use_user_model));
+            const modalPayload = {
+              ...args,
+              langdb_api_key: process.env.LANGDB_API_KEY || process.env.LANGDB_KEY,
+              langdb_project_id: process.env.LANGDB_PROJECT_ID,
+              langdb_chat_url: derivedLangdbUrl,
+              // Model selection with Railway-first precedence + optional user override
+              model: modalModel,
+            };
+            // Debug log to aid diagnosing incorrect endpoints/models in deployed logs
+            console.info('[router] submitting Modal job', { derivedLangdbUrl: derivedLangdbUrl?.slice(0, 120), model: modalPayload.model });
+
+            const syncWait = Number(process.env.MODAL_SYNC_TIMEOUT_MS || 120000);
+            console.info('[router] submitModalJob sync wait ms', { correlationId, syncWait });
+
+            // Register waiter for webhook callback
+            const resultPromise: Promise<unknown> = new Promise((resolve, reject) => {
+              jobWaiters.set(correlationId, { resolve, reject, createdAt: Date.now() });
             });
 
-              // Wait for callback or timeout
-              const timed = new Promise<undefined>((_r, reject) => setTimeout(() => reject(new Error('sync_timeout')), syncWait));
-              try {
-                const finalResult = await Promise.race([resultPromise, timed]);
-                // webhook returned result within sync window
-                console.info('[router] modal job completed within sync window', { correlationId, resultPreview: JSON.stringify(finalResult).slice(0, 200) });
-                
-                // Process the LangDB result from Modal and build enhanced response
-                const history = getThoughts(session);
-                let processedSteps: any[] = [];
-                
-                try {
-                  // Extract steps from LangDB response
-                  if (finalResult && typeof finalResult === 'object') {
-                    const result = finalResult as any;
-                    if (result.steps && Array.isArray(result.steps)) {
-                      processedSteps = result.steps;
-                    } else if (result.result && Array.isArray(result.result)) {
-                      processedSteps = result.result;
-                    } else if (Array.isArray(finalResult)) {
-                      processedSteps = finalResult;
-                    }
-                  }
-                  console.info('[router] processed Modal result steps', { stepCount: processedSteps.length, hasSteps: processedSteps.length > 0 });
-                } catch (e) {
-                  console.warn('[router] error processing Modal result steps', e);
-                }
+            let submitRes: any;
+            try {
+              submitRes = await submitModalJob({
+                task: 'langdb_chat_steps',
+                payload: modalPayload,
+                callbackPath: '/webhook/modal',
+                correlationId,
+                syncWaitMs: syncWait,
+              });
 
-                // Build enhanced output with LangDB steps
-                const out = {
-                  thought: String(args.thought || ''),
-                  thought_number: Number(args.thought_number),
-                  total_thoughts: Number(args.total_thoughts),
-                  next_thought_needed: Boolean(args.next_thought_needed),
-                  current_step: {
-                    step_description: `Perform: ${String(args.thought || '')}`,
-                    expected_outcome: "Gather initial results and identify follow-ups",
-                    recommended_tools: processedSteps.length > 0 ? 
-                      processedSteps.map((step: any, idx: number) => ({
-                        tool_name: "mcp_perplexity-ask",
-                        confidence: 0.9,
-                        rationale: step.step_description || `Step ${idx + 1}`,
-                        priority: idx + 1
-                      })) :
-                      [{ tool_name: "mcp_perplexity-ask", confidence: 0.9, rationale: "LLM suggestion", priority: 1 }],
-                    next_step_conditions: processedSteps.length > 0 ? 
-                      processedSteps.map((step: any) => step.step_description || "Check results") :
-                      ["Check results", "Decide whether to branch or continue"]
-                  },
-                  previous_steps: history,
-                  remaining_steps: processedSteps,
-                  modal_processing: {
+                // Wait for callback or timeout
+                const timed = new Promise<undefined>((_r, reject) => setTimeout(() => reject(new Error('sync_timeout')), syncWait));
+                try {
+                  const finalResult = await Promise.race([resultPromise, timed]);
+                  // webhook returned result within sync window
+                  console.info('[router] modal job completed within sync window', { correlationId, resultPreview: JSON.stringify(finalResult).slice(0, 200) });
+                  
+                  // Process the LangDB result from Modal and build enhanced response
+                  const history = getThoughts(session);
+                  let processedSteps: any[] = [];
+                  
+                  try {
+                    // Extract steps from LangDB response
+                    if (finalResult && typeof finalResult === 'object') {
+                      const result = finalResult as any;
+                      if (result.steps && Array.isArray(result.steps)) {
+                        processedSteps = result.steps;
+                      } else if (result.result && Array.isArray(result.result)) {
+                        processedSteps = result.result;
+                      } else if (Array.isArray(finalResult)) {
+                        processedSteps = finalResult;
+                      }
+                    }
+                    console.info('[router] processed Modal result steps', { stepCount: processedSteps.length, hasSteps: processedSteps.length > 0 });
+                  } catch (e) {
+                    console.warn('[router] error processing Modal result steps', e);
+                    logError(e as Error, { type: 'modal_result_processing', correlationId, session });
+                  }
+
+                  // Build enhanced output with LangDB steps
+                  const out = {
+                    thought: String(args.thought || ''),
+                    thought_number: Number(args.thought_number),
+                    total_thoughts: Number(args.total_thoughts),
+                    next_thought_needed: Boolean(args.next_thought_needed),
+                    current_step: {
+                      step_description: `Perform: ${String(args.thought || '')}`,
+                      expected_outcome: "Gather initial results and identify follow-ups",
+                      recommended_tools: processedSteps.length > 0 ? 
+                        processedSteps.map((step: any, idx: number) => ({
+                          tool_name: "mcp_perplexity-ask",
+                          confidence: 0.9,
+                          rationale: step.step_description || `Step ${idx + 1}`,
+                          priority: idx + 1
+                        })) :
+                        [{ tool_name: "mcp_perplexity-ask", confidence: 0.9, rationale: "LLM suggestion", priority: 1 }],
+                      next_step_conditions: processedSteps.length > 0 ? 
+                        processedSteps.map((step: any) => step.step_description || "Check results") :
+                        ["Check results", "Decide whether to branch or continue"]
+                    },
+                    previous_steps: history,
+                    remaining_steps: processedSteps,
+                    modal_processing: {
+                      used_modal: true,
+                      correlation_id: correlationId,
+                      langdb_steps: processedSteps
+                    }
+                  };
+                  
+                  // Log successful Modal completion
+                  const elapsedMs = Date.now() - startTime
+                  analyticsClient.logToolCall(session, toolName, elapsedMs, true, undefined, {
                     used_modal: true,
                     correlation_id: correlationId,
-                    langdb_steps: processedSteps
-                  }
-                };
-                
-                // Log successful Modal completion
-                const elapsedMs = Date.now() - startTime
-                analyticsClient.logToolCall(session, toolName, elapsedMs, true, undefined, {
-                  used_modal: true,
-                  correlation_id: correlationId,
-                  steps_count: processedSteps.length,
-                  model: modalModel
-                });
-                analyticsClient.logPerformanceMetric({
-                  metric_name: 'tool_response_time_ms',
-                  metric_value: elapsedMs,
-                  metric_unit: 'ms',
-                  tags: { tool: toolName, used_modal: true, model: modalModel }
-                });
-                
-                // Cursor expects displayable content in a `content[]` array for some transports.
-                return sendResult({ content: [{ type: 'text', text: JSON.stringify(out) }] });
-              } catch (e) {
-                // timed out waiting for webhook – return accepted info as content (Cursor-friendly)
-                console.info('[router] modal job sync wait timed out, returning accepted', { correlationId });
-                
-                // Log timeout/accepted response
-                const elapsedMs = Date.now() - startTime
-                analyticsClient.logToolCall(session, toolName, elapsedMs, true, undefined, {
-                  used_modal: true,
-                  correlation_id: correlationId,
-                  timeout: true,
-                  sync_wait_ms: syncWait,
-                  model: modalModel
-                });
-                analyticsClient.logPerformanceMetric({
-                  metric_name: 'tool_response_time_ms',
-                  metric_value: elapsedMs,
-                  metric_unit: 'ms',
-                  tags: { tool: toolName, used_modal: true, model: modalModel, timeout: true }
-                });
-                
-                // Even on accepted, mirror the expected structure without exposing job details
-                const history = getThoughts(session);
-                const out = {
-                  thought_number: Number(args.thought_number),
-                  total_thoughts: Number(args.total_thoughts),
-                  next_thought_needed: Boolean(args.next_thought_needed),
-                  branches: [],
-                  thought_history_length: Array.isArray(history) ? history.length : 0,
-                  available_mcp_tools: ['mcp_perplexity-ask'],
-                };
-                return sendResult({ content: [{ type: 'text', text: JSON.stringify(out) }] });
+                    steps_count: processedSteps.length,
+                    model: modalModel
+                  });
+                  analyticsClient.logPerformanceMetric({
+                    metric_name: 'tool_response_time_ms',
+                    metric_value: elapsedMs,
+                    metric_unit: 'ms',
+                    tags: { tool: toolName, used_modal: true, model: modalModel }
+                  });
+                  
+                  // Cursor expects displayable content in a `content[]` array for some transports.
+                  return sendResult({ content: [{ type: 'text', text: JSON.stringify(out) }] });
+                } catch (e) {
+                  // timed out waiting for webhook – return accepted info as content (Cursor-friendly)
+                  console.info('[router] modal job sync wait timed out, returning accepted', { correlationId });
+                  logError(e as Error, { type: 'modal_sync_timeout', correlationId, session, syncWait });
+                  
+                  // Log timeout/accepted response
+                  const elapsedMs = Date.now() - startTime
+                  analyticsClient.logToolCall(session, toolName, elapsedMs, true, undefined, {
+                    used_modal: true,
+                    correlation_id: correlationId,
+                    timeout: true,
+                    sync_wait_ms: syncWait,
+                    model: modalModel
+                  });
+                  analyticsClient.logPerformanceMetric({
+                    metric_name: 'tool_response_time_ms',
+                    metric_value: elapsedMs,
+                    metric_unit: 'ms',
+                    tags: { tool: toolName, used_modal: true, model: modalModel, timeout: true }
+                  });
+                  
+                  // Even on accepted, mirror the expected structure without exposing job details
+                  const history = getThoughts(session);
+                  const out = {
+                    thought_number: Number(args.thought_number),
+                    total_thoughts: Number(args.total_thoughts),
+                    next_thought_needed: Boolean(args.next_thought_needed),
+                    branches: [],
+                    thought_history_length: Array.isArray(history) ? history.length : 0,
+                    available_mcp_tools: ['mcp_perplexity-ask'],
+                  };
+                  return sendResult({ content: [{ type: 'text', text: JSON.stringify(out) }] });
+                }
+            } catch (e) {
+              let errorMessage = 'Failed to submit Modal job';
+              if (e && typeof e === 'object' && 'message' in e && typeof (e as { message: string }).message === 'string') {
+                errorMessage = (e as { message: string }).message;
               }
+              
+              logError(e as Error, { type: 'modal_submission_failed', toolName, session, errorMessage });
+              
+              return sendError(-32000, `Failed to submit Modal job: ${errorMessage}`);
+            } finally {
+              // cleanup waiter if still present after sync window
+              if (jobWaiters.has(correlationId)) {
+                // don't reject; leave to webhook to resolve later
+                // but remove to avoid memory leak
+                const w = jobWaiters.get(correlationId);
+                // we avoid calling reject here to let webhook handle late arrivals
+                jobWaiters.delete(correlationId);
+                console.info('[router] cleaned up waiter after sync window', { correlationId });
+              }
+            }
           } catch (e) {
             let errorMessage = 'Failed to submit Modal job';
             if (e && typeof e === 'object' && 'message' in e && typeof (e as { message: string }).message === 'string') {
               errorMessage = (e as { message: string }).message;
             }
-            
-            // Log Modal job failure
-            analyticsClient.logToolCall(session, toolName, Date.now() - startTime, false, errorMessage, {
-              used_modal: true,
-              error_type: 'modal_submission_failed',
-              model: modalModel
+            logError(e as Error, { type: 'modal_submission_failed_outer', toolName, session, errorMessage });
+            return sendError(-32000, `Failed to submit Modal job: ${errorMessage}`);
+          }
+        }
+
+        // Enhanced flow: record per-step, generate recommendations, and return structured output
+        addThought(args as ThoughtInput, session);
+        // Build enhanced output when USE_ENHANCED_SCHEMA is true
+        const useEnhanced = String(process.env.USE_ENHANCED_SCHEMA || 'true').toLowerCase() === 'true';
+        const history = getThoughts(session);
+        if (useEnhanced) {
+          // Generate current_step recommendations
+          try {
+            const available = (process.env.AVAILABLE_MCP_TOOLS || 'mcp_perplexity-ask').split(',').map(s => s.trim()).filter(Boolean);
+            const { recommendToolsForThought } = await import('./recommender');
+            const current_step = await recommendToolsForThought(String(args.thought || ''), available);
+
+            const out = {
+              thought: String(args.thought || ''),
+              thought_number: Number(args.thought_number),
+              total_thoughts: Number(args.total_thoughts),
+              next_thought_needed: Boolean(args.next_thought_needed),
+              current_step,
+              previous_steps: history,
+              remaining_steps: [],
+            };
+            // Log successful local processing
+            const elapsedMs = Date.now() - startTime
+            analyticsClient.logToolCall(session, toolName, elapsedMs, true, undefined, {
+              used_modal: false,
+              processing_type: 'local_enhanced'
+            });
+            analyticsClient.logPerformanceMetric({
+              metric_name: 'tool_response_time_ms',
+              metric_value: elapsedMs,
+              metric_unit: 'ms',
+              tags: { tool: toolName, used_modal: false, processing_type: 'local_enhanced' }
             });
             
-            return sendError(-32000, `Failed to submit Modal job: ${errorMessage}`);
-          } finally {
-            // cleanup waiter if still present after sync window
-            if (jobWaiters.has(correlationId)) {
-              // don't reject; leave to webhook to resolve later
-              // but remove to avoid memory leak
-              const w = jobWaiters.get(correlationId);
-              // we avoid calling reject here to let webhook handle late arrivals
-              jobWaiters.delete(correlationId);
-              console.info('[router] cleaned up waiter after sync window', { correlationId });
-            }
+            return sendResult({ content: [{ type: 'text', text: JSON.stringify(out) }] });
+          } catch (e) {
+            console.warn('[router] recommender error', e);
+            logError(e as Error, { type: 'recommender_error', session, toolName });
+            // fallback to minimal shape
           }
-        } catch (e) {
-          let errorMessage = 'Failed to submit Modal job';
-          if (e && typeof e === 'object' && 'message' in e && typeof (e as { message: string }).message === 'string') {
-            errorMessage = (e as { message: string }).message;
-          }
-          return sendError(-32000, `Failed to submit Modal job: ${errorMessage}`);
         }
+
+        // Fallback minimal shape
+        const out = {
+          thought_number: Number(args.thought_number),
+          total_thoughts: Number(args.total_thoughts),
+          next_thought_needed: Boolean(args.next_thought_needed),
+          branches: [],
+          thought_history_length: Array.isArray(history) ? history.length : 0,
+          available_mcp_tools: ['mcp_perplexity-ask'],
+        };
+        
+        // Log successful fallback processing
+        const elapsedMs = Date.now() - startTime
+        analyticsClient.logToolCall(session, toolName, elapsedMs, true, undefined, {
+          used_modal: false,
+          processing_type: 'local_fallback'
+        });
+        analyticsClient.logPerformanceMetric({
+          metric_name: 'tool_response_time_ms',
+          metric_value: elapsedMs,
+          metric_unit: 'ms',
+          tags: { tool: toolName, used_modal: false, processing_type: 'local_fallback' }
+        });
+        
+        return sendResult({ content: [{ type: 'text', text: JSON.stringify(out) }] });
       }
 
-      // Enhanced flow: record per-step, generate recommendations, and return structured output
-      addThought(args as ThoughtInput, session);
-      // Build enhanced output when USE_ENHANCED_SCHEMA is true
-      const useEnhanced = String(process.env.USE_ENHANCED_SCHEMA || 'true').toLowerCase() === 'true';
-      const history = getThoughts(session);
-      if (useEnhanced) {
-        // Generate current_step recommendations
-        try {
-          const available = (process.env.AVAILABLE_MCP_TOOLS || 'mcp_perplexity-ask').split(',').map(s => s.trim()).filter(Boolean);
-          const { recommendToolsForThought } = await import('./recommender');
-          const current_step = await recommendToolsForThought(String(args.thought || ''), available);
-
-          const out = {
-            thought: String(args.thought || ''),
-            thought_number: Number(args.thought_number),
-            total_thoughts: Number(args.total_thoughts),
-            next_thought_needed: Boolean(args.next_thought_needed),
-            current_step,
-            previous_steps: history,
-            remaining_steps: [],
-          };
-          // Log successful local processing
-          const elapsedMs = Date.now() - startTime
-          analyticsClient.logToolCall(session, toolName, elapsedMs, true, undefined, {
-            used_modal: false,
-            processing_type: 'local_enhanced'
-          });
-          analyticsClient.logPerformanceMetric({
-            metric_name: 'tool_response_time_ms',
-            metric_value: elapsedMs,
-            metric_unit: 'ms',
-            tags: { tool: toolName, used_modal: false, processing_type: 'local_enhanced' }
-          });
-          
-          return sendResult({ content: [{ type: 'text', text: JSON.stringify(out) }] });
-        } catch (e) {
-          console.warn('[router] recommender error', e);
-          // fallback to minimal shape
-        }
+      if (method === 'prompts/list') {
+        return sendResult({ prompts: [] });
       }
 
-      // Fallback minimal shape
-      const out = {
-        thought_number: Number(args.thought_number),
-        total_thoughts: Number(args.total_thoughts),
-        next_thought_needed: Boolean(args.next_thought_needed),
-        branches: [],
-        thought_history_length: Array.isArray(history) ? history.length : 0,
-        available_mcp_tools: ['mcp_perplexity-ask'],
-      };
-      
-      // Log successful fallback processing
-      const elapsedMs = Date.now() - startTime
-      analyticsClient.logToolCall(session, toolName, elapsedMs, true, undefined, {
-        used_modal: false,
-        processing_type: 'local_fallback'
-      });
-      analyticsClient.logPerformanceMetric({
-        metric_name: 'tool_response_time_ms',
-        metric_value: elapsedMs,
-        metric_unit: 'ms',
-        tags: { tool: toolName, used_modal: false, processing_type: 'local_fallback' }
-      });
-      
-      return sendResult({ content: [{ type: 'text', text: JSON.stringify(out) }] });
-    }
+      if (method === 'resources/list') {
+        return sendResult({ resources: [] });
+      }
 
-    if (method === 'prompts/list') {
-      return sendResult({ prompts: [] });
+      return sendError(-32601, 'Method not found');
+    } catch (e: any) {
+      console.error('[router] unhandled JSON-RPC error', e);
+      logError(e, { requestPath: '/', requestMethod: 'POST', unhandled: true });
+      // Ensure a valid JSON-RPC error response even for unhandled exceptions
+      return reply.send({ jsonrpc: '2.0', id: body?.id, error: { code: -32000, message: e.message || 'Internal server error', data: { stack: process.env.NODE_ENV === 'development' ? e.stack : undefined } } });
     }
-
-    if (method === 'resources/list') {
-      return sendResult({ resources: [] });
-    }
-
-    return sendError(-32601, 'Method not found');
   });
 
   app.post('/process_thought', async (req: FastifyRequest, reply: FastifyReply) => {
     const limitCheck = checkAndIncrementRateLimit(req);
     if (!limitCheck.allowed) {
+      logError(new Error('Rate limit exceeded'), { requestPath: '/process_thought', requestMethod: 'POST', retryAfterMs: limitCheck.retryAfterMs });
       return reply.code(429).send({ error: { code: 'RATE_LIMITED', message: 'Rate limit exceeded', details: { retryAfterMs: limitCheck.retryAfterMs } } });
     }
     const body = (req.body as Partial<ThoughtInput> | undefined) || {};
@@ -576,77 +587,119 @@ export function setupRoutes(app: FastifyInstance) {
     } = body as ThoughtInput;
 
     if (typeof thought !== 'string' || typeof thought_number !== 'number' || typeof total_thoughts !== 'number' || typeof next_thought_needed !== 'boolean') {
+      logError(new Error('Invalid input'), { requestPath: '/process_thought', requestMethod: 'POST', body });
       return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'Invalid input' } });
     }
     if (thought.length > MAX_THOUGHT_LENGTH) {
+      logError(new Error(`Thought exceeds max length ${MAX_THOUGHT_LENGTH}`), { requestPath: '/process_thought', requestMethod: 'POST', maxLength: MAX_THOUGHT_LENGTH, currentLength: thought.length });
       return reply.code(400).send({ error: { code: 'INPUT_TOO_LONG', message: `Thought exceeds max length ${MAX_THOUGHT_LENGTH}` } });
     }
 
     const session = (req.headers['x-session-id'] as string) || (req.query as any)?.session_id;
-    const entry = addThought({
-      thought,
-      thought_number,
-      total_thoughts,
-      next_thought_needed,
-      is_revision,
-      revises_thought,
-      branch_from_thought,
-      branch_id,
-      needs_more_thoughts,
-    }, session);
+    try {
+      const entry = addThought({
+        thought,
+        thought_number,
+        total_thoughts,
+        next_thought_needed,
+        is_revision,
+        revises_thought,
+        branch_from_thought,
+        branch_id,
+        needs_more_thoughts,
+      }, session);
 
-    return { ok: true, entry };
+      return { ok: true, entry };
+    } catch (e: any) {
+      console.error('[process_thought] error', e);
+      logError(e, { requestPath: '/process_thought', requestMethod: 'POST', session });
+      return reply.code(500).send({ error: { code: 'INTERNAL_SERVER_ERROR', message: e.message || 'Internal Server Error' } });
+    }
   });
 
   app.get('/generate_summary', async (req: FastifyRequest, reply: FastifyReply) => {
     const session = (req.headers['x-session-id'] as string) || (req.query as any)?.session_id;
-    const summary = generateSummary(session);
-    return { summary };
+    try {
+      const summary = generateSummary(session);
+      return { summary };
+    } catch (e: any) {
+      console.error('[generate_summary] error', e);
+      logError(e, { requestPath: '/generate_summary', requestMethod: 'GET', session });
+      return reply.code(500).send({ error: { code: 'INTERNAL_SERVER_ERROR', message: e.message || 'Internal Server Error' } });
+    }
   });
 
   app.post('/clear_history', async (req: FastifyRequest) => {
     const session = (req.headers['x-session-id'] as string) || (req.query as any)?.session_id || (req.body as any)?.session_id;
-    clearHistory(session);
-    return { ok: true };
+    try {
+      clearHistory(session);
+      return { ok: true };
+    } catch (e: any) {
+      console.error('[clear_history] error', e);
+      logError(e, { requestPath: '/clear_history', requestMethod: 'POST', session });
+      return { ok: false, error: e.message || 'Internal Server Error' };
+    }
   });
 
   app.post('/run', async (req: FastifyRequest, reply: FastifyReply) => {
     const limitCheck = checkAndIncrementRateLimit(req);
     if (!limitCheck.allowed) {
+      logError(new Error('Rate limit exceeded'), { requestPath: '/run', requestMethod: 'POST', retryAfterMs: limitCheck.retryAfterMs });
       return reply.code(429).send({ error: { code: 'RATE_LIMITED', message: 'Rate limit exceeded', details: { retryAfterMs: limitCheck.retryAfterMs } } });
     }
     const body = (req.body as any) || {};
     const tool = body.tool || body.name;
     const args = body.arguments || body.args || {};
     if (tool !== 'sequential_thinking') {
+      logError(new Error('Unsupported tool'), { tool, requestPath: '/run', requestMethod: 'POST' });
       return reply.code(400).send({ error: { code: 'UNSUPPORTED_TOOL', message: 'Unsupported tool' } });
     }
     // Minimal mapping: route to process_thought semantics
     const session = (req.headers['x-session-id'] as string) || (req.query as any)?.session_id || args.session_id;
     const required = ['thought', 'thought_number', 'total_thoughts', 'next_thought_needed'];
     for (const k of required) {
-      if (!(k in args)) return reply.code(400).send({ error: { code: 'MISSING_ARGUMENT', message: `Missing argument: ${k}` } });
+      if (!(k in args)) {
+        logError(new Error(`Missing argument: ${k}`), { tool, argument: k, requestPath: '/run', requestMethod: 'POST', session });
+        return reply.code(400).send({ error: { code: 'MISSING_ARGUMENT', message: `Missing argument: ${k}` } });
+      }
     }
     const thought = String(args.thought || '');
     if (thought.length > MAX_THOUGHT_LENGTH) {
+      logError(new Error(`Thought exceeds max length ${MAX_THOUGHT_LENGTH}`), { tool, maxLength: MAX_THOUGHT_LENGTH, currentLength: thought.length, requestPath: '/run', requestMethod: 'POST', session });
       return reply.code(400).send({ error: { code: 'INPUT_TOO_LONG', message: `Thought exceeds max length ${MAX_THOUGHT_LENGTH}` } });
     }
-    const entry = addThought(args as ThoughtInput, session);
-    return { ok: true, result: { entry } };
+    try {
+      const entry = addThought(args as ThoughtInput, session);
+      return { ok: true, result: { entry } };
+    } catch (e: any) {
+      console.error('[run] error', e);
+      logError(e, { requestPath: '/run', requestMethod: 'POST', session });
+      return reply.code(500).send({ error: { code: 'INTERNAL_SERVER_ERROR', message: e.message || 'Internal Server Error' } });
+    }
   });
 
   // Submit a GPU-heavy job to Modal (async pattern)
   app.post('/modal/submit', async (req: FastifyRequest, reply: FastifyReply) => {
     const limitCheck = checkAndIncrementRateLimit(req);
     if (!limitCheck.allowed) {
+      logError(new Error('Rate limit exceeded'), { requestPath: '/modal/submit', requestMethod: 'POST', retryAfterMs: limitCheck.retryAfterMs });
       return reply.code(429).send({ error: { code: 'RATE_LIMITED', message: 'Rate limit exceeded', details: { retryAfterMs: limitCheck.retryAfterMs } } });
     }
     const body = (req.body as any) || {};
     const task = body.task;
     const payload = body.payload || {};
-    if (!task) return reply.code(400).send({ error: { code: 'MISSING_TASK', message: 'Missing task' } });
-    const result = await submitModalJob({ task, payload, callbackPath: '/webhook/modal' });
-    return { ok: true, job: result };
+    if (!task) {
+      logError(new Error('Missing task'), { requestPath: '/modal/submit', requestMethod: 'POST', body });
+      return reply.code(400).send({ error: { code: 'MISSING_TASK', message: 'Missing task' } });
+    }
+    try {
+      const result = await submitModalJob({ task, payload, callbackPath: '/webhook/modal' });
+      return { ok: true, job: result };
+    } catch (e: any) {
+      console.error('[modal/submit] error', e);
+      logError(e, { requestPath: '/modal/submit', requestMethod: 'POST', task, payload });
+      return reply.code(500).send({ error: { code: 'INTERNAL_SERVER_ERROR', message: e.message || 'Internal Server Error' } });
+    }
   });
 
   // Webhook receiver for Modal job completion
@@ -661,11 +714,7 @@ export function setupRoutes(app: FastifyInstance) {
     
     if (secret && signature !== hmac) {
       console.warn('[webhook] Invalid HMAC signature');
-      // Log webhook authentication failure
-      analyticsClient.logWebhookEvent('unknown', 'modal_webhook', false, Date.now() - startTime, {
-        error: 'Invalid HMAC signature',
-        signature_provided: !!signature
-      });
+      logError(new Error('Invalid HMAC signature'), { webhookPath: '/webhook/modal', signatureProvided: !!signature });
       return reply.code(401).send({ error: 'Invalid signature' });
     }
 

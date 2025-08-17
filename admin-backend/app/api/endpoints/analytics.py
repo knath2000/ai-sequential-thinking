@@ -248,3 +248,15 @@ async def get_cost_summary(
         end_date=end_date,
         service_name=service_name
     )
+
+
+@router.get("/diag/error-logs")
+async def get_recent_error_logs(
+    limit: int = Query(10, ge=1, le=100),
+    db: Session = Depends(get_db),
+    current_user: AdminUserResponse = Depends(get_current_active_user)
+):
+    """Return recent error logs for diagnostic viewing."""
+    service = AnalyticsService(db)
+    recent_errors = service.get_error_logs(skip=0, limit=limit)
+    return {"ok": True, "count": len(recent_errors), "errors": recent_errors}

@@ -837,6 +837,21 @@ export function setupRoutes(app: FastifyInstance) {
       return reply.send({ error: errorMessage });
     }
   });
+
+  // Test endpoint to trigger error logging
+  app.post('/test-error-logging', async (req: FastifyRequest, reply: FastifyReply) => {
+    try {
+      // Intentionally trigger an error
+      throw new Error('Test error for logging verification');
+    } catch (error: any) {
+      await logError(error, {
+        route: '/test-error-logging',
+        method: 'POST',
+        request_body: req.body
+      });
+      return { ok: true, message: 'Error logged successfully' };
+    }
+  });
 }
 
 

@@ -3,7 +3,7 @@ Analytics and logging models for MCP server data
 """
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Float, JSON
 from sqlalchemy.sql import func
-from ..db.database import Base
+from ..db.base import Base  # Import from base.py instead of database.py
 
 
 class UsageEvent(Base):

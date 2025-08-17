@@ -9,7 +9,8 @@ from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from .core.config import settings
 from .core.log_buffer import InMemoryLogHandler
-from .db.database import engine, Base
+from .db.database import engine, get_db
+from .db.base import Base
 from .api.endpoints import auth, analytics, admin
 
 

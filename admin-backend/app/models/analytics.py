@@ -1,7 +1,7 @@
 """
 Analytics and logging models for MCP server data
 """
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Float, JSON
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Float, JSON, UniqueConstraint
 from sqlalchemy.sql import func
 from ..db.base import Base  # Import from base.py instead of database.py
 
@@ -88,6 +88,7 @@ class Session(Base):
 class CostTracking(Base):
     """Track costs for external services"""
     __tablename__ = "cost_tracking"
+    __table_args__ = (UniqueConstraint('service_name', 'operation_type', 'request_id', name='uq_cost_tracking'),)
     
     id = Column(Integer, primary_key=True, index=True)
     timestamp = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
@@ -96,7 +97,7 @@ class CostTracking(Base):
     tokens_used = Column(Integer)
     cost_usd = Column(Float, nullable=False)
     session_id = Column(String(255), index=True)
-    request_id = Column(String(255))
+    request_id = Column(String(255), nullable=False)
     meta = Column(JSON)
     
     def __repr__(self):

@@ -125,7 +125,7 @@ class CostTrackingBase(BaseModel):
     cost_usd: float
     session_id: Optional[str] = None
     request_id: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    meta: Optional[Dict[str, Any]] = None
 
 
 class CostTrackingCreate(CostTrackingBase):

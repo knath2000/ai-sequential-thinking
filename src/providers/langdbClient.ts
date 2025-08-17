@@ -1,5 +1,6 @@
 import axios, { AxiosRequestConfig } from 'axios'
 import { getLangDBConfig, getEffectiveModel } from '../config'
+import { analyticsClient } from '../services/analyticsClient'
 
 export interface LangdbStep {
   step_description: string
@@ -114,7 +115,8 @@ function estimateTokens(text: string): number {
 export async function callLangdbChatForSteps(
   prompt: string,
   model: string,
-  timeoutMs = 15_000
+  timeoutMs = 15_000,
+  opts?: { sessionId?: string; requestId?: string }
 ): Promise<LangdbStepsResult> {
   const url = buildChatUrl();
   if (!url) return { ok: false, error: 'LANGDB_CHAT_URL not configured' };
@@ -169,7 +171,20 @@ export async function callLangdbChatForSteps(
     const content = data?.choices?.[0]?.message?.content;
     if (typeof content === 'string') {
       const steps = extractJsonArray(content);
-      if (steps?.length) return { ok: true, steps, raw: data };
+      if (steps?.length) {
+        try {
+          // Estimate output tokens and cost (simple estimator)
+          const outputTokens = estimateTokens(content);
+          const totalTokens = inputTokens + outputTokens;
+          const pricePer1K = parseFloat(process.env.LANGDB_PRICE_PER_1K || '0.03');
+          const costUsd = Number(((totalTokens / 1000) * pricePer1K).toFixed(6));
+          // Fire-and-forget analytics logging
+          analyticsClient.logLangDBCost(opts?.sessionId || 'unknown', getEffectiveModel(model), totalTokens, costUsd, opts?.requestId, { inputTokens, outputTokens });
+        } catch (e) {
+          console.warn('[LangDB] failed to log cost', e);
+        }
+        return { ok: true, steps, raw: data };
+      }
     }
     return { ok: false, error: 'LangDB response invalid', raw: data };
   } catch (e: any) {

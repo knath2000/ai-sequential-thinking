@@ -155,7 +155,21 @@ class AnalyticsService:
     # Cost Tracking
     def create_cost_tracking(self, cost_data: CostTrackingCreate) -> CostTrackingResponse:
         """Create a new cost tracking entry"""
-        db_cost = CostTracking(**cost_data.dict())
+        # Idempotent insert: avoid duplicate entries for the same request_id/service/operation
+        data = cost_data.dict()
+        request_id = data.get('request_id')
+        service_name = data.get('service_name')
+        operation_type = data.get('operation_type')
+        if request_id and service_name and operation_type:
+            existing = self.db.query(CostTracking).filter(
+                CostTracking.request_id == request_id,
+                CostTracking.service_name == service_name,
+                CostTracking.operation_type == operation_type
+            ).first()
+            if existing:
+                return CostTrackingResponse.from_orm(existing)
+
+        db_cost = CostTracking(**data)
         self.db.add(db_cost)
         self.db.commit()
         self.db.refresh(db_cost)

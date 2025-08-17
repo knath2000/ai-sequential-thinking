@@ -752,6 +752,15 @@ export function setupRoutes(app: FastifyInstance) {
       }
 
       // Log successful webhook processing
+      // Attempt to extract cost info from webhook payload and log it
+      try {
+        const tokensUsed = result?.meta?.tokens_used || result?.meta?.tokens || undefined;
+        const costUsd = result?.meta?.cost_usd || result?.meta?.cost || undefined;
+        analyticsClient.logModalCost(correlationId || 'unknown', 'job_execution', tokensUsed, costUsd, correlationId, { resultSize: JSON.stringify(result).length });
+      } catch (e) {
+        console.warn('[router] failed to log modal cost from webhook', e);
+      }
+
       analyticsClient.logWebhookEvent(correlationId || 'unknown', 'modal_webhook', true, Date.now() - startTime, {
         has_correlation_id: !!correlationId,
         has_waiter: !!correlationId && jobWaiters.has(correlationId),

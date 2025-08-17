@@ -5,6 +5,7 @@
   import Tile from '../lib/components/Tile.svelte'
   import RecentLogs from '../lib/components/RecentLogs.svelte'
   import SessionsTable from '../lib/components/SessionsTable.svelte'
+  import CostSummaryWidget from '../lib/components/CostSummaryWidget.svelte'
 
   let metrics: DashboardMetrics | null = null
   let error: string | null = null
@@ -59,7 +60,12 @@
     </div>
 
     <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <RecentLogs />
+      <div>
+        <RecentLogs />
+        <div class="mt-4">
+          <CostSummaryWidget />
+        </div>
+      </div>
       <SessionsTable />
     </div>
   </div>

@@ -159,6 +159,29 @@ async def create_cost_tracking(
     return service.create_cost_tracking(cost)
 
 
+@router.get("/costs", response_model=List[CostTrackingResponse])
+async def list_costs(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    service_name: Optional[str] = Query(None),
+    start_date: Optional[datetime] = Query(None),
+    end_date: Optional[datetime] = Query(None),
+    db: Session = Depends(get_db),
+    current_user: AdminUserResponse = Depends(get_current_active_user)
+):
+    """List raw cost tracking entries"""
+    from ...models.analytics import CostTracking as CostModel
+    q = db.query(CostModel)
+    if service_name:
+        q = q.filter(CostModel.service_name == service_name)
+    if start_date:
+        q = q.filter(CostModel.timestamp >= start_date)
+    if end_date:
+        q = q.filter(CostModel.timestamp <= end_date)
+    items = q.order_by(CostModel.timestamp.desc()).offset(skip).limit(limit).all()
+    return [CostTrackingResponse.from_orm(i) for i in items]
+
+
 @router.get("/summary", response_model=AnalyticsSummary)
 async def get_analytics_summary(
     start_date: Optional[datetime] = Query(None, description="Start date for summary"),

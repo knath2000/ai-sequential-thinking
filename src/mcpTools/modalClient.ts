@@ -38,6 +38,19 @@ export async function submitModalJob({ task, payload, callbackPath, correlationI
     if (data?.ok !== true) {
       throw new Error(`Modal submit endpoint error: ${typeof data === 'object' ? JSON.stringify(data) : String(data)}`);
     }
+    // Attempt to log a Modal cost event if the submit endpoint returned pricing info
+    try {
+      const tokens = data?.meta?.tokens_used || undefined;
+      const cost = data?.meta?.cost_usd || undefined;
+      // analyticsClient is imported lazily to avoid circular imports
+      const { analyticsClient } = await import('../services/analyticsClient');
+      if (cost !== undefined) {
+        analyticsClient.logModalCost(payload?.session_id || 'unknown', 'job_submission', tokens, cost, correlationId, { task });
+      }
+    } catch (e) {
+      console.warn('[modalClient] failed to log cost from submit response', e);
+    }
+
     return { id: correlationId || (payload?.['correlation_id'] as string | undefined) };
   }
 

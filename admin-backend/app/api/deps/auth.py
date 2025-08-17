@@ -65,7 +65,11 @@ async def get_ingest_or_user(
     db: Session = Depends(get_db)
 ):
     """Allow either a special ingest key header or a valid bearer user."""
+    # Accept ingest key in production or allow dev bypass when configured
     if settings.ANALYTICS_INGEST_KEY and x_analytics_ingest_key == settings.ANALYTICS_INGEST_KEY:
+        return None
+    # Development convenience: if enabled, allow bypass when no credentials provided
+    if settings.ALLOW_DEV_AUTH_BYPASS and (x_analytics_ingest_key is None or x_analytics_ingest_key == ''):
         return None
     return await get_current_user(credentials, db)
 

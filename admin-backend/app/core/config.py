@@ -73,6 +73,8 @@ class Settings(BaseSettings):
     # Analytics
     ANALYTICS_RETENTION_DAYS: int = 90
     METRICS_UPDATE_INTERVAL: int = 60
+    # Development helpers
+    ALLOW_DEV_AUTH_BYPASS: bool = False
     ANALYTICS_PUBLIC_READ: bool = True
     
     # CORS Settings

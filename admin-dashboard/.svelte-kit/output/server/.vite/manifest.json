@@ -45,16 +45,6 @@
     "file": "chunks/ssr2.js",
     "name": "ssr"
   },
-  "_stores.js": {
-    "file": "chunks/stores.js",
-    "name": "stores",
-    "imports": [
-      "_ssr.js",
-      "_exports.js",
-      "_utils.js",
-      "_ssr2.js"
-    ]
-  },
   "_utils.js": {
     "file": "chunks/utils.js",
     "name": "utils"
@@ -76,7 +66,9 @@
     "isEntry": true,
     "imports": [
       "_ssr.js",
-      "_stores.js",
+      "_exports.js",
+      "_utils.js",
+      "_ssr2.js",
       "_escape.js"
     ]
   },
@@ -103,7 +95,7 @@
       "_ssr.js"
     ],
     "css": [
-      "_app/immutable/assets/_layout.D5Xs1-N_.css"
+      "_app/immutable/assets/_layout.CUvFY3QW.css"
     ]
   },
   "src/routes/+page.svelte": {
@@ -116,14 +108,13 @@
       "_escape.js"
     ]
   },
-  "src/routes/session/[id]/+page.svelte": {
-    "file": "entries/pages/session/_id_/_page.svelte.js",
-    "name": "entries/pages/session/_id_/_page.svelte",
-    "src": "src/routes/session/[id]/+page.svelte",
+  "src/routes/session/[session_id]/+page.svelte": {
+    "file": "entries/pages/session/_session_id_/_page.svelte.js",
+    "name": "entries/pages/session/_session_id_/_page.svelte",
+    "src": "src/routes/session/[session_id]/+page.svelte",
     "isEntry": true,
     "imports": [
       "_ssr.js",
-      "_stores.js",
       "_escape.js"
     ]
   }

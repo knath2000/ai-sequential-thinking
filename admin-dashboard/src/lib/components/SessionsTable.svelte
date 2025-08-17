@@ -85,7 +85,7 @@
 </div>
 
 {#if selectedSession}
-  <SessionDetailModal {sessionDetail} onClose={closeSessionDetail} />
+  <SessionDetailModal sessionDetail={selectedSession} onClose={closeSessionDetail} />
 {/if}
 
 

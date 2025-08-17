@@ -260,3 +260,31 @@ Improvements_Identified_For_Consolidation:
 - Railway-GitHub auto-deployment pattern works well for continuous integration and testing
 ---
 
+---
+Date: 2025-08-16
+TaskRef: "Session detail modal, auto-close, worker restart, 500 fix & CORS headers"
+
+Learnings:
+- Adding a nullable `session_id` column to metrics tables makes per-session retrieval simple and avoids brittle JSON tag lookups.
+- Always `session.rollback()` after a failed SQLAlchemy query to clear the "current transaction is aborted" state; otherwise every subsequent query in the same request fails with 500.
+- Wrapping expensive optional queries (metrics) in try/except keeps the endpoint functional even if one part fails.
+- Global exception handler plus Starlette `CORSMiddleware` guarantees 500 JSON bodies with proper CORS headers – prevents the browser from showing misleading CORS‐missing errors.
+- Svelte modal inactivity timer can attach document-level listeners and must clear them on destroy to avoid memory leaks and HMR warnings.
+- Frontend endpoint paths should include the same prefix (`/analytics`) used in backend routers to avoid 404.
+
+Difficulties:
+- Neon returned `current transaction is aborted` after the initial invalid JSON-lookup query, breaking subsequent log queries.
+- Browser showed CORS 500 because the unhandled exception prevented CORSMiddleware from adding headers.
+
+Successes:
+- Session detail view works: metadata, events, metrics, logs.
+- Modal closes automatically after 5 min idle; logs pane still streams.
+- Restarted Modal worker with `modal deploy` and confirmed GPU function live.
+- Fixed 500s by rolling back session and simplifying metric query; verified 200/404 responses.
+
+Improvements_Identified_For_Consolidation:
+- Pattern: always rollback the DB session inside except blocks before issuing additional queries.
+- Pattern: expose nullable foreign-key-ish columns (e.g., `session_id`) for common lookup paths even if JSON tags exist.
+- Pattern: global exception handler + CORSMiddleware ensures consistent JSON error responses across environments.
+---
+

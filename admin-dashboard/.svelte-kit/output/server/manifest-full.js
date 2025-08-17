@@ -10,12 +10,11 @@ return {
 	assets: new Set([]),
 	mimeTypes: {},
 	_: {
-		client: {start:"_app/immutable/entry/start.YDTMySxK.js",app:"_app/immutable/entry/app.D4Ym8JEU.js",imports:["_app/immutable/entry/start.YDTMySxK.js","_app/immutable/chunks/DezwTiSE.js","_app/immutable/chunks/CU9EupLQ.js","_app/immutable/entry/app.D4Ym8JEU.js","_app/immutable/chunks/CU9EupLQ.js","_app/immutable/chunks/IHki7fMi.js"],stylesheets:[],fonts:[],uses_env_dynamic_public:false},
+		client: {start:"_app/immutable/entry/start.B4Fv36uw.js",app:"_app/immutable/entry/app.B3ENHdfS.js",imports:["_app/immutable/entry/start.B4Fv36uw.js","_app/immutable/chunks/DeTnh1Px.js","_app/immutable/chunks/Cj5CJtXD.js","_app/immutable/entry/app.B3ENHdfS.js","_app/immutable/chunks/Cj5CJtXD.js","_app/immutable/chunks/IHki7fMi.js"],stylesheets:[],fonts:[],uses_env_dynamic_public:false},
 		nodes: [
 			__memo(() => import('./nodes/0.js')),
 			__memo(() => import('./nodes/1.js')),
-			__memo(() => import('./nodes/2.js')),
-			__memo(() => import('./nodes/3.js'))
+			__memo(() => import('./nodes/2.js'))
 		],
 		remotes: {
 			
@@ -26,13 +25,6 @@ return {
 				pattern: /^\/$/,
 				params: [],
 				page: { layouts: [0,], errors: [1,], leaf: 2 },
-				endpoint: null
-			},
-			{
-				id: "/session/[session_id]",
-				pattern: /^\/session\/([^/]+?)\/?$/,
-				params: [{"name":"session_id","optional":false,"rest":false,"chained":false}],
-				page: { layouts: [0,], errors: [1,], leaf: 3 },
 				endpoint: null
 			}
 		],

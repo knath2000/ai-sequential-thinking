@@ -28,7 +28,10 @@ const SessionsTable = create_ssr_component(($$result, $$props, $$bindings, slots
   if ($$props.pageSize === void 0 && $$bindings.pageSize && pageSize !== void 0) $$bindings.pageSize(pageSize);
   return `<div class="rounded-lg border border-gray-700 bg-gray-900/60"><div class="flex items-center justify-between px-3 py-2 border-b border-gray-700"><div class="text-sm font-semibold" data-svelte-h="svelte-1d3eqnm">Recent Sessions</div> <button class="text-xs text-blue-400 hover:underline" data-svelte-h="svelte-9svlmm">Refresh</button></div> ${``} <div class="overflow-auto"><table class="min-w-full text-left text-xs"><thead class="bg-gray-800 text-gray-300" data-svelte-h="svelte-1dstrq3"><tr><th class="px-3 py-2">Session</th> <th class="px-3 py-2">Created</th> <th class="px-3 py-2">Requests</th> <th class="px-3 py-2">Errors</th> <th class="px-3 py-2">Proc (ms)</th></tr></thead> <tbody>${each(rows, (s) => {
     return `<tr class="border-t border-gray-800 hover:bg-gray-800/40 cursor-pointer"><td class="px-3 py-2 font-mono">${escape(s.session_id)}</td> <td class="px-3 py-2">${escape(new Date(s.created_at).toLocaleString())}</td> <td class="px-3 py-2">${escape(s.total_requests)}</td> <td class="px-3 py-2">${escape(s.total_errors)}</td> <td class="px-3 py-2">${escape(s.total_processing_time_ms)}</td> </tr>`;
-  })}</tbody></table></div></div>`;
+  })}</tbody></table></div></div> ${``}`;
+});
+const CostSummaryWidget = create_ssr_component(($$result, $$props, $$bindings, slots) => {
+  return `<div class="glass rounded-xl p-4"><div class="flex items-center justify-between" data-svelte-h="svelte-1uqmwdx"><div><div class="text-sm text-gray-400">Cost Summary</div> <div class="mt-1 text-lg font-semibold">Overview (period)</div></div></div> ${`<div class="mt-4 text-sm text-gray-400" data-svelte-h="svelte-1qhj9eb">Loading…</div>`}</div>`;
 });
 const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
   let metrics = null;
@@ -82,7 +85,7 @@ const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
     },
     {},
     {}
-  )}</div> <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-4">${validate_component(RecentLogs, "RecentLogs").$$render($$result, {}, {}, {})} ${validate_component(SessionsTable, "SessionsTable").$$render($$result, {}, {}, {})}</div></div></div>`;
+  )}</div> <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-4"><div>${validate_component(RecentLogs, "RecentLogs").$$render($$result, {}, {}, {})} <div class="mt-4">${validate_component(CostSummaryWidget, "CostSummaryWidget").$$render($$result, {}, {}, {})}</div></div> ${validate_component(SessionsTable, "SessionsTable").$$render($$result, {}, {}, {})}</div></div></div>`;
 });
 export {
   Page as default

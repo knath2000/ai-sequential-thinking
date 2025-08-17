@@ -79,9 +79,30 @@ logging.getLogger().addHandler(_inmem_handler)
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     logger.info(f"REQ {request.method} {request.url}")
-    response = await call_next(request)
-    logger.info(f"RES {request.method} {request.url.path} -> {response.status_code}")
-    return response
+    try:
+        response = await call_next(request)
+        logger.info(f"RES {request.method} {request.url.path} -> {response.status_code}")
+        # If 401, attempt to log auth failure details asynchronously
+        if response.status_code == 401:
+            try:
+                # Extract headers and client ip
+                headers = dict(request.headers)
+                client_ip = request.client.host if request.client else ''
+                # Fire-and-forget logging to DB
+                from .db.database import SessionLocal
+                from .services.analytics import AnalyticsService
+                db = SessionLocal()
+                try:
+                    svc = AnalyticsService(db)
+                    svc.log_auth_failure(str(request.url.path), headers, client_ip, 401, {})
+                finally:
+                    db.close()
+            except Exception:
+                logger.exception('Failed to log auth failure')
+        return response
+    except Exception as e:
+        logger.exception('Error in request middleware')
+        raise
 
 # Mount static files (robust path resolution)
 try:

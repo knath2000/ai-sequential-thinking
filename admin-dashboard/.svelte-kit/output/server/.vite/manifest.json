@@ -95,7 +95,7 @@
       "_ssr.js"
     ],
     "css": [
-      "_app/immutable/assets/_layout.CUvFY3QW.css"
+      "_app/immutable/assets/_layout.B3akM3ib.css"
     ]
   },
   "src/routes/+page.svelte": {
@@ -106,16 +106,9 @@
     "imports": [
       "_ssr.js",
       "_escape.js"
-    ]
-  },
-  "src/routes/session/[session_id]/+page.svelte": {
-    "file": "entries/pages/session/_session_id_/_page.svelte.js",
-    "name": "entries/pages/session/_session_id_/_page.svelte",
-    "src": "src/routes/session/[session_id]/+page.svelte",
-    "isEntry": true,
-    "imports": [
-      "_ssr.js",
-      "_escape.js"
+    ],
+    "css": [
+      "_app/immutable/assets/_page.Dx4LF2Le.css"
     ]
   }
 }

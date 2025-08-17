@@ -104,6 +104,22 @@ class CostTracking(Base):
         return f"<CostTracking(service={self.service_name}, cost=${self.cost_usd})>"
 
 
+class AuthFailure(Base):
+    """Log authentication failures for debugging"""
+    __tablename__ = "auth_failures"
+
+    id = Column(Integer, primary_key=True, index=True)
+    timestamp = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    endpoint = Column(String(500))
+    request_headers = Column(JSON)
+    client_ip = Column(String(50))
+    response_code = Column(Integer)
+    meta = Column(JSON)
+
+    def __repr__(self):
+        return f"<AuthFailure(endpoint={self.endpoint}, code={self.response_code})>"
+
+
 class AdminUser(Base):
     """Admin users for the dashboard"""
     __tablename__ = "admin_users"

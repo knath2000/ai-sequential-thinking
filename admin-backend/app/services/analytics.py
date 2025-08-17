@@ -400,3 +400,11 @@ class AnalyticsService:
             "metrics": metrics,
             "logs": logs,
         }
+
+    def log_auth_failure(self, endpoint: str, request_headers: Dict[str, Any], client_ip: str, response_code: int, meta: Dict[str, Any]) -> Dict[str, Any]:
+        from ..models.analytics import AuthFailure
+        db_af = AuthFailure(endpoint=endpoint, request_headers=request_headers or {}, client_ip=client_ip or '', response_code=response_code or 0, meta=meta or {})
+        self.db.add(db_af)
+        self.db.commit()
+        self.db.refresh(db_af)
+        return {"ok": True, "id": db_af.id}

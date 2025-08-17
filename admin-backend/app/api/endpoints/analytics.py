@@ -125,6 +125,26 @@ async def create_error_log(
     return service.create_error_log(error)
 
 
+@router.post("/auth-failure")
+async def log_auth_failure(
+    endpoint: str,
+    request_headers: Optional[Dict[str, Any]] = None,
+    client_ip: Optional[str] = None,
+    response_code: Optional[int] = None,
+    meta: Optional[Dict[str, Any]] = None,
+    db: Session = Depends(get_db),
+    current_user: Optional[AdminUserResponse] = Depends(get_ingest_or_user)
+):
+    service = AnalyticsService(db)
+    # Insert directly using SQLAlchemy model to avoid schema mismatch
+    from ...models.analytics import AuthFailure
+    af = AuthFailure(endpoint=endpoint, request_headers=request_headers or {}, client_ip=client_ip or '', response_code=response_code or 0, meta=meta or {})
+    db.add(af)
+    db.commit()
+    db.refresh(af)
+    return {"ok": True, "id": af.id}
+
+
 @router.get("/errors", response_model=List[ErrorLogResponse])
 async def get_error_logs(
     skip: int = Query(0, ge=0),

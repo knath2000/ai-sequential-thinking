@@ -46,7 +46,6 @@ declare module '$env/static/private' {
 	export const __CF_USER_TEXT_ENCODING: string;
 	export const VSCODE_PROFILE_INITIALIZED: string;
 	export const npm_execpath: string;
-	export const PAGER: string;
 	export const npm_config_frozen_lockfile: string;
 	export const npm_config_verify_deps_before_run: string;
 	export const PATH: string;
@@ -55,10 +54,8 @@ declare module '$env/static/private' {
 	export const USER_ZDOTDIR: string;
 	export const PWD: string;
 	export const npm_command: string;
-	export const DISABLE_AUTO_UPDATE: string;
 	export const npm_config__jsr_registry: string;
 	export const npm_lifecycle_event: string;
-	export const CURSOR_AGENT: string;
 	export const LANG: string;
 	export const npm_package_name: string;
 	export const NODE_PATH: string;
@@ -69,14 +66,11 @@ declare module '$env/static/private' {
 	export const npm_package_version: string;
 	export const pnpm_config_verify_deps_before_run: string;
 	export const VSCODE_INJECTION: string;
-	export const npm_config_yes: string;
 	export const HOME: string;
 	export const SHLVL: string;
 	export const VSCODE_GIT_ASKPASS_MAIN: string;
-	export const PIP_NO_INPUT: string;
 	export const LOGNAME: string;
 	export const npm_lifecycle_script: string;
-	export const COMPOSER_NO_INTERACTION: string;
 	export const VSCODE_GIT_IPC_HANDLE: string;
 	export const npm_config_user_agent: string;
 	export const GIT_ASKPASS: string;
@@ -136,7 +130,6 @@ declare module '$env/dynamic/private' {
 		__CF_USER_TEXT_ENCODING: string;
 		VSCODE_PROFILE_INITIALIZED: string;
 		npm_execpath: string;
-		PAGER: string;
 		npm_config_frozen_lockfile: string;
 		npm_config_verify_deps_before_run: string;
 		PATH: string;
@@ -145,10 +138,8 @@ declare module '$env/dynamic/private' {
 		USER_ZDOTDIR: string;
 		PWD: string;
 		npm_command: string;
-		DISABLE_AUTO_UPDATE: string;
 		npm_config__jsr_registry: string;
 		npm_lifecycle_event: string;
-		CURSOR_AGENT: string;
 		LANG: string;
 		npm_package_name: string;
 		NODE_PATH: string;
@@ -159,14 +150,11 @@ declare module '$env/dynamic/private' {
 		npm_package_version: string;
 		pnpm_config_verify_deps_before_run: string;
 		VSCODE_INJECTION: string;
-		npm_config_yes: string;
 		HOME: string;
 		SHLVL: string;
 		VSCODE_GIT_ASKPASS_MAIN: string;
-		PIP_NO_INPUT: string;
 		LOGNAME: string;
 		npm_lifecycle_script: string;
-		COMPOSER_NO_INTERACTION: string;
 		VSCODE_GIT_IPC_HANDLE: string;
 		npm_config_user_agent: string;
 		GIT_ASKPASS: string;

@@ -45,7 +45,8 @@ export async function submitModalJob({ task, payload, callbackPath, correlationI
       // analyticsClient is imported lazily to avoid circular imports
       const { analyticsClient } = await import('../services/analyticsClient');
       if (cost !== undefined) {
-        analyticsClient.logModalCost(payload?.session_id || 'unknown', 'job_submission', tokens, cost, correlationId, { task });
+        const sessionId = payload && (payload as any).session_id ? String((payload as any).session_id) : 'unknown';
+        analyticsClient.logModalCost(sessionId, 'job_submission', tokens, cost, correlationId, { task });
       }
     } catch (e) {
       console.warn('[modalClient] failed to log cost from submit response', e);

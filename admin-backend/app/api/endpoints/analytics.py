@@ -282,7 +282,7 @@ async def get_cost_summary(
     end_date: Optional[datetime] = Query(None),
     service_name: Optional[str] = Query(None),
     db: Session = Depends(get_db),
-    current_user: AdminUserResponse = Depends(get_current_active_user)
+    current_user: Optional[AdminUserResponse] = Depends(get_ingest_or_user)
 ):
     """Get cost summary with aggregations"""
     service = AnalyticsService(db)

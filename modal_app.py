@@ -36,6 +36,7 @@ KEEP_WARM = int(os.getenv("MODAL_KEEP_WARM", "1"))
     timeout=1800,
     retries=Retries(max_retries=3, backoff_coefficient=2.0, initial_delay=1.0, max_delay=30.0),
     keep_warm=KEEP_WARM,
+    secrets=[modal.Secret.from_name("railway-analytics")]
 )
 def run_llm_task(payload: dict, callback_url: str, webhook_secret: Optional[str] = None):
     # Lazy import to avoid local import error during modal deploy parsing

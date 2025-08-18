@@ -18,6 +18,8 @@ export async function submitModalJob({ task, payload, callbackPath, correlationI
   const publicBaseUrl = process.env.PUBLIC_BASE_URL;
   if (!publicBaseUrl) throw new Error('Missing PUBLIC_BASE_URL');
   const callback_url = new URL(callbackPath, publicBaseUrl).toString();
+  const railwayAnalyticsUrl = process.env.RAILWAY_ANALYTICS_URL || `${publicBaseUrl}/api/v1/analytics/costs`;
+  const railwayAnalyticsKey = process.env.RAILWAY_ANALYTICS_KEY || process.env.ANALYTICS_INGEST_KEY;
 
   // Prefer calling our Modal web endpoint directly if provided
   const submitUrl = process.env.MODAL_SUBMIT_URL;
@@ -25,7 +27,12 @@ export async function submitModalJob({ task, payload, callbackPath, correlationI
   if (submitUrl) {
     const { data } = await axios.post(submitUrl, {
       task,
-      payload,
+      payload: {
+        ...payload,
+        RAILWAY_ANALYTICS_URL: railwayAnalyticsUrl,
+        RAILWAY_ANALYTICS_KEY: railwayAnalyticsKey,
+        session_id: payload.session_id || correlationId, // Ensure session_id is always passed
+      },
       callback_url,
       webhook_secret: webhookSecret,
       correlation_id: correlationId,
@@ -62,7 +69,12 @@ export async function submitModalJob({ task, payload, callbackPath, correlationI
   const url = `${baseUrl}/v1/jobs`;
   const { data } = await axios.post(url, {
     task,
-    payload,
+    payload: {
+      ...payload,
+      RAILWAY_ANALYTICS_URL: railwayAnalyticsUrl,
+      RAILWAY_ANALYTICS_KEY: railwayAnalyticsKey,
+      session_id: payload.session_id || correlationId, // Ensure session_id is always passed
+    },
     callback_url,
     webhook_secret: webhookSecret,
     correlation_id: correlationId,

@@ -862,6 +862,36 @@ export function setupRoutes(app: FastifyInstance) {
     }
   });
 
+  // New endpoint to receive cost data from Modal
+  app.post('/internal/modal-cost-callback', async (req: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const body = req.body as { correlation_id: string; cost_data: { cost_usd: number; tokens_used?: number; metadata?: any; }; };
+      const { correlation_id, cost_data } = body;
+
+      if (!correlation_id || !cost_data || typeof cost_data.cost_usd !== 'number') {
+        console.warn('[Modal Cost Callback] Invalid payload', body);
+        return reply.code(400).send({ error: 'Invalid payload' });
+      }
+
+      // Log the cost using existing analytics client
+      await analyticsClient.logModalCost(
+        cost_data.metadata?.session_id || 'unknown', // Use session_id from meta if available
+        cost_data.metadata?.operation_type || 'unknown_operation', // Use operation_type from meta
+        cost_data.tokens_used, 
+        cost_data.cost_usd, 
+        correlation_id,
+        cost_data.metadata
+      );
+      
+      console.log('[Modal Cost Callback] Cost logged successfully for correlation_id:', correlation_id);
+      return reply.code(200).send({ success: true });
+    } catch (error: any) {
+      console.error('[Modal Cost Callback] Error:', error);
+      logError(error, { type: 'modal_cost_callback_error', requestBody: req.body });
+      return reply.code(500).send({ error: 'Failed to log cost' });
+    }
+  });
+
   // Debug endpoint to check cost tracking configuration
   app.get('/debug/cost-tracking', async () => {
     return {

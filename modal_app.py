@@ -198,6 +198,68 @@ def run_llm_task(payload: dict, callback_url: str, webhook_secret: Optional[str]
         signature = hmac.new(webhook_secret.encode("utf-8"), callback_body.encode("utf-8"), hashlib.sha256).hexdigest()
         headers_cb["x-signature"] = signature
 
+    # Cost calculation and reporting to Railway analytics
+    try:
+        railway_analytics_url = os.environ.get("RAILWAY_ANALYTICS_URL")
+        railway_analytics_key = os.environ.get("RAILWAY_ANALYTICS_KEY")
+        
+        if railway_analytics_url and railway_analytics_key:
+            input_tokens = full.get("usage", {}).get("prompt_tokens", 0) if isinstance(full, dict) else 0
+            output_tokens = full.get("usage", {}).get("completion_tokens", 0) if isinstance(full, dict) else 0
+            total_tokens = input_tokens + output_tokens
+            
+            # Simple cost estimation (adjust as per actual model pricing)
+            price_per_1k = float(os.environ.get("LANGDB_PRICE_PER_1K", 0.03))
+            cost_usd = round((total_tokens / 1000) * price_per_1k, 6)
+            
+            print(f"[Modal] Reporting cost to Railway: {cost_usd} USD for {total_tokens} tokens")
+            
+            requests.post(
+                railway_analytics_url,
+                json={
+                    "service_name": "langdb",
+                    "operation_type": model,
+                    "tokens_used": total_tokens,
+                    "cost_usd": cost_usd,
+                    "session_id": payload.get("session_id"),
+                    "request_id": correlation_id,
+                    "meta": {
+                        "input_tokens": input_tokens,
+                        "output_tokens": output_tokens,
+                        "modal_run_id": os.environ.get("MODAL_TASK_ID"),
+                        "modal_stub_name": os.environ.get("MODAL_JOB_ID"),
+                    }
+                },
+                headers={
+                    "X-Analytics-Ingest-Key": railway_analytics_key,
+                    "Content-Type": "application/json"
+                },
+                timeout=5 # Short timeout to avoid blocking
+            )
+        else:
+            print("[Modal] Skipping cost reporting: RAILWAY_ANALYTICS_URL or RAILWAY_ANALYTICS_KEY not set")
+    except Exception as e:
+        print(f"[Modal] Error reporting cost: {e}")
+        # Log to error analytics on Railway if possible, but don't block main flow
+        try:
+            if railway_analytics_url and railway_analytics_key:
+                requests.post(
+                    railway_analytics_url.replace("/costs", "/errors"), # Use the errors endpoint
+                    json={
+                        "session_id": payload.get("session_id"),
+                        "error_type": "modal_cost_reporting_error",
+                        "error_message": str(e),
+                        "context": {"correlation_id": correlation_id, "modal_task_id": os.environ.get("MODAL_TASK_ID")}
+                    },
+                    headers={
+                        "X-Analytics-Ingest-Key": railway_analytics_key,
+                        "Content-Type": "application/json"
+                    },
+                    timeout=5
+                )
+        except Exception as inner_e:
+            print(f"[Modal] Failed to log error about cost reporting: {inner_e}")
+
     # Retry with exponential backoff + jitter
     max_retries = 5
     base_delay = 0.5

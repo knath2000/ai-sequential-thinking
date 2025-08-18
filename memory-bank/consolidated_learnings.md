@@ -47,6 +47,12 @@
 - Support analytics ingestion with either `Authorization: Bearer <token>` or `X-Analytics-Ingest-Key: <secret>`; make bearer optional when ingest key matches.
 - Tool-side analytics client should enable automatically: default backend URL to production and send either bearer or ingest key header.
 
+## Cost Tracking & Observability (New)
+- **Pattern: Cost event instrumentation**: Log LangDB and Modal costs at call sites. Estimate LangDB costs via a simple tokens * price-per-1k formula (`LANGDB_PRICE_PER_1K` env var) and log Modal costs when provided by the submit API or webhook payload.
+- **Pattern: Idempotent cost ingestion**: Prevent duplicate cost records by deduplicating on `(request_id, service_name, operation_type)` either via a unique constraint in the DB or a pre-insert lookup in the analytics service.
+- **Pattern: Dashboard integration**: Provide `/api/v1/analytics/costs/summary` and `/api/v1/analytics/costs` endpoints for dashboard widgets. Client includes `X-Analytics-Ingest-Key` from `VITE_ANALYTICS_INGEST_KEY` for simple ingestion authentication.
+- **Pattern: Auth-failure logging**: Capture 401/authorization failures in an `auth_failures` table with request headers and client IP to facilitate debugging and alerting.
+
 
 ## MCP + Cursor Interop
 - Use JSON-RPC streamable HTTP with `protocolVersion: 2025-06-18`; implement `initialize`, `tools/list`, `tools/call`, 204 for `notifications/initialized`.

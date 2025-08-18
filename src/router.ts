@@ -861,6 +861,48 @@ export function setupRoutes(app: FastifyInstance) {
       return { ok: true, message: 'Error logged successfully' };
     }
   });
+
+  // Debug endpoint to check cost tracking configuration
+  app.get('/debug/cost-tracking', async () => {
+    return {
+      analyticsEnabled: analyticsClient.enabled,
+      hasLangdbPriceVar: Boolean(process.env.LANGDB_PRICE_PER_1K),
+      langdbPriceValue: process.env.LANGDB_PRICE_PER_1K,
+      hasIngestKey: Boolean(process.env.ANALYTICS_INGEST_KEY),
+      hasAdminUrl: Boolean(process.env.ADMIN_BACKEND_URL),
+      adminUrl: process.env.ADMIN_BACKEND_URL?.slice(0, 50) + '...',
+      timestamp: new Date().toISOString()
+    };
+  });
+
+  // Test endpoint to force cost logging with known values
+  app.post('/debug/test-cost-logging', async (req, reply) => {
+    try {
+      // Test LangDB cost logging
+      await analyticsClient.logLangDBCost(
+        'test_session',
+        'openrouter/o4-mini-high',
+        1000, // tokens
+        0.03, // cost USD
+        'test_request_id',
+        { test: true }
+      );
+      
+      // Test Modal cost logging  
+      await analyticsClient.logModalCost(
+        'test_session',
+        'test_operation', 
+        500, // tokens
+        0.015, // cost USD
+        'test_modal_request',
+        { test: true }
+      );
+      
+      return { ok: true, message: 'Cost logging tests completed' };
+    } catch (error) {
+      return { ok: false, error: error.message };
+    }
+  });
 }
 
 

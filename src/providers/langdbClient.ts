@@ -178,8 +178,24 @@ export async function callLangdbChatForSteps(
           const totalTokens = inputTokens + outputTokens;
           const pricePer1K = parseFloat(process.env.LANGDB_PRICE_PER_1K || '0.03');
           const costUsd = Number(((totalTokens / 1000) * pricePer1K).toFixed(6));
-          // Fire-and-forget analytics logging
-          analyticsClient.logLangDBCost(opts?.sessionId || 'unknown', getEffectiveModel(model), totalTokens, costUsd, opts?.requestId, { inputTokens, outputTokens });
+          
+          // Add debug logging
+          console.log('[LangDB] Cost calculation:', {
+            inputTokens, 
+            outputTokens, 
+            totalTokens, 
+            pricePer1K, 
+            costUsd,
+            willLogCost: costUsd !== undefined 
+          });
+          
+          if (costUsd !== undefined) {
+            // Fire-and-forget analytics logging
+            analyticsClient.logLangDBCost(opts?.sessionId || 'unknown', getEffectiveModel(model), totalTokens, costUsd, opts?.requestId, { inputTokens, outputTokens });
+            console.log('[LangDB] Cost logged successfully');
+          } else {
+            console.warn('[LangDB] Cost not logged - costUsd is undefined');
+          }
         } catch (e) {
           console.warn('[LangDB] failed to log cost', e);
         }

@@ -179,6 +179,36 @@ Improvements_Identified_For_Consolidation:
 ---
 
 ---
+Date: 2025-08-18
+TaskRef: "Add cost tracking, dashboard widget, auth fixes, and deployment stability fixes"
+
+Learnings:
+- Instrumented LangDB calls to estimate token usage and log cost events via the existing analytics client (`analyticsClient.logLangDBCost`). Added `LANGDB_PRICE_PER_1K` env var for simple cost estimation.
+- Instrumented Modal job submissions and webhook callbacks to log Modal cost information when available (`analyticsClient.logModalCost`).
+- Extended analytics backend: added `cost_tracking` unique constraint to prevent duplicates and made `create_cost_tracking` idempotent.
+- Exposed analytics endpoints: `/api/v1/analytics/costs` (list), `/api/v1/analytics/costs/summary` (aggregations). Added `AuthFailure` model and `/api/v1/analytics/auth-failure` helper endpoint for auth logging.
+- Implemented a `CostSummaryWidget.svelte` in the Svelte dashboard and integrated it into the dashboard page; fetches `/analytics/costs/summary` using `admin-dashboard/src/lib/api.ts` which now attaches `X-Analytics-Ingest-Key` from `VITE_ANALYTICS_INGEST_KEY`.
+- Fixed TypeScript issues in Node code (modalClient typing) and successfully ran `pnpm build`.
+- Resolved a `NameError: Dict` by importing `Dict` and `Any` (and/or replacing with modern `dict[str, Any]`) in `admin-backend/app/api/endpoints/analytics.py`.
+- Improved authentication flow: changed `get_cost_summary` to depend on `get_ingest_or_user` so the ingest key is accepted; added optional dev auth bypass via `ALLOW_DEV_AUTH_BYPASS` for local testing.
+
+Difficulties:
+- Initial TypeScript build failed due to typing mismatch in `modalClient.ts`; fixed by normalizing `session_id` to string when logging.
+- Deployment crash caused by missing `Dict` import required careful type hint fixes.
+
+Successes:
+- Full instrumentation for cost events for LangDB and Modal; backend stores cost entries and prevents duplicates.
+- Dashboard widget added and integrated; client now sends ingest key header automatically.
+- Backend enhanced with auth-failure logging, middleware to capture 401s, and developer convenience flags for local testing.
+- All changes committed and pushed; builds succeed locally (TypeScript) and changes pushed to `origin/main`.
+
+Improvements_Identified_For_Consolidation:
+- Add unit and integration tests for cost logging and for the `auth_failure` logging flow.
+- Add dashboard UI charts for historical cost trends and alerts for spikes.
+- Harden dev bypass logic and document `ALLOW_DEV_AUTH_BYPASS` usage clearly in README.
+---
+
+---
 Date: 2025-08-13
 TaskRef: "Implement JSON-RPC MCP server, Cursor integration, and auto-orchestrator"
 

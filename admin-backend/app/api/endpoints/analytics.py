@@ -128,10 +128,10 @@ async def create_error_log(
 @router.post("/auth-failure")
 async def log_auth_failure(
     endpoint: str,
-    request_headers: Optional[Dict[str, Any]] = None,
+    request_headers: Optional[dict[str, Any]] = None,
     client_ip: Optional[str] = None,
     response_code: Optional[int] = None,
-    meta: Optional[Dict[str, Any]] = None,
+    meta: Optional[dict[str, Any]] = None,
     db: Session = Depends(get_db),
     current_user: Optional[AdminUserResponse] = Depends(get_ingest_or_user)
 ):

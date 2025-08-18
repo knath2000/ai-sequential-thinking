@@ -12,6 +12,8 @@
 - `PERPLEXITY_ASK_URL` (e.g., http://localhost:5000)
 - `PORT` (default 3000)
 - `TRANSPORT` ("sse" or "stdio")
+- `RAILWAY_ANALYTICS_URL` (URL of your Railway app's /api/v1/analytics/costs endpoint)
+- `RAILWAY_ANALYTICS_KEY` (Your analytics ingest key, passed as a Modal secret)
 
 ### Dev Commands (planned)
 - Install: `npm i fastify axios dotenv`

@@ -895,7 +895,7 @@ export function setupRoutes(app: FastifyInstance) {
   // Debug endpoint to check cost tracking configuration
   app.get('/debug/cost-tracking', async () => {
     return {
-      analyticsEnabled: analyticsClient.enabled,
+      analyticsEnabled: (analyticsClient as any).enabled, // Access as any for debug
       hasLangdbPriceVar: Boolean(process.env.LANGDB_PRICE_PER_1K),
       langdbPriceValue: process.env.LANGDB_PRICE_PER_1K,
       hasIngestKey: Boolean(process.env.ANALYTICS_INGEST_KEY),
@@ -929,8 +929,8 @@ export function setupRoutes(app: FastifyInstance) {
       );
       
       return { ok: true, message: 'Cost logging tests completed' };
-    } catch (error) {
-      return { ok: false, error: error.message };
+    } catch (error: any) {
+      return { ok: false, error: (error as Error).message };
     }
   });
 }

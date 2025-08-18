@@ -6,6 +6,10 @@ export type DashboardMetrics = {
   active_sessions: number
   total_cost_today: number
   top_errors: string[]
+  // New fields for charts
+  cost_history: Array<{ date: string; cost: number; }>
+  performance_metrics_data: Array<{ name: string; value: number; }>
+  usage_distribution_data: Array<{ name: string; count: number; }>
 }
 
 export type SessionResponse = {
@@ -20,6 +24,9 @@ export type SessionResponse = {
   total_requests: number
   total_errors: number
   total_processing_time_ms: number
+  // Add optional duration for UI
+  duration?: string
+  status?: string
 }
 
 export type UsageEventResponse = {

@@ -27,12 +27,14 @@
  */
 declare module '$env/static/private' {
 	export const VITE_API_BASE_URL: string;
+	export const VITE_ANALYTICS_INGEST_KEY: string;
 	export const TERM_PROGRAM: string;
 	export const NODE: string;
 	export const INIT_CWD: string;
 	export const SHELL: string;
 	export const TERM: string;
 	export const TMPDIR: string;
+	export const HOMEBREW_REPOSITORY: string;
 	export const TERM_PROGRAM_VERSION: string;
 	export const MallocNanoZone: string;
 	export const ORIGINAL_XDG_CURRENT_DESKTOP: string;
@@ -69,10 +71,13 @@ declare module '$env/static/private' {
 	export const HOME: string;
 	export const SHLVL: string;
 	export const VSCODE_GIT_ASKPASS_MAIN: string;
+	export const HOMEBREW_PREFIX: string;
 	export const LOGNAME: string;
 	export const npm_lifecycle_script: string;
 	export const VSCODE_GIT_IPC_HANDLE: string;
 	export const npm_config_user_agent: string;
+	export const HOMEBREW_CELLAR: string;
+	export const INFOPATH: string;
 	export const GIT_ASKPASS: string;
 	export const VSCODE_GIT_ASKPASS_NODE: string;
 	export const COLORTERM: string;
@@ -111,12 +116,14 @@ declare module '$env/static/public' {
 declare module '$env/dynamic/private' {
 	export const env: {
 		VITE_API_BASE_URL: string;
+		VITE_ANALYTICS_INGEST_KEY: string;
 		TERM_PROGRAM: string;
 		NODE: string;
 		INIT_CWD: string;
 		SHELL: string;
 		TERM: string;
 		TMPDIR: string;
+		HOMEBREW_REPOSITORY: string;
 		TERM_PROGRAM_VERSION: string;
 		MallocNanoZone: string;
 		ORIGINAL_XDG_CURRENT_DESKTOP: string;
@@ -153,10 +160,13 @@ declare module '$env/dynamic/private' {
 		HOME: string;
 		SHLVL: string;
 		VSCODE_GIT_ASKPASS_MAIN: string;
+		HOMEBREW_PREFIX: string;
 		LOGNAME: string;
 		npm_lifecycle_script: string;
 		VSCODE_GIT_IPC_HANDLE: string;
 		npm_config_user_agent: string;
+		HOMEBREW_CELLAR: string;
+		INFOPATH: string;
 		GIT_ASKPASS: string;
 		VSCODE_GIT_ASKPASS_NODE: string;
 		COLORTERM: string;

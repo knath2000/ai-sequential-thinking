@@ -161,6 +161,10 @@ class DashboardMetrics(BaseModel):
     active_sessions: int
     total_cost_today: float
     top_errors: List[str]
+    # New fields for charts
+    cost_history: List[Dict[str, Any]]
+    performance_metrics_data: List[Dict[str, Any]]
+    usage_distribution_data: List[Dict[str, Any]]
 
 
 class AdminUserBase(BaseModel):

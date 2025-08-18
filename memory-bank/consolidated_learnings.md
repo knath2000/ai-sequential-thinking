@@ -25,6 +25,7 @@
 - When external gateway calls must be isolated, route requests to Modal with `correlation_id`, perform the gateway call there, then post results back to the server webhook.
 - Return `{ status: "accepted", correlation_id, poll }` immediately; allow polling and/or synchronization with a capped timeout.
 - Sign webhook callbacks with HMAC and implement retries with backoff.
+- Ensure Modal worker passes `RAILWAY_ANALYTICS_URL` and `RAILWAY_ANALYTICS_KEY` in the payload for cost reporting.
 
 **Deployment-time route verification**
 - Provide a `/routes` debug endpoint during active development to verify route registration quickly in deployed environments; remove or guard it for production.
@@ -42,6 +43,7 @@
 - In dev, set Vite proxy `/api` → production host and default frontend API base to `/api` to avoid CORS.
 - Guard static mounts with absolute paths and skip if missing to prevent startup crashes.
 - Add simple REQ/RES logging middleware in FastAPI during active dev to trace status codes in Railway.
+- Implement a dedicated `/internal/modal-cost-callback` endpoint on Railway to receive and log cost data from Modal.
 
 **Auth & Ingestion:**
 - Support analytics ingestion with either `Authorization: Bearer <token>` or `X-Analytics-Ingest-Key: <secret>`; make bearer optional when ingest key matches.

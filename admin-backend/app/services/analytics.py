@@ -341,7 +341,31 @@ class AnalyticsService:
         ).group_by(ErrorLog.error_type).order_by(desc("count")).limit(3)
         
         top_errors = [row.error_type for row in top_errors_query.all()]
-        
+
+        # Cost history (last 24 hours)
+        cost_history = self.db.query(
+            CostTracking.timestamp,
+            func.sum(CostTracking.cost_usd).label("cost_usd")
+        ).filter(
+            CostTracking.timestamp >= one_hour_ago
+        ).group_by(CostTracking.timestamp).order_by(CostTracking.timestamp).all()
+
+        # Performance metrics data (last 24 hours)
+        performance_metrics_data = self.db.query(
+            PerformanceMetric.timestamp,
+            func.avg(PerformanceMetric.response_time_ms).label("avg_response_time_ms")
+        ).filter(
+            PerformanceMetric.timestamp >= one_hour_ago
+        ).group_by(PerformanceMetric.timestamp).order_by(PerformanceMetric.timestamp).all()
+
+        # Usage distribution data (last 24 hours)
+        usage_distribution_data = self.db.query(
+            UsageEvent.event_type,
+            func.count(UsageEvent.id).label("count")
+        ).filter(
+            UsageEvent.timestamp >= one_hour_ago
+        ).group_by(UsageEvent.event_type).order_by(desc("count")).all()
+
         return DashboardMetrics(
             timestamp=now,
             requests_per_minute=requests_per_minute,
@@ -349,7 +373,10 @@ class AnalyticsService:
             success_rate=round(success_rate, 2),
             active_sessions=active_sessions,
             total_cost_today=round(float(total_cost_today), 2),
-            top_errors=top_errors
+            top_errors=top_errors,
+            cost_history=cost_history,
+            performance_metrics_data=performance_metrics_data,
+            usage_distribution_data=usage_distribution_data
         )
 
     def get_session_detail(self, session_id: str) -> Optional[Dict[str, Any]]:

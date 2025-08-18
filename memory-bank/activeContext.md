@@ -68,6 +68,7 @@
 - **Response Quality**: Rich, detailed, comprehensive output with progress tracking
 - **Admin Backend**: Complete FastAPI admin backend for analytics and monitoring
 - **Data Collection**: Comprehensive analytics tracking integrated into MCP server
+- **Cost Tracking**: Full end-to-end cost tracking implemented and verified, with Modal reporting costs to Railway analytics.
 
 ### Decisions & Considerations
 - Keep state in-memory initially; add persistence later if needed

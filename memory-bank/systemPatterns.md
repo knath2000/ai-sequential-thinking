@@ -39,6 +39,7 @@ Sequence:
 - `.env` for LANGDB and Perplexity URLs/keys
 - No secrets in client-visible responses
  - Increase default diagnostic timeout to 30s to accommodate slower upstreams
+ - Ensure `RAILWAY_ANALYTICS_URL` and `RAILWAY_ANALYTICS_KEY` are set in Railway environment and passed to Modal worker as secrets.
 
 ### Extensibility
 - Add new tools via `src/mcpTools/*`

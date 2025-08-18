@@ -1,20 +1,54 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "./styles/liquid-glass.css";
 
-:root {
-  --glass-bg: rgba(255, 255, 255, 0.15);
-  --glass-border: rgba(255, 255, 255, 0.25);
-  --glass-blur: 16px;
-  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.20);
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
 }
 
-.glass {
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
+/* Global styles for dark theme */
+:global(html) {
+  box-sizing: border-box;
+}
+
+:global(*),
+:global(*::before),
+:global(*::after) {
+  box-sizing: inherit;
+}
+
+:global(body) {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+:global(img),
+:global(picture),
+:global(video),
+:global(canvas),
+:global(svg) {
+  display: block;
+  max-width: 100%;
+}
+
+:global(input),
+:global(button),
+:global(textarea),
+:global(select) {
+  font: inherit;
+}
+
+:global(p, h1, h2, h3, h4, h5, h6) {
+  overflow-wrap: break-word;
+}
+
+:global(#root) {
+  isolation: isolate;
 }
 
 

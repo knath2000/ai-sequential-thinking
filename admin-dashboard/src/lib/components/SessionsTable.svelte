@@ -10,6 +10,12 @@
   let loading = true;
   let selectedSession: SessionResponse | null = null;
   let showModal = false;
+
+  function formatSessionId(id: any): string {
+    if (typeof id === 'string') return id.slice(0, 8);
+    if (typeof id === 'number') return String(id).slice(0, 8);
+    return String(id || 'unknown').slice(0, 8);
+  }
   
   onMount(async () => {
     try {
@@ -60,7 +66,7 @@
           tabindex="0"
         >
           <div class="table-cell">
-            <span class="session-id">{session.id.slice(0, 8)}...</span>
+            <span class="session-id">{formatSessionId(session.id)}...</span>
           </div>
           <div class="table-cell">
             {new Date(session.created_at).toLocaleString()}

@@ -4,7 +4,7 @@
 
   export let pollMs = 3000;
   export let max = 200;
-  export let level: string | undefined;
+  export let level: string = ''; // Add default empty string
   export let enhanced: boolean = false; // Flag to indicate enhanced styling
 
   type LogRow = { ts: string; level: string; name: string; message: string };

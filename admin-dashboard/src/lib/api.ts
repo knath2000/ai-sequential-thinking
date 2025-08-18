@@ -16,10 +16,43 @@ export async function fetchJson<T>(path: string, init: RequestInit = {}): Promis
   return resp.json() as Promise<T>
 }
 
-export function connectSSE(path: string, onMessage: (ev: MessageEvent) => void): EventSource {
-  const es = new EventSource(`${API_BASE_URL}${path}`, { withCredentials: true } as any)
-  es.onmessage = onMessage
-  return es
+export function connectSSE(
+  path: string,
+  onMessage: (ev: MessageEvent) => void,
+  maxRetries: number = 3
+): EventSource {
+  let retryCount = 0;
+  
+  function createConnection(): EventSource {
+    const es = new EventSource(`${API_BASE_URL}${path}`, { 
+      withCredentials: true 
+    } as any);
+    
+    es.onmessage = onMessage;
+    
+    es.onerror = (error) => {
+      console.warn(`SSE connection error (attempt ${retryCount + 1}):`, error);
+      
+      if (retryCount < maxRetries) {
+        retryCount++;
+        setTimeout(() => {
+          es.close();
+          return createConnection();
+        }, 1000 * retryCount); // Exponential backoff
+      } else {
+        console.error('SSE connection failed after max retries');
+      }
+    };
+    
+    es.onopen = () => {
+      retryCount = 0; // Reset on successful connection
+      console.log('SSE connection established');
+    };
+    
+    return es;
+  }
+  
+  return createConnection();
 }
 
 

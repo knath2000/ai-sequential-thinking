@@ -48,7 +48,8 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     docs_url=f"{settings.API_V1_STR}/docs",
     redoc_url=f"{settings.API_V1_STR}/redoc",
-    lifespan=lifespan
+    lifespan=lifespan,
+    debug=True # Enable debug mode for better error visibility
 )
 
 # Set up CORS
@@ -61,14 +62,28 @@ app.add_middleware(
 )
 
 
-# Global exception handler to ensure JSON error responses and allow CORSMiddleware to add headers
+# Global exception handler to ensure JSON error responses and manually add CORS headers
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     import traceback
-    logger.error("Unhandled exception: %s", traceback.format_exc())
-    # Return JSON response; CORSMiddleware will append CORS headers
     from fastapi.responses import JSONResponse
-    return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})
+
+    logger.error("Unhandled exception: %s", traceback.format_exc())
+    
+    response = JSONResponse(
+        status_code=500, 
+        content={"detail": "Internal Server Error"}
+    )
+
+    # Manually add CORS headers for error responses
+    origin = request.headers.get("origin")
+    if origin and origin in settings.BACKEND_CORS_ORIGINS:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Methods"] = "*"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+    
+    return response
 
 # Attach in-memory log handler for dashboard retrieval
 _inmem_handler = InMemoryLogHandler(capacity=2000)

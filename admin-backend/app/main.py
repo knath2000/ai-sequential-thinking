@@ -24,7 +24,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-# Define exception handling middleware first
+# Define exception handling middleware function first
+# This middleware will catch exceptions and apply CORS headers manually
 @app.middleware("http")
 async def catch_exceptions_middleware(request: Request, call_next):
     try:
@@ -93,7 +94,7 @@ app = FastAPI(
 )
 
 # Order of middleware is important: Exception handler first, then CORS
-# app.middleware("http")(global_exception_handler_middleware) # Custom exception handler middleware - REMOVED
+app.middleware("http")(catch_exceptions_middleware) # Custom exception handler middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.BACKEND_CORS_ORIGINS,

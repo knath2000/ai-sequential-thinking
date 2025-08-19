@@ -4,9 +4,9 @@ FastAPI Admin Backend for ai-sequential-thinking MCP Server
 import logging
 import traceback
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse # Import JSONResponse
+from fastapi.responses import JSONResponse, Response # Import Response
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from .core.config import settings
@@ -23,21 +23,36 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Define global_exception_handler_middleware function before using it
-async def global_exception_handler_middleware(request: Request, call_next):
+
+# Define exception handling middleware first
+@app.middleware("http")
+async def catch_exceptions_middleware(request: Request, call_next):
     try:
-        response = await call_next(request)
+        return await call_next(request)
+    except HTTPException as http_exc:
+        # Handle FastAPI HTTP exceptions
+        response = JSONResponse(
+            status_code=http_exc.status_code,
+            content={"detail": http_exc.detail}
+        )
+        # Manually add CORS headers
+        origin = request.headers.get('origin')
+        if origin and origin in settings.BACKEND_CORS_ORIGINS:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Credentials"] = "true"
         return response
-    except Exception as exc:
-        logger.error("Unhandled exception: %s", traceback.format_exc())
+    except Exception as e:
+        # Handle all other exceptions
+        logger.error(f"Unhandled exception: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
         
         response = JSONResponse(
-            status_code=500, 
-            content={"detail": "Internal Server Error"}
+            status_code=500,
+            content={"detail": "Internal server error"}
         )
-
+        
         # Manually add CORS headers for error responses
-        origin = request.headers.get("origin")
+        origin = request.headers.get('origin')
         if origin and origin in settings.BACKEND_CORS_ORIGINS:
             response.headers["Access-Control-Allow-Origin"] = origin
             response.headers["Access-Control-Allow-Credentials"] = "true"
@@ -78,7 +93,7 @@ app = FastAPI(
 )
 
 # Order of middleware is important: Exception handler first, then CORS
-app.middleware("http")(global_exception_handler_middleware) # Custom exception handler middleware
+# app.middleware("http")(global_exception_handler_middleware) # Custom exception handler middleware - REMOVED
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.BACKEND_CORS_ORIGINS,

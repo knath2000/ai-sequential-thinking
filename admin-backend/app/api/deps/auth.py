@@ -1,7 +1,7 @@
 """
 Authentication dependencies for FastAPI routes
 """
-from typing import Optional
+from typing import Optional, Union
 from fastapi import Depends, HTTPException, status, Header
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
@@ -15,7 +15,7 @@ security = HTTPBearer(auto_error=False)
 
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials | None = Depends(security),
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
     db: Session = Depends(get_db)
 ) -> AdminUserResponse:
     """Get the current authenticated user"""
@@ -60,8 +60,8 @@ async def get_current_active_user(
 
 
 async def get_ingest_or_user(
-    x_analytics_ingest_key: str | None = Header(default=None, alias="X-Analytics-Ingest-Key"),
-    credentials: HTTPAuthorizationCredentials | None = Depends(security),
+    x_analytics_ingest_key: Optional[str] = Header(default=None, alias="X-Analytics-Ingest-Key"),
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
     db: Session = Depends(get_db)
 ):
     """Allow either a special ingest key header or a valid bearer user."""

@@ -24,7 +24,18 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-# Define exception handling middleware function first
+# Create FastAPI application instance early
+app = FastAPI(
+    title=settings.PROJECT_NAME,
+    version=settings.PROJECT_VERSION,
+    description="Administrative backend for ai-sequential-thinking MCP Server",
+    openapi_url=f"{settings.API_V1_STR}/openapi.json",
+    docs_url=f"{settings.API_V1_STR}/docs",
+    redoc_url=f"{settings.API_V1_STR}/redoc",
+    debug=True # Enable debug mode for better error visibility
+)
+
+# Define exception handling middleware function first (after app is defined)
 # This middleware will catch exceptions and apply CORS headers manually
 @app.middleware("http")
 async def catch_exceptions_middleware(request: Request, call_next):
@@ -81,20 +92,8 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down MCP Admin Backend...")
 
 
-# Create FastAPI application
-app = FastAPI(
-    title=settings.PROJECT_NAME,
-    version=settings.PROJECT_VERSION,
-    description="Administrative backend for ai-sequential-thinking MCP Server",
-    openapi_url=f"{settings.API_V1_STR}/openapi.json",
-    docs_url=f"{settings.API_V1_STR}/docs",
-    redoc_url=f"{settings.API_V1_STR}/redoc",
-    lifespan=lifespan,
-    debug=True # Enable debug mode for better error visibility
-)
-
 # Order of middleware is important: Exception handler first, then CORS
-app.middleware("http")(catch_exceptions_middleware) # Custom exception handler middleware
+# app.middleware("http")(catch_exceptions_middleware) # Custom exception handler middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.BACKEND_CORS_ORIGINS,

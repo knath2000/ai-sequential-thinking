@@ -343,28 +343,34 @@ class AnalyticsService:
         top_errors = [row.error_type for row in top_errors_query.all()]
 
         # Cost history (last 24 hours)
-        cost_history = self.db.query(
-            CostTracking.timestamp,
-            func.sum(CostTracking.cost_usd).label("cost_usd")
-        ).filter(
-            CostTracking.timestamp >= one_hour_ago
-        ).group_by(CostTracking.timestamp).order_by(CostTracking.timestamp).all()
+        cost_history = [
+            {"date": c.timestamp.isoformat(), "cost": round(float(c.cost_usd or 0), 2)}
+            for c in self.db.query(CostTracking.timestamp, func.sum(CostTracking.cost_usd).label("cost_usd"))
+            .filter(CostTracking.timestamp >= today)
+            .group_by(CostTracking.timestamp)
+            .order_by(CostTracking.timestamp)
+            .all()
+        ]
 
         # Performance metrics data (last 24 hours)
-        performance_metrics_data = self.db.query(
-            PerformanceMetric.timestamp,
-            func.avg(PerformanceMetric.response_time_ms).label("avg_response_time_ms")
-        ).filter(
-            PerformanceMetric.timestamp >= one_hour_ago
-        ).group_by(PerformanceMetric.timestamp).order_by(PerformanceMetric.timestamp).all()
+        # Filter for 'average_response_time' specifically, then get metric_value
+        performance_metrics_data = [
+            {"name": p.metric_name, "value": round(float(p.metric_value), 2)}
+            for p in self.db.query(PerformanceMetric.metric_name, PerformanceMetric.metric_value)
+            .filter(PerformanceMetric.timestamp >= today, PerformanceMetric.metric_name == "average_response_time")
+            .order_by(PerformanceMetric.timestamp)
+            .all()
+        ]
 
         # Usage distribution data (last 24 hours)
-        usage_distribution_data = self.db.query(
-            UsageEvent.event_type,
-            func.count(UsageEvent.id).label("count")
-        ).filter(
-            UsageEvent.timestamp >= one_hour_ago
-        ).group_by(UsageEvent.event_type).order_by(desc("count")).all()
+        usage_distribution_data = [
+            {"name": u.event_type, "count": u.count}
+            for u in self.db.query(UsageEvent.event_type, func.count(UsageEvent.id).label("count"))
+            .filter(UsageEvent.timestamp >= today)
+            .group_by(UsageEvent.event_type)
+            .order_by(desc("count"))
+            .all()
+        ]
 
         return DashboardMetrics(
             timestamp=now,

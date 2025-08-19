@@ -2,9 +2,11 @@
 FastAPI Admin Backend for ai-sequential-thinking MCP Server
 """
 import logging
+import traceback
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse # Import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from .core.config import settings
@@ -20,6 +22,29 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
+# Define global_exception_handler_middleware function before using it
+async def global_exception_handler_middleware(request: Request, call_next):
+    try:
+        response = await call_next(request)
+        return response
+    except Exception as exc:
+        logger.error("Unhandled exception: %s", traceback.format_exc())
+        
+        response = JSONResponse(
+            status_code=500, 
+            content={"detail": "Internal Server Error"}
+        )
+
+        # Manually add CORS headers for error responses
+        origin = request.headers.get("origin")
+        if origin and origin in settings.BACKEND_CORS_ORIGINS:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            response.headers["Access-Control-Allow-Methods"] = "*"
+            response.headers["Access-Control-Allow-Headers"] = "*"
+        
+        return response
 
 
 @asynccontextmanager
@@ -62,31 +87,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Define global_exception_handler_middleware function before using it
-async def global_exception_handler_middleware(request: Request, call_next):
-    try:
-        response = await call_next(request)
-        return response
-    except Exception as exc:
-        import traceback
-        from fastapi.responses import JSONResponse
-
-        logger.error("Unhandled exception: %s", traceback.format_exc())
-        
-        response = JSONResponse(
-            status_code=500, 
-            content={"detail": "Internal Server Error"}
-        )
-
-        # Manually add CORS headers for error responses
-        origin = request.headers.get("origin")
-        if origin and origin in settings.BACKEND_CORS_ORIGINS:
-            response.headers["Access-Control-Allow-Origin"] = origin
-            response.headers["Access-Control-Allow-Credentials"] = "true"
-            response.headers["Access-Control-Allow-Methods"] = "*"
-            response.headers["Access-Control-Allow-Headers"] = "*"
-        
-        return response
 
 # Attach in-memory log handler for dashboard retrieval
 _inmem_handler = InMemoryLogHandler(capacity=2000)

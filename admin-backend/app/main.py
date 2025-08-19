@@ -52,7 +52,8 @@ app = FastAPI(
     debug=True # Enable debug mode for better error visibility
 )
 
-# Set up CORS
+# Order of middleware is important: Exception handler first, then CORS
+app.middleware("http")(global_exception_handler_middleware) # Custom exception handler middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.BACKEND_CORS_ORIGINS,
@@ -61,29 +62,31 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Define global_exception_handler_middleware function before using it
+async def global_exception_handler_middleware(request: Request, call_next):
+    try:
+        response = await call_next(request)
+        return response
+    except Exception as exc:
+        import traceback
+        from fastapi.responses import JSONResponse
 
-# Global exception handler to ensure JSON error responses and manually add CORS headers
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    import traceback
-    from fastapi.responses import JSONResponse
+        logger.error("Unhandled exception: %s", traceback.format_exc())
+        
+        response = JSONResponse(
+            status_code=500, 
+            content={"detail": "Internal Server Error"}
+        )
 
-    logger.error("Unhandled exception: %s", traceback.format_exc())
-    
-    response = JSONResponse(
-        status_code=500, 
-        content={"detail": "Internal Server Error"}
-    )
-
-    # Manually add CORS headers for error responses
-    origin = request.headers.get("origin")
-    if origin and origin in settings.BACKEND_CORS_ORIGINS:
-        response.headers["Access-Control-Allow-Origin"] = origin
-        response.headers["Access-Control-Allow-Credentials"] = "true"
-        response.headers["Access-Control-Allow-Methods"] = "*"
-        response.headers["Access-Control-Allow-Headers"] = "*"
-    
-    return response
+        # Manually add CORS headers for error responses
+        origin = request.headers.get("origin")
+        if origin and origin in settings.BACKEND_CORS_ORIGINS:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            response.headers["Access-Control-Allow-Methods"] = "*"
+            response.headers["Access-Control-Allow-Headers"] = "*"
+        
+        return response
 
 # Attach in-memory log handler for dashboard retrieval
 _inmem_handler = InMemoryLogHandler(capacity=2000)

@@ -44,8 +44,35 @@
 - Guard static mounts with absolute paths and skip if missing to prevent startup crashes.
 - Add simple REQ/RES logging middleware in FastAPI during active dev to trace status codes in Railway.
 - Implement a dedicated `/internal/modal-cost-callback` endpoint on Railway to receive and log cost data from Modal.
+- Implemented `DashboardMetrics` schema with `cost_history`, `performance_metrics_data`, and `usage_distribution_data` for chart visualization.
+- Enhanced `AnalyticsService` to provide these new data points for dashboard metrics.
 
-**Auth & Ingestion:**
+## Backend Exception Handling
+**Pattern: Global Exception Handler with CORS**: 
+- Implement a global exception handler in FastAPI (`app.exception_handler(Exception)`) to catch all unhandled exceptions.
+- Manually add `Access-Control-Allow-Origin`, `Access-Control-Allow-Credentials`, `Access-Control-Allow-Methods`, and `Access-Control-Allow-Headers` to the `JSONResponse` in the exception handler to ensure CORS headers are present even for 500 errors.
+- Set `debug=True` in `FastAPI` app initialization for better error visibility during development.
+
+## Frontend Build & Runtime Fixes
+**Pattern: SvelteKit Warning Suppression**: 
+- Move `warningFilter` to the root level of `svelte.config.js` and update warning codes to use underscores (e.g., `a11y_click_events_have_key_events`).
+- Provide default values for optional props in Svelte components to prevent warnings (e.g., `export let level: string = '';`).
+- Explicitly declare SvelteKit routing props (`export let data = {}; export let form = null;`) in `+layout.svelte` and `+page.svelte` to prevent "unknown prop" warnings.
+
+**Pattern: Robust API Connection**: 
+- Enhance `connectSSE` and `fetchJson` functions in `src/lib/api.ts` with retry logic and comprehensive error handling, including exponential backoff, to improve stability for connections to Railway backend.
+
+**Pattern: Chart.js Data Handling**: 
+- Implement defensive programming in Chart.js components (`GlassChart.svelte`, `CostAnalyticsChart.svelte`) by adding null checks (`if (!data || !data.datasets) return;`) before chart initialization.
+- Include reactive updates (`$: if (chartInstance && data && data.datasets) { chartInstance.update(); }`) to ensure charts react to data changes.
+- Add loading states with shimmer animations to improve user experience during data fetching.
+
+**Pattern: Vite & SvelteKit Optimization**: 
+- Configure `vite.config.ts` to include `hmr: { overlay: false }`, `optimizeDeps: { exclude: ['@sveltejs/kit', 'svelte'] }`, `define: { global: 'globalThis' }`, `build: { sourcemap: false }`, and `logLevel: 'warn'` to resolve HMR issues, suppress warnings, and optimize the build process.
+- Add a data URI favicon in `src/app.html` to prevent 404 errors for favicon requests.
+- Implement explicit CSS for heading elements (`h1`, `h2`, `h3`) in `src/styles.css` to address accessibility warnings and ensure consistent typography.
+
+## Auth & Ingestion:**
 - Support analytics ingestion with either `Authorization: Bearer <token>` or `X-Analytics-Ingest-Key: <secret>`; make bearer optional when ingest key matches.
 - Tool-side analytics client should enable automatically: default backend URL to production and send either bearer or ingest key header.
 

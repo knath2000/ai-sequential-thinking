@@ -5,6 +5,8 @@ export interface ProviderConfig {
   model: string
 }
 
+import logger from './utils/logger';
+
 export function getProviderConfig(): ProviderConfig {
   const provider = (process.env.AI_PROVIDER || 'claude').toLowerCase() as Provider
   // Choose a reasonable default model label per provider (placeholder)
@@ -41,7 +43,10 @@ export async function generateThinkingSteps(query: string): Promise<{ steps: Thi
       const steps = res.steps && res.steps.length > 0 ? res.steps : base
       return { steps, provider, model, source: 'langdb' }
     }
-  } catch {}
+    logger.warn({ reason: res.error ?? 'unknown' }, 'LangDB returned non-ok result; falling back to stub steps');
+  } catch (e: any) {
+    logger.warn({ err: e }, 'LangDB call failed; falling back to stub steps');
+  }
 
   void query
   return { steps: base, provider, model, source: 'stub' }

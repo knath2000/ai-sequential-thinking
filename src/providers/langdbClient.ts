@@ -1,6 +1,7 @@
 import axios, { AxiosRequestConfig } from 'axios'
 import { getLangDBConfig, getEffectiveModel } from '../config'
 import { analyticsClient } from '../services/analyticsClient'
+import logger from '../utils/logger'
 
 export interface LangdbStep {
   step_description: string
@@ -150,7 +151,7 @@ export async function callLangdbChatForSteps(
     body.temperature = 0.2;
   }
 
-  console.log(`[LangDB] tokens → input:${inputTokens} max_output:${safeMaxTokens} timeout:${timeoutMs}ms`);
+  logger.info({ inputTokens, safeMaxTokens, timeoutMs }, '[LangDB] tokens estimation and timeout');
 
   try {
     const res = await fetch(url, {
@@ -165,6 +166,7 @@ export async function callLangdbChatForSteps(
 
     const data = await res.json();
     if (!res.ok) {
+      logger.error({ status: res.status, data }, 'LangDB returned non-2xx status');
       return { ok: false, error: `LangDB HTTP ${res.status}`, raw: data };
     }
 
@@ -180,30 +182,25 @@ export async function callLangdbChatForSteps(
           const costUsd = Number(((totalTokens / 1000) * pricePer1K).toFixed(6));
           
           // Add debug logging
-          console.log('[LangDB] Cost calculation:', {
-            inputTokens, 
-            outputTokens, 
-            totalTokens, 
-            pricePer1K, 
-            costUsd,
-            willLogCost: costUsd !== undefined 
-          });
+          logger.debug({ inputTokens, outputTokens, totalTokens, pricePer1K, costUsd }, '[LangDB] Cost calculation');
           
           if (costUsd !== undefined) {
             // Fire-and-forget analytics logging
             analyticsClient.logLangDBCost(opts?.sessionId || 'unknown', getEffectiveModel(model), totalTokens, costUsd, opts?.requestId, { inputTokens, outputTokens });
-            console.log('[LangDB] Cost logged successfully');
+            logger.info({ correlation: opts?.requestId, costUsd }, '[LangDB] Cost logged successfully');
           } else {
-            console.warn('[LangDB] Cost not logged - costUsd is undefined');
+            logger.warn('[LangDB] Cost not logged - costUsd is undefined');
           }
         } catch (e) {
-          console.warn('[LangDB] failed to log cost', e);
+          logger.warn({ err: e }, '[LangDB] failed to log cost');
         }
         return { ok: true, steps, raw: data };
       }
     }
+    logger.warn({ data }, 'LangDB response invalid');
     return { ok: false, error: 'LangDB response invalid', raw: data };
   } catch (e: any) {
+    logger.error({ err: e }, 'LangDB fetch failed');
     return { ok: false, error: e.message || 'LangDB fetch failed' };
   }
 }

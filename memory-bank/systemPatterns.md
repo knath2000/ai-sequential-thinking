@@ -54,3 +54,13 @@ Sequence:
 **Layout & Components**: Transformed the dashboard layout with a new grid system and enhanced data table components (SessionsTable, RecentLogs) with glass aesthetics and improved interactivity.
 
 **Performance & Accessibility**: Optimized backdrop-filter performance, added `prefers-reduced-motion` handling, implemented explicit color contrast rules, and ensured WCAG compliance for a responsive and accessible user experience.
+
+## Backend Application Startup & Stability
+**Pattern: `NameError` and `TypeError` Resolution**: 
+- Ensured `FastAPI` app instance (`app = FastAPI(...)`) is created before any `@app.middleware` decorators or `app`-dependent imports to prevent `NameError: name 'app' is not defined`.
+- Replaced Python 3.9 incompatible type hints (`X | None`) with `Optional[X]` to resolve `TypeError` during startup.
+- Restructured middleware registration to ensure proper order (`catch_exceptions_middleware` before `CORSMiddleware`).
+
+**Pattern: `AttributeError` Resolution**: 
+- Modified `AnalyticsService` to correctly query `PerformanceMetric.metric_value` and filter by `metric_name` (e.g., "average_response_time") instead of direct attribute access to `response_time_ms`.
+- Refined data aggregation for `cost_history`, `performance_metrics_data`, and `usage_distribution_data` to ensure accurate chart data from the database.

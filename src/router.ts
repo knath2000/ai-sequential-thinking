@@ -9,6 +9,7 @@ import { callLangdbChatForSteps } from './providers/langdbClient';
 import { getEffectiveModel } from './config';
 import { analyticsClient } from './services/analyticsClient';
 import { createErrorLogger } from './middleware/errorHandler';
+import logger from './utils/logger';
 
 export function setupRoutes(app: FastifyInstance) {
   const logError = createErrorLogger(analyticsClient);
@@ -97,11 +98,11 @@ export function setupRoutes(app: FastifyInstance) {
   // Add raw body logging
   const requestBody = req.body as DiagLangdbBody;
 
-  console.log('Raw request body:', requestBody);
+  logger.debug({ body: requestBody }, 'Raw request body for /diag/langdb');
 
   // Validate incoming payload
   if (!requestBody || typeof requestBody !== 'object') {
-    console.error('Invalid or empty JSON payload received');
+    logger.error('Invalid or empty JSON payload received');
     return reply.status(400).send({
       ok: false,
       error: 'Invalid or empty JSON payload received'
@@ -156,8 +157,7 @@ export function setupRoutes(app: FastifyInstance) {
       };
     }
   } catch (e: any) {
-    console.error('LangDB processing error:', e);
-    console.error('Received payload:', JSON.stringify(requestBody, null, 2));
+    logger.error({ err: e, requestBodyPreview: JSON.stringify(requestBody).slice(0,200) }, 'LangDB processing error');
 
     return reply.status(500).send({
       ok: false,
@@ -303,11 +303,7 @@ export function setupRoutes(app: FastifyInstance) {
         // Always use Modal for LangDB requests by default (since LANGDB=true is set in mcp.json)
         // Can be overridden by setting use_langdb=false explicitly
         const shouldUseLangdb = args?.use_langdb !== false; // Default to true unless explicitly disabled
-        console.log('[DEBUG] Modal offload check:', { 
-          argsUseLangdb: args?.use_langdb, 
-          shouldUseLangdb,
-          note: 'Always using Modal by default (can disable with use_langdb=false)'
-        });
+        logger.debug({ argsUseLangdb: args?.use_langdb, shouldUseLangdb }, 'Modal offload check (default on)');
         if (shouldUseLangdb) {
           try {
             const correlationId = crypto.randomUUID();
@@ -323,10 +319,10 @@ export function setupRoutes(app: FastifyInstance) {
               model: modalModel,
             };
             // Debug log to aid diagnosing incorrect endpoints/models in deployed logs
-            console.info('[router] submitting Modal job', { derivedLangdbUrl: derivedLangdbUrl?.slice(0, 120), model: modalPayload.model });
+            logger.info({ derivedLangdbUrl: derivedLangdbUrl?.slice(0, 120), model: modalPayload.model }, '[router] submitting Modal job');
 
             const syncWait = Number(process.env.MODAL_SYNC_TIMEOUT_MS || 120000);
-            console.info('[router] submitModalJob sync wait ms', { correlationId, syncWait });
+            logger.info({ correlationId, syncWait }, '[router] submitModalJob sync wait ms');
 
             // Register waiter for webhook callback
             const resultPromise: Promise<unknown> = new Promise((resolve, reject) => {
@@ -348,7 +344,7 @@ export function setupRoutes(app: FastifyInstance) {
                 try {
                   const finalResult = await Promise.race([resultPromise, timed]);
                   // webhook returned result within sync window
-                  console.info('[router] modal job completed within sync window', { correlationId, resultPreview: JSON.stringify(finalResult).slice(0, 200) });
+                  logger.info({ correlationId, resultPreview: JSON.stringify(finalResult).slice(0, 200) }, '[router] modal job completed within sync window');
                   
                   // Process the LangDB result from Modal and build enhanced response
                   const history = getThoughts(session);
@@ -366,9 +362,9 @@ export function setupRoutes(app: FastifyInstance) {
                         processedSteps = finalResult;
                       }
                     }
-                    console.info('[router] processed Modal result steps', { stepCount: processedSteps.length, hasSteps: processedSteps.length > 0 });
+                    logger.info({ stepCount: processedSteps.length, hasSteps: processedSteps.length > 0 }, '[router] processed Modal result steps');
                   } catch (e) {
-                    console.warn('[router] error processing Modal result steps', e);
+                    logger.warn({ err: e }, '[router] error processing Modal result steps');
                     logError(e as Error, { type: 'modal_result_processing', correlationId, session });
                   }
 
@@ -421,7 +417,7 @@ export function setupRoutes(app: FastifyInstance) {
                   return sendResult({ content: [{ type: 'text', text: JSON.stringify(out) }] });
                 } catch (e) {
                   // timed out waiting for webhook – return accepted info as content (Cursor-friendly)
-                  console.info('[router] modal job sync wait timed out, returning accepted', { correlationId });
+                  logger.warn({ correlationId }, '[router] modal job sync wait timed out, returning accepted');
                   logError(e as Error, { type: 'modal_sync_timeout', correlationId, session, syncWait });
                   
                   // Log timeout/accepted response
@@ -469,7 +465,7 @@ export function setupRoutes(app: FastifyInstance) {
                 const w = jobWaiters.get(correlationId);
                 // we avoid calling reject here to let webhook handle late arrivals
                 jobWaiters.delete(correlationId);
-                console.info('[router] cleaned up waiter after sync window', { correlationId });
+                logger.info({ correlationId }, '[router] cleaned up waiter after sync window');
               }
             }
           } catch (e) {
@@ -518,7 +514,7 @@ export function setupRoutes(app: FastifyInstance) {
             
             return sendResult({ content: [{ type: 'text', text: JSON.stringify(out) }] });
           } catch (e) {
-            console.warn('[router] recommender error', e);
+            logger.warn({ err: e }, '[router] recommender error');
             logError(e as Error, { type: 'recommender_error', session, toolName });
             // fallback to minimal shape
           }
@@ -560,7 +556,7 @@ export function setupRoutes(app: FastifyInstance) {
 
       return sendError(-32601, 'Method not found');
     } catch (e: any) {
-      console.error('[router] unhandled JSON-RPC error', e);
+      logger.error({ err: e }, '[router] unhandled JSON-RPC error');
       logError(e, { requestPath: '/', requestMethod: 'POST', unhandled: true });
       // Ensure a valid JSON-RPC error response even for unhandled exceptions
       return reply.send({ jsonrpc: '2.0', id: body?.id, error: { code: -32000, message: e.message || 'Internal server error', data: { stack: process.env.NODE_ENV === 'development' ? e.stack : undefined } } });
@@ -611,7 +607,7 @@ export function setupRoutes(app: FastifyInstance) {
 
       return { ok: true, entry };
     } catch (e: any) {
-      console.error('[process_thought] error', e);
+      logger.error({ err: e }, '[process_thought] error');
       logError(e, { requestPath: '/process_thought', requestMethod: 'POST', session });
       return reply.code(500).send({ error: { code: 'INTERNAL_SERVER_ERROR', message: e.message || 'Internal Server Error' } });
     }
@@ -623,7 +619,7 @@ export function setupRoutes(app: FastifyInstance) {
       const summary = generateSummary(session);
       return { summary };
     } catch (e: any) {
-      console.error('[generate_summary] error', e);
+      logger.error({ err: e }, '[generate_summary] error');
       logError(e, { requestPath: '/generate_summary', requestMethod: 'GET', session });
       return reply.code(500).send({ error: { code: 'INTERNAL_SERVER_ERROR', message: e.message || 'Internal Server Error' } });
     }
@@ -635,7 +631,7 @@ export function setupRoutes(app: FastifyInstance) {
       clearHistory(session);
       return { ok: true };
     } catch (e: any) {
-      console.error('[clear_history] error', e);
+      logger.error({ err: e }, '[clear_history] error');
       logError(e, { requestPath: '/clear_history', requestMethod: 'POST', session });
       return { ok: false, error: e.message || 'Internal Server Error' };
     }
@@ -672,7 +668,7 @@ export function setupRoutes(app: FastifyInstance) {
       const entry = addThought(args as ThoughtInput, session);
       return { ok: true, result: { entry } };
     } catch (e: any) {
-      console.error('[run] error', e);
+      logger.error({ err: e }, '[run] error');
       logError(e, { requestPath: '/run', requestMethod: 'POST', session });
       return reply.code(500).send({ error: { code: 'INTERNAL_SERVER_ERROR', message: e.message || 'Internal Server Error' } });
     }
@@ -696,7 +692,7 @@ export function setupRoutes(app: FastifyInstance) {
       const result = await submitModalJob({ task, payload, callbackPath: '/webhook/modal' });
       return { ok: true, job: result };
     } catch (e: any) {
-      console.error('[modal/submit] error', e);
+      logger.error({ err: e }, '[modal/submit] error');
       logError(e, { requestPath: '/modal/submit', requestMethod: 'POST', task, payload });
       return reply.code(500).send({ error: { code: 'INTERNAL_SERVER_ERROR', message: e.message || 'Internal Server Error' } });
     }
@@ -710,10 +706,10 @@ export function setupRoutes(app: FastifyInstance) {
     const body = (req.body as any) || {};
     const raw = JSON.stringify(body || {});
     const hmac = crypto.createHmac('sha256', secret).update(raw).digest('hex');
-    console.info('[webhook] Received callback', { path: '/webhook/modal', signature: !!signature });
+    logger.info({ path: '/webhook/modal', signature: !!signature }, '[webhook] Received callback');
     
     if (secret && signature !== hmac) {
-      console.warn('[webhook] Invalid HMAC signature');
+      logger.warn('[webhook] Invalid HMAC signature');
       logError(new Error('Invalid HMAC signature'), { webhookPath: '/webhook/modal', signatureProvided: !!signature });
       return reply.code(401).send({ error: 'Invalid signature' });
     }
@@ -735,7 +731,7 @@ export function setupRoutes(app: FastifyInstance) {
       if (correlationId) {
         const waiter = jobWaiters.get(correlationId);
         if (waiter) {
-          try { waiter.resolve(result); } catch (e) { console.error('[webhook] waiter.resolve error', e); }
+          try { waiter.resolve(result); } catch (e) { logger.error({ err: e }, '[webhook] waiter.resolve error'); }
           jobWaiters.delete(correlationId);
         }
         jobResults.set(correlationId, { done: true, result, createdAt: Date.now() });
@@ -743,12 +739,12 @@ export function setupRoutes(app: FastifyInstance) {
         const outPath = path.join(storeDir, `${correlationId}.json`);
         try {
           fs.writeFileSync(outPath, JSON.stringify({ done: true, result, ts: Date.now() }), { encoding: 'utf8' });
-          console.info('[webhook] persisted job result', { correlationId, outPath });
+          logger.info({ correlationId, outPath }, '[webhook] persisted job result');
         } catch (e) {
-          console.error('[webhook] failed to persist job result', e);
+          logger.error({ err: e }, '[webhook] failed to persist job result');
         }
       } else {
-        console.warn('[webhook] callback did not include correlation id', { bodyPreview: raw.slice(0,200) });
+        logger.warn({ bodyPreview: raw.slice(0,200) }, '[webhook] callback did not include correlation id');
       }
 
       // Log successful webhook processing
@@ -758,7 +754,7 @@ export function setupRoutes(app: FastifyInstance) {
         const costUsd = result?.meta?.cost_usd || result?.meta?.cost || undefined;
         analyticsClient.logModalCost(correlationId || 'unknown', 'job_execution', tokensUsed, costUsd, correlationId, { resultSize: JSON.stringify(result).length });
       } catch (e) {
-        console.warn('[router] failed to log modal cost from webhook', e);
+        logger.warn({ err: e }, '[router] failed to log modal cost from webhook');
       }
 
       analyticsClient.logWebhookEvent(correlationId || 'unknown', 'modal_webhook', true, Date.now() - startTime, {
@@ -769,8 +765,8 @@ export function setupRoutes(app: FastifyInstance) {
       
       return reply.send({ ok: true });
     } catch (e) {
-      console.error('[webhook] error handling callback', e);
-      
+      logger.error({ err: e }, '[webhook] error handling callback');
+
       // Log webhook processing error
       analyticsClient.logWebhookEvent('unknown', 'modal_webhook', false, Date.now() - startTime, {
         error: String(e),
@@ -800,7 +796,7 @@ export function setupRoutes(app: FastifyInstance) {
           jobResults.set(id, newItem);
         }
       } catch (e) {
-        console.error('[modal/job] error reading persisted job result', e);
+        logger.error({ err: e }, '[modal/job] error reading persisted job result');
       }
     }
     if (!item) return { ok: true, done: false };
@@ -869,7 +865,7 @@ export function setupRoutes(app: FastifyInstance) {
       const { correlation_id, cost_data } = body;
 
       if (!correlation_id || !cost_data || typeof cost_data.cost_usd !== 'number') {
-        console.warn('[Modal Cost Callback] Invalid payload', body);
+        logger.warn({ body }, '[Modal Cost Callback] Invalid payload');
         return reply.code(400).send({ error: 'Invalid payload' });
       }
 
@@ -883,10 +879,10 @@ export function setupRoutes(app: FastifyInstance) {
         cost_data.metadata
       );
       
-      console.log('[Modal Cost Callback] Cost logged successfully for correlation_id:', correlation_id);
+      logger.info({ correlation_id }, '[Modal Cost Callback] Cost logged successfully');
       return reply.code(200).send({ success: true });
     } catch (error: any) {
-      console.error('[Modal Cost Callback] Error:', error);
+      logger.error({ err: error }, '[Modal Cost Callback] Error');
       logError(error, { type: 'modal_cost_callback_error', requestBody: req.body });
       return reply.code(500).send({ error: 'Failed to log cost' });
     }

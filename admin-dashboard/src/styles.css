@@ -43,7 +43,7 @@ body {
   font: inherit;
 }
 
-:global(p, h1, h2, h3, h4, h5, h6) {
+:global(p), :global(h1), :global(h2), :global(h3), :global(h4), :global(h5), :global(h6) {
   overflow-wrap: break-word;
 }
 

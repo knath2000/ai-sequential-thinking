@@ -1,4 +1,4 @@
-import adapter from '@sveltejs/adapter-static';
+import adapter from '@sveltejs/adapter-vercel';
 import sveltePreprocess from 'svelte-preprocess';
 
 /** @type {import('@sveltejs/kit').Config} */
@@ -14,12 +14,8 @@ const config = {
     return !ignore.includes(warning.code);
   },
   kit: {
-    adapter: adapter({
-      pages: 'build',
-      assets: 'build',
-      fallback: 'index.html',
-      precompress: false
-    }),
+    // Use Vercel adapter for zero-config deployments on Vercel
+    adapter: adapter(),
     paths: {
       base: '/dashboard'
     }

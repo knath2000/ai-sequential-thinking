@@ -29,7 +29,6 @@ declare module '$env/static/private' {
 	export const VITE_API_BASE_URL: string;
 	export const VITE_ANALYTICS_INGEST_KEY: string;
 	export const TERM_PROGRAM: string;
-	export const npm_config_reporter: string;
 	export const NODE: string;
 	export const INIT_CWD: string;
 	export const SHELL: string;
@@ -48,6 +47,7 @@ declare module '$env/static/private' {
 	export const SSH_AUTH_SOCK: string;
 	export const __CF_USER_TEXT_ENCODING: string;
 	export const VSCODE_PROFILE_INITIALIZED: string;
+	export const npm_config_dir: string;
 	export const npm_execpath: string;
 	export const PAGER: string;
 	export const npm_config_frozen_lockfile: string;
@@ -124,7 +124,6 @@ declare module '$env/dynamic/private' {
 		VITE_API_BASE_URL: string;
 		VITE_ANALYTICS_INGEST_KEY: string;
 		TERM_PROGRAM: string;
-		npm_config_reporter: string;
 		NODE: string;
 		INIT_CWD: string;
 		SHELL: string;
@@ -143,6 +142,7 @@ declare module '$env/dynamic/private' {
 		SSH_AUTH_SOCK: string;
 		__CF_USER_TEXT_ENCODING: string;
 		VSCODE_PROFILE_INITIALIZED: string;
+		npm_config_dir: string;
 		npm_execpath: string;
 		PAGER: string;
 		npm_config_frozen_lockfile: string;

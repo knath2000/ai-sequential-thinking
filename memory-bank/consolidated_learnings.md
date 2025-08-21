@@ -118,6 +118,15 @@
 ## Next Implementation
 - Choose and standardize one mode; add guardrails and provider switch (Claude/GPT/Gemini/DeepSeek).
 
+## Recent Engineering Changes (Aug 2025)
+
+- **Shared logging & HTTP client**: Added `src/utils/logger.ts` (pino) and `src/utils/httpClient.ts` (axios interceptors) to standardize logs and HTTP error handling across modules.
+- **LangDB modularization**: Split LangDB logic into `src/providers/langdb/{urlBuilder,request,response,cost,index}.ts` to isolate URL assembly, request mapping, response parsing, and cost calculation.
+- **SSE hardening**: `src/sequentialTool.ts` now guards writes, listens to `close`/`aborted` events, and sets headers to avoid buffering/compression issues.
+- **Unit tests**: Added Jest/ts-jest config and initial unit tests for LangDB modules to lock in behavior before DI and route modularization.
+- **Modal deployment**: Deployed updated `modal_app.py` via `modal deploy modal_app.py`; Modal submit and app endpoints active.
+
+
 ## Sequential Thinking Enhancements (2025-08-14)
 
 **Pattern: Enhanced per-step schema with tool recommendations**

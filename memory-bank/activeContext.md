@@ -80,3 +80,11 @@
 - No standard JSON-RPC field to force client follow-up; client (Agent) drives chaining
 - Align tool response shape with third-party parity to avoid client confusion
 - Cursor expects `content[]` blocks; returning raw custom fields may lead to hidden/ignored results.
+
+- Added shared logging and HTTP utilities: `src/utils/logger.ts` and `src/utils/httpClient.ts` and migrated ad-hoc `console.*` usages in core modules to structured logging.
+- Modularized LangDB into `src/providers/langdb/` (urlBuilder, request, response, cost, index) and implemented `callLangdbSteps` facade returning a typed result union.
+- Hardened SSE in `src/sequentialTool.ts` (client close/aborted handlers, guarded writes, headers to prevent buffering/compression).
+- Refactored `src/mcpTools/perplexityAsk.ts` to use `httpClient` + `logger` and support `AbortSignal`.
+- Added Jest (`ts-jest`) configuration and unit tests for LangDB helpers under `__tests__/providers/langdb/`.
+- Committed and pushed changes to `origin/main`; deployed Modal worker via `modal deploy modal_app.py` (submit URL and app deployment active).
+- Next: add DI (`tsyringe`) and `createServer()` seam, expand unit/integration tests, and document new env vars in `.env.example`.

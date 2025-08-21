@@ -1,4 +1,33 @@
 ---
+Date: 2025-08-20
+TaskRef: "Refactor logging/http client, modularize LangDB, SSE hardening, tests, push & deploy Modal"
+
+Learnings:
+- Introduced a centralized `logger` (pino + pino-pretty) and shared `httpClient` (axios + interceptors) to standardize logging and HTTP error handling across the codebase.
+- Modularizing LangDB into `urlBuilder`, `request`, `response`, and `cost` modules makes parsing, URL assembly, request mapping, and cost calculation testable and easier to reason about.
+- Replacing ad-hoc `console.*` calls with structured `logger` improves observability and enables consistent context (route, correlation_id, timing) in logs.
+- SSE robustness: listening for `req.raw` 'close' and 'aborted' events, guarding writes, and setting headers (disable buffering/compression) prevents resource leaks and improves streaming reliability.
+- Tests first: Adding Jest + ts-jest and unit tests for LangDB modules prevents regressions during larger refactors (DI, route modularization).
+- Modal redeploy is straightforward via `modal deploy modal_app.py`; remember to address Modal deprecation warnings (GPU config and autoscaling param names).
+
+Difficulties:
+- Multiple code paths used different HTTP stacks and logging; required incremental consistent replacement to avoid breaking behavior.
+- Parsing assistant outputs required defensive heuristics (fenced blocks, embedded arrays); edge cases remain for malformed model outputs.
+
+Successes:
+- Added `src/utils/logger.ts` and `src/utils/httpClient.ts`; refactored `perplexityAsk` to use the http client and logger with AbortSignal support.
+- Replaced `console.*` usages across core modules (router, provider, LangDB client) with structured `logger` calls.
+- Split LangDB logic into `src/providers/langdb/{urlBuilder,request,response,cost,index}.ts` and implemented `callLangdbSteps` facade returning a discriminated union.
+- Hardened SSE in `src/sequentialTool.ts` with client disconnect handlers and guarded writes.
+- Added Jest, tests, and scripts; wrote unit tests for LangDB modules and committed them.
+- Committed and pushed to `origin/main` and deployed Modal worker; Modal returned a submit URL and app deploy link.
+
+Improvements_Identified_For_Consolidation:
+- Continue expanding unit/integration tests (httpClient retries, webhook accepted→poll flows, recommender parsing).
+- Add DI (`tsyringe`) and a `createServer()` seam for testable server bootstrapping.
+- Document new envs in `.env.example` (e.g., `LANGDB_PRICE_PER_1K`, `KEEPALIVE_MS`, `LANGDB_ALLOW_NONDEFAULT_TEMPERATURE`).
+
+---
 Date: 2025-08-16
 TaskRef: "Build live analytics dashboard, fix CORS/auth, and instrument logging"
 

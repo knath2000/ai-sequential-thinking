@@ -38,5 +38,10 @@ Powered by Claude Opus 4 via the LangDB AI Gateway, with grounding via a Perplex
 - Perplexity-Ask MCP tool is reachable locally or via container
 - SSE and stdio semantics align with Claude Desktop expectations
 
+### Recent additions (Aug 2025):
+- Centralized logging (`src/utils/logger.ts`) and shared HTTP client (`src/utils/httpClient.ts`).
+- LangDB modularization and unit tests (`src/providers/langdb/*`, `__tests__/providers/langdb/*`).
+- SSE hardening and Cursor compatibility fixes; Modal offload via `modal_app.py` deployed.
+
 ### References
 - Glama servers above; LangDB AI Gateway docs; MCP protocol + Claude Desktop configuration

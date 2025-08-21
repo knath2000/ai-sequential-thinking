@@ -36,12 +36,14 @@
     "tslib": "^2.6.3",
     "typescript": "^5.5.3",
     "vite": "^5.3.3"
-  }
-  ,
+  },
   "pnpm": {
     "overrides": {
       "svelte": "^5.0.0"
     },
-    "onlyBuiltDependencies": ["svelte-preprocess"]
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "svelte-preprocess"
+    ]
   }
 }

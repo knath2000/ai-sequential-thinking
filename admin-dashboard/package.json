@@ -12,17 +12,14 @@
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.6",
-    "@sveltejs/kit": "^2.36.1",
     "chart.js": "^4.5.0",
     "echarts": "^5.5.1",
     "flowbite": "^2.5.1",
     "flowbite-svelte": "^0.47.4",
     "svelte": "^5.38.2"
   },
-  "engines": {
-    "node": "20.x"
-  },
   "devDependencies": {
+    "@sveltejs/kit": "^2.36.1",
     "@sveltejs/adapter-vercel": "^3.1.0",
     "@sveltejs/vite-plugin-svelte": "^4.0.0",
     "@types/node": "^20.14.10",
@@ -36,6 +33,9 @@
     "tslib": "^2.6.3",
     "typescript": "^5.5.3",
     "vite": "^5.3.3"
+  },
+  "engines": {
+    "node": "20.x"
   },
   "pnpm": {
     "overrides": {

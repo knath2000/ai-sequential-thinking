@@ -16,7 +16,12 @@ const config = {
   kit: {
     // Use Vercel adapter for zero-config deployments on Vercel
     // Pin runtime to Node 20 to avoid Vercel/adapter issues while we upgrade deps
-    adapter: adapter({ runtime: 'nodejs20.x' }),
+    adapter: adapter({
+      runtime: 'nodejs20.x',
+      regions: ['iad1'],
+      memory: 1024,
+      maxDuration: 10
+    }),
     paths: {
       base: '/dashboard'
     }

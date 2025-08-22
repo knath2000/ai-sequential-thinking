@@ -1,7 +1,8 @@
 {
   "version": 2,
-  "buildCommand": "pnpm run build",
-  "outputDirectory": ".svelte-kit/output/client",
-  "devCommand": "pnpm run dev",
-  "installCommand": "pnpm install"
+  "buildCommand": "cd admin-dashboard && pnpm run build",
+  "outputDirectory": "admin-dashboard/build",
+  "installCommand": "cd admin-dashboard && pnpm install",
+  "devCommand": "cd admin-dashboard && pnpm run dev",
+  "framework": "sveltekit"
 }

@@ -20,8 +20,7 @@ export default defineConfig({
     }
   },
   optimizeDeps: {
-    include: ['chart.js', 'echarts'],
-    exclude: ['@sveltejs/kit', 'svelte']
+    include: ['chart.js', 'echarts'] // Remove exclusions to allow Vercel to bundle all dependencies
   },
   define: {
     global: 'globalThis'

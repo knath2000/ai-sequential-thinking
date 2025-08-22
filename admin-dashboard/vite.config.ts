@@ -28,7 +28,7 @@ export default defineConfig({
   build: {
     sourcemap: false // Disable source maps in build
   },
-  logLevel: 'warn' // Suppress dependency source map warnings
+  logLevel: 'warn' // Suppresses dependency source map warnings
 });
 
 

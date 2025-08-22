@@ -2,10 +2,9 @@
   import { onMount } from 'svelte';
   import { fetchJson } from '../api'; // Assuming fetchJson is in api.ts
 
-  export let pollMs = 3000;
-  export let max = 200;
-  export let level: string = ''; // Add default empty string
-  export let enhanced: boolean = false; // Flag to indicate enhanced styling
+  let pollMs = 3000;
+  let max = 200;
+  let level: string = ''; // Add default empty string
 
   type LogRow = { ts: string; level: string; name: string; message: string };
   let rows: LogRow[] = [];

@@ -3,10 +3,6 @@
   import { fetchJson, connectSSE } from '../lib/api';
   import type { DashboardMetrics } from '../lib/types';
   
-  // Accept SvelteKit automatic props
-  export let data = {};
-  export let form = null;
-
   // Import new glassmorphic components
   import LiquidNavigation from '../lib/components/LiquidNavigation.svelte';
   import GlassCard from '../lib/components/GlassCard.svelte';

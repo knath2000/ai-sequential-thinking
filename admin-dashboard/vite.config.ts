@@ -26,7 +26,14 @@ export default defineConfig({
     global: 'globalThis'
   },
   build: {
-    sourcemap: false // Disable source maps in build
+    sourcemap: false, // Disable source maps in build
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true
+      }
+    }
   },
   logLevel: 'warn' // Suppresses dependency source map warnings
 });

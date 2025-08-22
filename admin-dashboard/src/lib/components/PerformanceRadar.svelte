@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { Chart, registerables } from 'chart.js';
   
-  export let data: any; // Keep this as export for external data binding
+  let data: any; // Keep this as export for external data binding
   
   let radarCanvas: HTMLCanvasElement;
   

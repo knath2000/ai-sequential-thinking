@@ -4,8 +4,6 @@
   import type { SessionResponse } from '../types';
   import SessionDetailModal from './SessionDetailModal.svelte';
   
-  export let enhanced: boolean = false; // Flag to indicate enhanced styling/features
-  
   let sessions: SessionResponse[] = [];
   let loading = true;
   let selectedSession: SessionResponse | null = null;

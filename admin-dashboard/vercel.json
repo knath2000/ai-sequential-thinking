@@ -1,7 +1,10 @@
 {
   "version": 2,
   "buildCommand": "cd admin-dashboard && pnpm run build",
-  "installCommand": "cd admin-dashboard && pnpm install",
+  "installCommand": "cd admin-dashboard && pnpm install --prod",
   "devCommand": "cd admin-dashboard && pnpm run dev",
-  "framework": "sveltekit"
+  "framework": "sveltekit",
+  "env": {
+    "NODE_ENV": "production"
+  }
 }

@@ -57,9 +57,10 @@
       </div>
       
       {#each sessions as session (session.id)}
-        <div 
-          class="table-row" 
+        <div
+          class="table-row"
           on:click={() => openSessionDetail(session)}
+          on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openSessionDetail(session); } }}
           role="button"
           tabindex="0"
         >

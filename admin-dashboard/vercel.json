@@ -1,9 +1,7 @@
 {
   "version": 2,
-  "buildCommand": "cd admin-dashboard && pnpm install --no-frozen-lockfile && pnpm run build",
-  "outputDirectory": "admin-dashboard/build",
-  "installCommand": "cd admin-dashboard && pnpm install --no-frozen-lockfile",
+  "buildCommand": "cd admin-dashboard && pnpm run build",
+  "installCommand": "cd admin-dashboard && pnpm install",
   "devCommand": "cd admin-dashboard && pnpm run dev",
-  "framework": "sveltekit",
-  "nodeVersion": "20.x"
+  "framework": "sveltekit"
 }

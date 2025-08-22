@@ -6,11 +6,11 @@ function __memo(fn) {
 
 return {
 	appDir: "_app",
-	appPath: "dashboard/_app",
+	appPath: "_app",
 	assets: new Set([]),
 	mimeTypes: {},
 	_: {
-		client: {start:"_app/immutable/entry/start.gYRGuZs1.js",app:"_app/immutable/entry/app.yEJ7j3_B.js",imports:["_app/immutable/entry/start.gYRGuZs1.js","_app/immutable/chunks/D86GkuHu.js","_app/immutable/chunks/BsBVTIWJ.js","_app/immutable/chunks/Ds4fwPmf.js","_app/immutable/entry/app.yEJ7j3_B.js","_app/immutable/chunks/Ds4fwPmf.js","_app/immutable/chunks/BsBVTIWJ.js","_app/immutable/chunks/CWj6FrbW.js","_app/immutable/chunks/BLq_cMMT.js","_app/immutable/chunks/DSusgRvu.js"],stylesheets:[],fonts:[],uses_env_dynamic_public:false},
+		client: {start:"_app/immutable/entry/start.DqLZ-ram.js",app:"_app/immutable/entry/app.DOamkqLf.js",imports:["_app/immutable/entry/start.DqLZ-ram.js","_app/immutable/chunks/DD6qOCmq.js","_app/immutable/chunks/qjyYhLW6.js","_app/immutable/chunks/C56QmhJh.js","_app/immutable/entry/app.DOamkqLf.js","_app/immutable/chunks/C56QmhJh.js","_app/immutable/chunks/qjyYhLW6.js","_app/immutable/chunks/CWj6FrbW.js","_app/immutable/chunks/BXKfCUwU.js"],stylesheets:[],fonts:[],uses_env_dynamic_public:false},
 		nodes: [
 			__memo(() => import('../output/server/nodes/0.js')),
 			__memo(() => import('../output/server/nodes/1.js')),

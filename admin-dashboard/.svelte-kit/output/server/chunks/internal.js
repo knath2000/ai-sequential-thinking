@@ -1,5 +1,6 @@
-import { H as HYDRATION_ERROR, B as BOUNDARY_EFFECT, E as ERROR_VALUE, a as EFFECT_RAN, d as define_property, r as run_all, U as UNOWNED, M as MAYBE_DIRTY, C as CLEAN, D as DERIVED, I as INERT, b as EFFECT, A as ASYNC, c as BLOCK_EFFECT, e as DIRTY, f as deferred, g as BRANCH_EFFECT, R as ROOT_EFFECT, h as DESTROYED, i as INSPECT_EFFECT, S as STATE_SYMBOL, o as object_prototype, j as array_prototype, k as UNINITIALIZED, l as get_descriptor, m as get_prototype_of, n as is_array, p as is_extensible, q as EFFECT_PRESERVED, s as HEAD_EFFECT, t as EFFECT_TRANSPARENT, u as STALE_REACTION, v as USER_EFFECT, w as DISCONNECTED, x as REACTION_IS_UPDATING, y as index_of, z as COMMENT_NODE, F as HYDRATION_START, G as HYDRATION_END, J as array_from, L as LEGACY_PROPS, K as render, N as push$1, O as setContext, P as pop$1 } from "./index2.js";
+import { H as HYDRATION_ERROR, B as BOUNDARY_EFFECT, E as ERROR_VALUE, a as EFFECT_RAN, U as UNOWNED, M as MAYBE_DIRTY, C as CLEAN, D as DERIVED, I as INERT, b as EFFECT, A as ASYNC, c as BLOCK_EFFECT, d as DIRTY, e as BRANCH_EFFECT, R as ROOT_EFFECT, f as DESTROYED, g as INSPECT_EFFECT, S as STATE_SYMBOL, h as UNINITIALIZED, i as EFFECT_PRESERVED, j as HEAD_EFFECT, k as EFFECT_TRANSPARENT, l as STALE_REACTION, m as USER_EFFECT, n as DISCONNECTED, o as REACTION_IS_UPDATING, p as COMMENT_NODE, q as HYDRATION_START, r as HYDRATION_END, L as LEGACY_PROPS, s as render, t as push$1, u as setContext, v as pop$1 } from "./index2.js";
 import { D as DEV } from "./false.js";
+import { d as define_property, r as run_all, a as deferred, o as object_prototype, b as array_prototype, g as get_descriptor, c as get_prototype_of, i as is_array, e as is_extensible, f as index_of, h as array_from } from "./utils2.js";
 import { s as safe_equals, e as equals } from "./equality.js";
 import "./environment.js";
 let public_env = {};
@@ -2075,7 +2076,7 @@ const options = {
 		<div class="error">
 			<span class="status">` + status + '</span>\n			<div class="message">\n				<h1>' + message + "</h1>\n			</div>\n		</div>\n	</body>\n</html>\n"
   },
-  version_hash: "1h9of2z"
+  version_hash: "1j4yk29"
 };
 async function get_hooks() {
   let handle;

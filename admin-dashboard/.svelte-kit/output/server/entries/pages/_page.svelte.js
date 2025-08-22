@@ -1,8 +1,9 @@
-import { Z as current_component, _ as attr_class, $ as attr_style, a0 as stringify, Q as fallback, a1 as clsx, T as slot, V as bind_props, N as push, P as pop, X as escape_html, a2 as copy_payload, a3 as assign_payload } from "../../chunks/index2.js";
+import { z as current_component, F as attr_class, G as attr_style, J as stringify, K as clsx, w as slot, N as bind_props, t as push, v as pop, y as escape_html, O as copy_payload, P as assign_payload } from "../../chunks/index2.js";
 import "@sveltejs/kit/internal";
 import "../../chunks/exports.js";
 import "../../chunks/utils.js";
 import "../../chunks/state.svelte.js";
+import { j as fallback } from "../../chunks/utils2.js";
 import { Color } from "@kurkle/color";
 function onDestroy(fn) {
   var context = (
@@ -13973,19 +13974,12 @@ function MetricTile($$payload, $$props) {
 }
 function PerformanceRadar($$payload, $$props) {
   push();
-  let data = $$props["data"];
   Chart.register(...registerables);
   $$payload.out.push(`<div class="radar-container svelte-ifivxs"><canvas></canvas></div>`);
-  bind_props($$props, { data });
   pop();
 }
 function SessionsTable($$payload, $$props) {
   push();
-  let enhanced = fallback(
-    $$props["enhanced"],
-    false
-    // Flag to indicate enhanced styling/features
-  );
   let $$settled = true;
   let $$inner_payload;
   function $$render_inner($$payload2) {
@@ -14006,23 +14000,10 @@ function SessionsTable($$payload, $$props) {
     $$render_inner($$inner_payload);
   } while (!$$settled);
   assign_payload($$payload, $$inner_payload);
-  bind_props($$props, { enhanced });
   pop();
 }
 function RecentLogs($$payload, $$props) {
   push();
-  let pollMs = fallback($$props["pollMs"], 3e3);
-  let max = fallback($$props["max"], 200);
-  let level = fallback(
-    $$props["level"],
-    ""
-    // Add default empty string
-  );
-  let enhanced = fallback(
-    $$props["enhanced"],
-    false
-    // Flag to indicate enhanced styling
-  );
   $$payload.out.push(`<div class="glass-table-container svelte-cd9rku"><div class="table-header svelte-cd9rku"><h3 class="svelte-cd9rku">Recent Logs</h3> <div class="table-actions svelte-cd9rku"><button class="glass-button svelte-cd9rku"><span class="svelte-cd9rku">↻</span> Refresh</button></div></div> `);
   {
     $$payload.out.push("<!--[!-->");
@@ -14033,20 +14014,14 @@ function RecentLogs($$payload, $$props) {
     $$payload.out.push(`<!--]-->`);
   }
   $$payload.out.push(`<!--]--></div>`);
-  bind_props($$props, { pollMs, max, level, enhanced });
   pop();
 }
 function _page($$payload, $$props) {
   push();
-  let costTrendData, performanceData, usageDistributionData;
-  let data = fallback($$props["data"], () => ({}), true);
-  let form = fallback($$props["form"], null);
+  let costTrendData, usageDistributionData;
   let metrics = null;
   let es = null;
   function prepareCostTrendData(metrics2) {
-    return null;
-  }
-  function preparePerformanceData(metrics2) {
     return null;
   }
   function prepareUsageData(metrics2) {
@@ -14054,7 +14029,6 @@ function _page($$payload, $$props) {
   }
   onDestroy(() => es?.close());
   costTrendData = prepareCostTrendData();
-  performanceData = preparePerformanceData();
   usageDistributionData = prepareUsageData();
   $$payload.out.push(`<div class="liquid-dashboard svelte-1clg4lq">`);
   LiquidNavigation($$payload);
@@ -14122,7 +14096,7 @@ function _page($$payload, $$props) {
     variant: "primary",
     animated: true,
     children: ($$payload2) => {
-      PerformanceRadar($$payload2, { data: performanceData });
+      PerformanceRadar($$payload2);
     },
     $$slots: { default: true }
   });
@@ -14144,7 +14118,7 @@ function _page($$payload, $$props) {
   GlassCard($$payload, {
     variant: "primary",
     children: ($$payload2) => {
-      SessionsTable($$payload2, { enhanced: true });
+      SessionsTable($$payload2);
     },
     $$slots: { default: true }
   });
@@ -14152,12 +14126,11 @@ function _page($$payload, $$props) {
   GlassCard($$payload, {
     variant: "secondary",
     children: ($$payload2) => {
-      RecentLogs($$payload2, { enhanced: true });
+      RecentLogs($$payload2);
     },
     $$slots: { default: true }
   });
   $$payload.out.push(`<!----></section></main></div>`);
-  bind_props($$props, { data, form });
   pop();
 }
 export {

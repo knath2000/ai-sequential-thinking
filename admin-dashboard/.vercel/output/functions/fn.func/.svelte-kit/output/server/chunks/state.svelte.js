@@ -1,4 +1,4 @@
-import { Y as noop } from "./index2.js";
+import { n as noop } from "./utils2.js";
 const is_legacy = noop.toString().includes("$$") || /function \w+\(\) \{\}/.test(noop.toString());
 if (is_legacy) {
   ({

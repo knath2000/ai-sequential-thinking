@@ -1,1 +1,0 @@
-import"../chunks/CWj6FrbW.js";import"../chunks/B7VAsmXk.js";import{k as e,l as i,m as n}from"../chunks/Ds4fwPmf.js";import{s as f}from"../chunks/W_L5FdDp.js";import{p as t}from"../chunks/DSusgRvu.js";function d(m,o){t(o,"params",24,()=>({})),t(o,"url",24,()=>({})),t(o,"route",24,()=>({}));var a=e(),r=i(a);f(r,o,"default",{}),n(m,a)}export{d as component};

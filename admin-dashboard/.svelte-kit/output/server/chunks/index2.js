@@ -1,38 +1,4 @@
 import { D as DEV } from "./false.js";
-var is_array = Array.isArray;
-var index_of = Array.prototype.indexOf;
-var array_from = Array.from;
-var define_property = Object.defineProperty;
-var get_descriptor = Object.getOwnPropertyDescriptor;
-var object_prototype = Object.prototype;
-var array_prototype = Array.prototype;
-var get_prototype_of = Object.getPrototypeOf;
-var is_extensible = Object.isExtensible;
-const noop = () => {
-};
-function run_all(arr) {
-  for (var i = 0; i < arr.length; i++) {
-    arr[i]();
-  }
-}
-function deferred() {
-  var resolve;
-  var reject;
-  var promise = new Promise((res, rej) => {
-    resolve = res;
-    reject = rej;
-  });
-  return { promise, resolve, reject };
-}
-function fallback(value, fallback2, lazy = false) {
-  return value === void 0 ? lazy ? (
-    /** @type {() => V} */
-    fallback2()
-  ) : (
-    /** @type {V} */
-    fallback2
-  ) : value;
-}
 const DERIVED = 1 << 1;
 const EFFECT = 1 << 2;
 const BLOCK_EFFECT = 1 << 4;
@@ -307,62 +273,49 @@ function bind_props(props_parent, props_now) {
   }
 }
 export {
-  attr_style as $,
   ASYNC as A,
   BOUNDARY_EFFECT as B,
   CLEAN as C,
   DERIVED as D,
   ERROR_VALUE as E,
-  HYDRATION_START as F,
-  HYDRATION_END as G,
+  attr_class as F,
+  attr_style as G,
   HYDRATION_ERROR as H,
   INERT as I,
-  array_from as J,
-  render as K,
+  stringify as J,
+  clsx as K,
   LEGACY_PROPS as L,
   MAYBE_DIRTY as M,
-  push as N,
-  setContext as O,
-  pop as P,
-  fallback as Q,
+  bind_props as N,
+  copy_payload as O,
+  assign_payload as P,
   ROOT_EFFECT as R,
   STATE_SYMBOL as S,
-  slot as T,
   UNOWNED as U,
-  bind_props as V,
-  getContext as W,
-  escape_html as X,
-  noop as Y,
-  current_component as Z,
-  attr_class as _,
   EFFECT_RAN as a,
-  stringify as a0,
-  clsx as a1,
-  copy_payload as a2,
-  assign_payload as a3,
   EFFECT as b,
   BLOCK_EFFECT as c,
-  define_property as d,
-  DIRTY as e,
-  deferred as f,
-  BRANCH_EFFECT as g,
-  DESTROYED as h,
-  INSPECT_EFFECT as i,
-  array_prototype as j,
-  UNINITIALIZED as k,
-  get_descriptor as l,
-  get_prototype_of as m,
-  is_array as n,
-  object_prototype as o,
-  is_extensible as p,
-  EFFECT_PRESERVED as q,
-  run_all as r,
-  HEAD_EFFECT as s,
-  EFFECT_TRANSPARENT as t,
-  STALE_REACTION as u,
-  USER_EFFECT as v,
-  DISCONNECTED as w,
-  REACTION_IS_UPDATING as x,
-  index_of as y,
-  COMMENT_NODE as z
+  DIRTY as d,
+  BRANCH_EFFECT as e,
+  DESTROYED as f,
+  INSPECT_EFFECT as g,
+  UNINITIALIZED as h,
+  EFFECT_PRESERVED as i,
+  HEAD_EFFECT as j,
+  EFFECT_TRANSPARENT as k,
+  STALE_REACTION as l,
+  USER_EFFECT as m,
+  DISCONNECTED as n,
+  REACTION_IS_UPDATING as o,
+  COMMENT_NODE as p,
+  HYDRATION_START as q,
+  HYDRATION_END as r,
+  render as s,
+  push as t,
+  setContext as u,
+  pop as v,
+  slot as w,
+  getContext as x,
+  escape_html as y,
+  current_component as z
 };

@@ -19,10 +19,7 @@ const config = {
     adapter: adapter({
       runtime: 'nodejs20.x',
       regions: ['iad1']
-    }),
-    paths: {
-      base: '/dashboard'
-    }
+    })
   }
 };
 

@@ -23,10 +23,12 @@ export default defineConfig({
     include: ['chart.js', 'echarts'] // Remove exclusions to allow Vercel to bundle all dependencies
   },
   define: {
-    global: 'globalThis'
+    global: 'globalThis',
+    __VERCEL__: JSON.stringify(process.env.VERCEL === '1')
   },
   build: {
-    sourcemap: false // Disable source maps in build
+    sourcemap: false, // Disable source maps in build
+    chunkSizeWarningLimit: 1000 // Increase chunk size warning limit
   },
   logLevel: 'warn' // Suppresses dependency source map warnings
 });

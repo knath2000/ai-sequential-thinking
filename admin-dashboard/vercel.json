@@ -4,7 +4,17 @@
   "installCommand": "cd admin-dashboard && pnpm install --no-frozen-lockfile",
   "devCommand": "cd admin-dashboard && pnpm run dev",
   "framework": "sveltekit",
+  "outputDirectory": ".svelte-kit/vercel",
   "env": {
     "NODE_ENV": "production"
-  }
+  },
+  "routes": [
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
 }

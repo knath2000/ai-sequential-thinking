@@ -6,7 +6,10 @@ export default defineConfig({
   build: {
     rollupOptions: {
       external: []
-    }
+    },
+    target: 'node20',
+    sourcemap: false,
+    chunkSizeWarningLimit: 1000
   },
   ssr: {
     noExternal: ['@sveltejs/kit', 'chart.js', 'echarts']
@@ -14,7 +17,7 @@ export default defineConfig({
   server: {
     port: 5173,
     hmr: {
-      overlay: false // Disables HMR error overlay
+      overlay: false
     },
     proxy: {
       '/api': {
@@ -25,17 +28,13 @@ export default defineConfig({
     }
   },
   optimizeDeps: {
-    include: ['chart.js', 'echarts'] // Remove exclusions to allow Vercel to bundle all dependencies
+    include: ['chart.js', 'echarts']
   },
   define: {
     global: 'globalThis',
     __VERCEL__: JSON.stringify(process.env.VERCEL === '1')
   },
-  build: {
-    sourcemap: false, // Disable source maps in build
-    chunkSizeWarningLimit: 1000 // Increase chunk size warning limit
-  },
-  logLevel: 'warn' // Suppresses dependency source map warnings
+  logLevel: 'warn'
 });
 
 

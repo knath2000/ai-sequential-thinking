@@ -1,13 +1,13 @@
 {
   "version": 2,
-  "buildCommand": "cd admin-dashboard && pnpm run build",
-  "installCommand": "cd admin-dashboard && pnpm install --no-frozen-lockfile",
+  "buildCommand": "cd admin-dashboard && pnpm install --no-frozen-lockfile && pnpm run build",
+  "installCommand": "npm install -g pnpm && cd admin-dashboard && pnpm install --no-frozen-lockfile",
   "devCommand": "cd admin-dashboard && pnpm run dev",
   "framework": "sveltekit",
   "outputDirectory": ".svelte-kit/vercel",
   "functions": {
     "index.js": {
-      "includeFiles": "node_modules/@sveltejs/kit/**"
+      "includeFiles": "node_modules/**"
     }
   },
   "env": {

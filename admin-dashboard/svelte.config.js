@@ -20,7 +20,8 @@ const config = {
       runtime: 'nodejs20.x',
       regions: ['iad1'],
       // Ensure all dependencies are bundled
-      external: []
+      external: [],
+      split: false // Bundle everything together
     })
   }
 };

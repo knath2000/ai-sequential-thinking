@@ -1,12 +1,13 @@
 # Active Context
 
 ### Current Focus
-- ✅ COMPLETED: Full MCP server implementation with Railway deployment
-- ✅ COMPLETED: Modal integration with LangDB offloading 
-- ✅ COMPLETED: o4-mini-high model compatibility with max_completion_tokens
-- ✅ COMPLETED: Rich LangDB response parsing and tool recommendations
-- ✅ COMPLETED: Automatic LANGDB environment variable integration
-- 🔄 **IN PROGRESS**: Vercel serverless function crash investigation and fix plan
+- ✅ **COMPLETED**: Full MCP server implementation with Railway deployment
+- ✅ **COMPLETED**: Modal integration with LangDB offloading 
+- ✅ **COMPLETED**: o4-mini-high model compatibility with max_completion_tokens
+- ✅ **COMPLETED**: Rich LangDB response parsing and tool recommendations
+- ✅ **COMPLETED**: Automatic LANGDB environment variable integration
+- ✅ **COMPLETED**: Vercel serverless function crash investigation and fix plan
+- ✅ **COMPLETED**: Vercel deployment successfully resolved with monorepo root directory fix
 
 ### Recent Changes
 - Initialized memory-bank with core documents
@@ -42,6 +43,7 @@
 - Verified `/diag/langdb` POST with minimal and valid payloads
 - Confirmed GET now returns a 405-style hint with example POST body
 - Added `/routes` for route auditing; confirmed route registration order and presence
+- Added `/debug/cost-tracking` and `/debug/test-cost-logging` endpoints for debugging
 
 ### Validation (this session)
 - Repo pushed to GitHub (`main`)
@@ -73,6 +75,7 @@
 19. ✅ **Frontend & Backend Stability**: All identified build and runtime errors (including CORS, API connection, and data handling) resolved across both frontend and backend services.
 20. ✅ **FastAPI Startup & Backend Reliability**: Resolved all startup crashes (`NameError`, `TypeError`) and critical backend 500 errors, ensuring the FastAPI application starts reliably and serves data correctly.
 21. ✅ **Dashboard Data Integrity**: Fixed `AttributeError` for performance metrics, ensuring all dashboard charts display accurate and real-time data.
+22. ✅ **Vercel Deployment Resolution**: Successfully resolved Vercel serverless function crash by configuring monorepo root directory to `admin-dashboard`
 
 ### Decisions & Considerations
 - Keep state in-memory initially; add persistence later if needed
@@ -90,11 +93,13 @@
 - Next: add DI (`tsyringe`) and `createServer()` seam, expand unit/integration tests, and document new env vars in `.env.example`.
 
 ### Current Investigation
-- **Vercel Serverless Function Crash**: Investigating `ERR_MODULE_NOT_FOUND` for `@sveltejs/kit` at runtime in Vercel's serverless environment
-- **Root Cause Analysis**: Identified potential issues with SvelteKit adapter configuration, dependency bundling, and Vercel deployment settings
-- **Fix Plan Created**: Comprehensive plan documented in `VERCEL_FIX_PLAN.md` with 8-step resolution strategy
+- ✅ **Vercel Serverless Function Crash**: Successfully resolved `ERR_MODULE_NOT_FOUND` for `@sveltejs/kit` at runtime in Vercel's serverless environment
+- ✅ **Root Cause Analysis**: Identified monorepo structure issue where Vercel was building root project instead of admin-dashboard
+- ✅ **Fix Applied**: Configured Vercel root directory to `admin-dashboard` for proper SvelteKit build process
+- ✅ **Deployment Status**: Vercel deployment now passes successfully
 
 ### Next Steps
-- Implement Vercel fix plan as outlined in `VERCEL_FIX_PLAN.md`
-- Test deployment after implementing fixes
+- ✅ **Vercel Deployment**: Successfully resolved and deployed
+- Consider adding DI framework (tsyringe) for better modularity
+- Expand unit test coverage for new modules
 - Document lessons learned for future Vercel deployments

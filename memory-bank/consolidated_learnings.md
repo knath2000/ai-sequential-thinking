@@ -35,6 +35,17 @@
 - For Cursor compatibility, always return `result` as `{ content: [{ type: 'text', text: JSON.stringify(payload) }] }` for both completed and accepted paths.
 - If synchronous completion may exceed typical client timeouts, increase server sync window (e.g., 120s) and simplify/accelerate the LLM path (faster model, smaller prompt).
 - Provide a documented polling fallback (e.g., `/modal/job/:id` and a small `scripts/poll_job_result.js`).
+
+## Vercel Monorepo Deployment
+**Pattern: Configure root directory for monorepo**
+- When deploying SvelteKit apps in monorepos, set Vercel's **Root Directory** to the specific project folder (e.g., `admin-dashboard`)
+- This ensures Vercel uses the correct package.json and build process instead of the root project
+- Required settings:
+  - **Root Directory**: `admin-dashboard`
+  - **Framework Preset**: SvelteKit (auto-detect)
+  - **Build Command**: Leave empty (uses `pnpm run build`)
+  - **Install Command**: Leave empty (uses `pnpm install`)
+
 # Consolidated Learnings
 ## Live Analytics Dashboard (SvelteKit + FastAPI)
 **Patterns:**
@@ -101,7 +112,6 @@
 - **Pattern: Dashboard integration**: Provide `/api/v1/analytics/costs/summary` and `/api/v1/analytics/costs` endpoints for dashboard widgets. Client includes `X-Analytics-Ingest-Key` from `VITE_ANALYTICS_INGEST_KEY` for simple ingestion authentication.
 - **Pattern: Auth-failure logging**: Capture 401/authorization failures in an `auth_failures` table with request headers and client IP to facilitate debugging and alerting.
 
-
 ## MCP + Cursor Interop
 - Use JSON-RPC streamable HTTP with `protocolVersion: 2025-06-18`; implement `initialize`, `tools/list`, `tools/call`, 204 for `notifications/initialized`.
 - `inputSchema` must use camelCase (`inputSchema`).
@@ -119,16 +129,14 @@
 - Choose and standardize one mode; add guardrails and provider switch (Claude/GPT/Gemini/DeepSeek).
 
 ## Recent Engineering Changes (Aug 2025)
-
 - **Shared logging & HTTP client**: Added `src/utils/logger.ts` (pino) and `src/utils/httpClient.ts` (axios interceptors) to standardize logs and HTTP error handling across modules.
 - **LangDB modularization**: Split LangDB logic into `src/providers/langdb/{urlBuilder,request,response,cost,index}.ts` to isolate URL assembly, request mapping, response parsing, and cost calculation.
 - **SSE hardening**: `src/sequentialTool.ts` now guards writes, listens to `close`/`aborted` events, and sets headers to avoid buffering/compression issues.
-- **Unit tests**: Added Jest/ts-jest config and initial unit tests for LangDB modules to lock in behavior before DI and route modularization.
+- **Unit tests**: Added Jest (`ts-jest`) configuration and unit tests for LangDB helpers under `__tests__/providers/langdb/`.
 - **Modal deployment**: Deployed updated `modal_app.py` via `modal deploy modal_app.py`; Modal submit and app endpoints active.
-
+- **Vercel deployment**: Successfully resolved monorepo configuration and deployed admin-dashboard to Vercel
 
 ## Sequential Thinking Enhancements (2025-08-14)
-
 **Pattern: Enhanced per-step schema with tool recommendations**
 - Use a structured `SequentialThinkingOutput` that includes `current_step`, `recommended_tools` (with `confidence`, `rationale`, `priority`), `previous_steps`, and `remaining_steps`.
 - Wrap MCP tool outputs in `content[]` with `{ type: 'text', text: JSON.stringify(payload) }` for Cursor compatibility.

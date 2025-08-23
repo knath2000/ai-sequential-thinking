@@ -3,7 +3,6 @@
   "buildCommand": "pnpm run build",
   "installCommand": "pnpm install --no-frozen-lockfile",
   "framework": "sveltekit",
-  "outputDirectory": ".svelte-kit/output",
   "functions": {
     "src/routes/**/*": {
       "runtime": "nodejs22.x",

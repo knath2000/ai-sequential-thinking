@@ -1,16 +1,47 @@
 import { D as DEV } from "./chunks/false.js";
-import { json, text, error } from "@sveltejs/kit";
-import { HttpError, SvelteKitError, Redirect, ActionFailure } from "@sveltejs/kit/internal";
-import { with_request_store, merge_tracing } from "@sveltejs/kit/internal/server";
+import { H as HttpError, S as SvelteKitError, j as json, t as text, w as with_request_store, R as Redirect, A as ActionFailure, v as validate_depends, e as error, s as stringify, p as parse_remote_arg, T as TRAILING_SLASH_PARAM, I as INVALIDATED_PARAM } from "./chunks/shared.js";
 import { a as assets, b as base, c as app_dir, o as override, r as reset } from "./chunks/environment.js";
 import * as devalue from "devalue";
 import { m as make_trackable, d as disable_search, a as decode_params, v as validate_layout_server_exports, b as validate_layout_exports, c as validate_page_server_exports, e as validate_page_exports, n as normalize_path, r as resolve, f as decode_pathname, g as validate_server_exports } from "./chunks/exports.js";
 import { b as base64_encode, t as text_decoder, a as text_encoder, g as get_relative_path } from "./chunks/utils.js";
 import { r as readable, w as writable } from "./chunks/index.js";
 import { p as public_env, r as read_implementation, o as options, s as set_private_env, a as set_public_env, g as get_hooks, b as set_read_implementation } from "./chunks/internal.js";
-import { s as stringify, p as parse_remote_arg, T as TRAILING_SLASH_PARAM, I as INVALIDATED_PARAM } from "./chunks/shared.js";
 import { parse, serialize } from "cookie";
 import * as set_cookie_parser from "set-cookie-parser";
+const DATA_SUFFIX = "/__data.json";
+const HTML_DATA_SUFFIX = ".html__data.json";
+function has_data_suffix(pathname) {
+  return pathname.endsWith(DATA_SUFFIX) || pathname.endsWith(HTML_DATA_SUFFIX);
+}
+function add_data_suffix(pathname) {
+  if (pathname.endsWith(".html")) return pathname.replace(/\.html$/, HTML_DATA_SUFFIX);
+  return pathname.replace(/\/$/, "") + DATA_SUFFIX;
+}
+function strip_data_suffix(pathname) {
+  if (pathname.endsWith(HTML_DATA_SUFFIX)) {
+    return pathname.slice(0, -HTML_DATA_SUFFIX.length) + ".html";
+  }
+  return pathname.slice(0, -DATA_SUFFIX.length);
+}
+const ROUTE_SUFFIX = "/__route.js";
+function has_resolution_suffix(pathname) {
+  return pathname.endsWith(ROUTE_SUFFIX);
+}
+function add_resolution_suffix(pathname) {
+  return pathname.replace(/\/$/, "") + ROUTE_SUFFIX;
+}
+function strip_resolution_suffix(pathname) {
+  return pathname.slice(0, -ROUTE_SUFFIX.length);
+}
+function merge_tracing(event_like, current) {
+  return {
+    ...event_like,
+    tracing: {
+      ...event_like.tracing,
+      current
+    }
+  };
+}
 const SVELTE_KIT_ASSETS = "/_svelte_kit_assets";
 const ENDPOINT_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"];
 const PAGE_METHODS = ["GET", "POST", "HEAD"];
@@ -294,31 +325,6 @@ function compact(arr) {
     /** @returns {val is NonNullable<T>} */
     (val) => val != null
   );
-}
-const DATA_SUFFIX = "/__data.json";
-const HTML_DATA_SUFFIX = ".html__data.json";
-function has_data_suffix(pathname) {
-  return pathname.endsWith(DATA_SUFFIX) || pathname.endsWith(HTML_DATA_SUFFIX);
-}
-function add_data_suffix(pathname) {
-  if (pathname.endsWith(".html")) return pathname.replace(/\.html$/, HTML_DATA_SUFFIX);
-  return pathname.replace(/\/$/, "") + DATA_SUFFIX;
-}
-function strip_data_suffix(pathname) {
-  if (pathname.endsWith(HTML_DATA_SUFFIX)) {
-    return pathname.slice(0, -HTML_DATA_SUFFIX.length) + ".html";
-  }
-  return pathname.slice(0, -DATA_SUFFIX.length);
-}
-const ROUTE_SUFFIX = "/__route.js";
-function has_resolution_suffix(pathname) {
-  return pathname.endsWith(ROUTE_SUFFIX);
-}
-function add_resolution_suffix(pathname) {
-  return pathname.replace(/\/$/, "") + ROUTE_SUFFIX;
-}
-function strip_resolution_suffix(pathname) {
-  return pathname.slice(0, -ROUTE_SUFFIX.length);
 }
 const noop_span = {
   spanContext() {
@@ -645,6 +651,7 @@ async function load_server_data({ event, event_state, state, node, parent }) {
   if (state.prerendering) {
     disable_search(url);
   }
+  let done = false;
   const result = await record_span({
     name: "sveltekit.load",
     attributes: {
@@ -659,18 +666,21 @@ async function load_server_data({ event, event_state, state, node, parent }) {
         () => load.call(null, {
           ...traced_event,
           fetch: (info, init2) => {
-            new URL(info instanceof Request ? info.url : info, event.url);
+            const url2 = new URL(info instanceof Request ? info.url : info, event.url);
+            if (DEV && done && !uses.dependencies.has(url2.href)) ;
             return event.fetch(info, init2);
           },
           /** @param {string[]} deps */
           depends: (...deps) => {
             for (const dep of deps) {
               const { href } = new URL(dep, event.url);
+              if (DEV) ;
               uses.dependencies.add(href);
             }
           },
           params: new Proxy(event.params, {
             get: (target, key2) => {
+              if (DEV && done && typeof key2 === "string" && !uses.params.has(key2)) ;
               if (is_tracking) {
                 uses.params.add(key2);
               }
@@ -681,6 +691,7 @@ async function load_server_data({ event, event_state, state, node, parent }) {
             }
           }),
           parent: async () => {
+            if (DEV && done && !uses.parent) ;
             if (is_tracking) {
               uses.parent = true;
             }
@@ -688,6 +699,7 @@ async function load_server_data({ event, event_state, state, node, parent }) {
           },
           route: new Proxy(event.route, {
             get: (target, key2) => {
+              if (DEV && done && typeof key2 === "string" && !uses.route) ;
               if (is_tracking) {
                 uses.route = true;
               }
@@ -711,6 +723,7 @@ async function load_server_data({ event, event_state, state, node, parent }) {
       return result2;
     }
   });
+  done = true;
   return {
     type: "data",
     data: result ?? null,

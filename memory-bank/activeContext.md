@@ -6,6 +6,7 @@
 - ✅ COMPLETED: o4-mini-high model compatibility with max_completion_tokens
 - ✅ COMPLETED: Rich LangDB response parsing and tool recommendations
 - ✅ COMPLETED: Automatic LANGDB environment variable integration
+- 🔄 **IN PROGRESS**: Vercel serverless function crash investigation and fix plan
 
 ### Recent Changes
 - Initialized memory-bank with core documents
@@ -48,6 +49,7 @@
  - Added `/diag` and `/diag/langdb`; verified env presence and active LangDB probe
  - Implemented Modal-offloaded LangDB flow; tool now returns `{ status: "accepted", correlation_id, poll }` then final via webhook
   - Applied Cursor-compat response mapping (content[] text); Cursor now shows final results synchronously when within the 120s window
+  - Added `scripts/poll_job_result.js` for manual polling when clients don't auto-poll
 
 ### Major Achievements (Current Session)
 1. ✅ **Modal Integration Fixed**: Resolved automatic LangDB offloading via LANGDB env var
@@ -60,19 +62,17 @@
 8. ✅ **Admin Backend Architecture**: FastAPI analytics backend with SSE and request logging middleware
 9. ✅ **Analytics Integration**: Tool auto-sends analytics to Railway via bearer or ingest key
 10. ✅ **Dashboard**: SvelteKit dashboard mounted at `/dashboard`, live KPIs via SSE, Vite proxy for dev CORS-free
-
-### Current Status
-- **Production Ready**: Full Railway deployment with Modal GPU processing
-- **Model Working**: o4-mini-high with max_completion_tokens parameter support
-- **Integration Complete**: Railway ↔ Modal ↔ LangDB pipeline operational
-- **Response Quality**: Rich, detailed, comprehensive output with progress tracking
-- **Admin Backend**: Complete FastAPI admin backend for analytics and monitoring
-- **Data Collection**: Comprehensive analytics tracking integrated into MCP server
-- **Cost Tracking**: Full end-to-end cost tracking implemented and verified, with Modal reporting costs to Railway analytics.
-- **Liquid Glass Admin Dashboard**: Fully implemented UI/UX redesign with Apple's "Liquid Glass" aesthetic, including dynamic components, advanced visualizations, and comprehensive error/performance handling.
-- **Frontend & Backend Stability**: All identified build and runtime errors (including CORS, API connection, and data handling) resolved across both frontend and backend services.
-- **FastAPI Startup & Backend Reliability**: Resolved all startup crashes (`NameError`, `TypeError`) and critical backend 500 errors, ensuring the FastAPI application starts reliably and serves data correctly.
-- **Dashboard Data Integrity**: Fixed `AttributeError` for performance metrics, ensuring all dashboard charts display accurate and real-time data.
+11. ✅ **Production Ready**: Full Railway deployment with Modal GPU processing
+12. ✅ **Model Working**: o4-mini-high with max_completion_tokens parameter support
+13. ✅ **Integration Complete**: Railway ↔ Modal ↔ LangDB pipeline operational
+14. ✅ **Response Quality**: Rich, detailed, comprehensive output with progress tracking
+15. ✅ **Admin Backend**: Complete FastAPI admin backend for analytics and monitoring
+16. ✅ **Data Collection**: Comprehensive analytics tracking integrated into MCP server
+17. ✅ **Cost Tracking**: Full end-to-end cost tracking implemented and verified, with Modal reporting costs to Railway analytics.
+18. ✅ **Liquid Glass Admin Dashboard**: Fully implemented UI/UX redesign with Apple's "Liquid Glass" aesthetic, including dynamic components, advanced visualizations, and comprehensive error/performance handling.
+19. ✅ **Frontend & Backend Stability**: All identified build and runtime errors (including CORS, API connection, and data handling) resolved across both frontend and backend services.
+20. ✅ **FastAPI Startup & Backend Reliability**: Resolved all startup crashes (`NameError`, `TypeError`) and critical backend 500 errors, ensuring the FastAPI application starts reliably and serves data correctly.
+21. ✅ **Dashboard Data Integrity**: Fixed `AttributeError` for performance metrics, ensuring all dashboard charts display accurate and real-time data.
 
 ### Decisions & Considerations
 - Keep state in-memory initially; add persistence later if needed
@@ -88,3 +88,13 @@
 - Added Jest (`ts-jest`) configuration and unit tests for LangDB helpers under `__tests__/providers/langdb/`.
 - Committed and pushed changes to `origin/main`; deployed Modal worker via `modal deploy modal_app.py` (submit URL and app deployment active).
 - Next: add DI (`tsyringe`) and `createServer()` seam, expand unit/integration tests, and document new env vars in `.env.example`.
+
+### Current Investigation
+- **Vercel Serverless Function Crash**: Investigating `ERR_MODULE_NOT_FOUND` for `@sveltejs/kit` at runtime in Vercel's serverless environment
+- **Root Cause Analysis**: Identified potential issues with SvelteKit adapter configuration, dependency bundling, and Vercel deployment settings
+- **Fix Plan Created**: Comprehensive plan documented in `VERCEL_FIX_PLAN.md` with 8-step resolution strategy
+
+### Next Steps
+- Implement Vercel fix plan as outlined in `VERCEL_FIX_PLAN.md`
+- Test deployment after implementing fixes
+- Document lessons learned for future Vercel deployments

@@ -3,8 +3,13 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   plugins: [sveltekit()],
+  build: {
+    rollupOptions: {
+      external: []
+    }
+  },
   ssr: {
-    noExternal: ['chart.js', 'echarts']
+    noExternal: ['@sveltejs/kit', 'chart.js', 'echarts']
   },
   server: {
     port: 5173,

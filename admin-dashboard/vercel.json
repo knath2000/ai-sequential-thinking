@@ -5,6 +5,11 @@
   "devCommand": "cd admin-dashboard && pnpm run dev",
   "framework": "sveltekit",
   "outputDirectory": ".svelte-kit/vercel",
+  "functions": {
+    "index.js": {
+      "includeFiles": "node_modules/@sveltejs/kit/**"
+    }
+  },
   "env": {
     "NODE_ENV": "production"
   },

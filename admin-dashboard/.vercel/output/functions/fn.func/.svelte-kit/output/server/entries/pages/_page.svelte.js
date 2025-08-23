@@ -1,5 +1,4 @@
 import { z as current_component, F as attr_class, G as attr_style, J as stringify, K as clsx, w as slot, N as bind_props, t as push, v as pop, y as escape_html, O as copy_payload, P as assign_payload } from "../../chunks/index2.js";
-import "@sveltejs/kit/internal";
 import "../../chunks/exports.js";
 import "../../chunks/utils.js";
 import "../../chunks/state.svelte.js";

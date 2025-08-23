@@ -18,7 +18,9 @@ const config = {
     // Pin runtime to Node 20 to avoid Vercel/adapter issues while we upgrade deps
     adapter: adapter({
       runtime: 'nodejs20.x',
-      regions: ['iad1']
+      regions: ['iad1'],
+      // Ensure all dependencies are bundled
+      external: []
     })
   }
 };

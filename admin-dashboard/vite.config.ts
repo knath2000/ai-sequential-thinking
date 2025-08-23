@@ -9,7 +9,7 @@ export default defineConfig({
   server: {
     port: 5173,
     hmr: {
-      overlay: false // Disable HMR error overlay
+      overlay: false // Disables HMR error overlay
     },
     proxy: {
       '/api': {

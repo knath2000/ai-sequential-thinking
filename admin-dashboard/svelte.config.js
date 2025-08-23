@@ -1,9 +1,9 @@
 import adapter from '@sveltejs/adapter-vercel';
-import sveltePreprocess from 'svelte-preprocess';
+import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
-  preprocess: sveltePreprocess(),
+  preprocess: vitePreprocess(),
   warningFilter: (warning) => {
     const ignore = [
       'a11y_click_events_have_key_events',
@@ -15,13 +15,13 @@ const config = {
   },
   kit: {
     // Use Vercel adapter for zero-config deployments on Vercel
-    // Pin runtime to Node 20 to avoid Vercel/adapter issues while we upgrade deps
     adapter: adapter({
-      runtime: 'nodejs20.x',
+      runtime: 'nodejs22.x',
       regions: ['iad1'],
       // Ensure all dependencies are bundled
       external: [],
-      split: false // Bundle everything together
+      split: false, // Bundle everything together
+      maxDuration: 30
     })
   }
 };

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build --mode production",
+    "build": "vite build",
     "preview": "vite preview --port 5173",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "lint": "eslint ."
@@ -13,6 +13,7 @@
   "dependencies": {
     "@fontsource/inter": "^5.2.6",
     "@sveltejs/adapter-vercel": "^3.1.0",
+    "@sveltejs/kit": "^2.36.1",
     "@sveltejs/vite-plugin-svelte": "^4.0.0",
     "chart.js": "^4.5.0",
     "echarts": "^5.5.1",
@@ -21,7 +22,6 @@
     "svelte": "^5.38.2"
   },
   "devDependencies": {
-    "@sveltejs/kit": "^2.36.1",
     "@types/node": "^20.14.10",
     "autoprefixer": "^10.4.19",
     "eslint": "^9.6.0",

@@ -1,25 +1,19 @@
 {
-  "version": 2,
-  "buildCommand": "cd admin-dashboard && pnpm install --no-frozen-lockfile && pnpm run build",
-  "installCommand": "npm install -g pnpm && cd admin-dashboard && pnpm install --no-frozen-lockfile",
-  "devCommand": "cd admin-dashboard && pnpm run dev",
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "pnpm run build",
+  "installCommand": "pnpm install --no-frozen-lockfile",
   "framework": "sveltekit",
-  "outputDirectory": ".svelte-kit/vercel",
+  "outputDirectory": ".svelte-kit/output",
   "functions": {
-    "index.js": {
+    "src/routes/**/*": {
+      "runtime": "nodejs22.x",
+      "maxDuration": 30,
+      "memory": 1024,
       "includeFiles": "node_modules/**"
     }
   },
+  "regions": ["iad1"],
   "env": {
     "NODE_ENV": "production"
-  },
-  "routes": [
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
-  ]
+  }
 }

@@ -7,9 +7,10 @@ export default defineConfig({
     rollupOptions: {
       external: []
     },
-    target: 'node20',
+    target: 'node22',
     sourcemap: false,
-    chunkSizeWarningLimit: 1000
+    chunkSizeWarningLimit: 1000,
+    outDir: '.svelte-kit/output'
   },
   ssr: {
     noExternal: ['@sveltejs/kit', 'chart.js', 'echarts']

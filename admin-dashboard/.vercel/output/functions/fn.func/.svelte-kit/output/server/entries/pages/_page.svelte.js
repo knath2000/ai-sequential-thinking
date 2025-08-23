@@ -16,7 +16,7 @@ function LiquidNavigation($$payload) {
   let scrollY = 0;
   isScrolled = scrollY > 20;
   navOpacity = Math.min(0.95, 0.7 + scrollY / 200 * 0.25);
-  $$payload.out.push(`<nav${attr_class("liquid-nav svelte-kdoo8f", void 0, { "scrolled": isScrolled })}${attr_style(`--nav-opacity: ${stringify(navOpacity)}`)}><div class="nav-backdrop svelte-kdoo8f"></div> <div class="nav-content"><div class="nav-brand"><h1>MCP Analytics</h1></div> <div class="nav-links"></div></div> <div class="nav-edge svelte-kdoo8f"></div></nav>`);
+  $$payload.out.push(`<nav${attr_class("liquid-nav svelte-1t31i7p", void 0, { "scrolled": isScrolled })}${attr_style(`--nav-opacity: ${stringify(navOpacity)}`)}><div class="nav-backdrop svelte-1t31i7p"></div> <div class="nav-content"><div class="nav-brand"><h1>MCP Analytics</h1></div> <div class="nav-links"></div></div> <div class="nav-edge svelte-1t31i7p"></div></nav>`);
 }
 function GlassCard($$payload, $$props) {
   let glassClass;

@@ -1,18 +1,6 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "pnpm run build",
-  "installCommand": "pnpm install --no-frozen-lockfile",
-  "framework": "sveltekit",
-  "functions": {
-    "src/routes/**/*": {
-      "runtime": "nodejs22.x",
-      "maxDuration": 30,
-      "memory": 1024,
-      "includeFiles": "node_modules/**"
-    }
-  },
-  "regions": ["iad1"],
-  "env": {
-    "NODE_ENV": "production"
-  }
+  "buildCommand": "pnpm build",
+  "outputDirectory": ".vercel/output",
+  "devCommand": "pnpm dev",
+  "installCommand": "pnpm install"
 }

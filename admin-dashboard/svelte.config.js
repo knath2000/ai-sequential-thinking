@@ -14,18 +14,11 @@ const config = {
     return !ignore.includes(warning.code);
   },
   kit: {
-    // Use Vercel adapter for zero-config deployments on Vercel
+    // Use Vercel adapter with explicit runtime configuration
     adapter: adapter({
-      runtime: 'nodejs22.x',
-      regions: ['iad1'],
-      // Ensure all dependencies are bundled
-      external: [],
-      split: false, // Bundle everything together
-      maxDuration: 30
+      runtime: 'nodejs22.x'
     })
   }
 };
 
 export default config;
-
-

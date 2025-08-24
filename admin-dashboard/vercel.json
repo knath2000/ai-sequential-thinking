@@ -2,5 +2,17 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "pnpm run build",
   "installCommand": "pnpm install --no-frozen-lockfile",
-  "framework": "sveltekit"
+  "framework": "sveltekit",
+  "devCommand": "pnpm run dev",
+  "outputDirectory": ".svelte-kit/output",
+  "rootDirectory": "admin-dashboard",
+  "functions": {
+    "index.js": {
+      "runtime": "nodejs22.x",
+      "maxDuration": 30
+    }
+  },
+  "env": {
+    "NODE_ENV": "production"
+  }
 }

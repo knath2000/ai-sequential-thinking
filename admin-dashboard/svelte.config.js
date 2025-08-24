@@ -16,8 +16,12 @@ const config = {
   kit: {
     adapter: adapter({
       runtime: 'nodejs22.x',
-      regions: ['iad1']
-    })
+      regions: ['iad1'],
+      split: false
+    }),
+    version: {
+      name: '1.0.0'
+    }
   }
 };
 

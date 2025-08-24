@@ -6,6 +6,16 @@
     "rootDirectory": "admin-dashboard",
     "installCommand": "pnpm install --no-frozen-lockfile",
     "buildCommand": "pnpm run build",
-    "outputDirectory": ".svelte-kit/output"
+    "outputDirectory": ".svelte-kit/output",
+    "devCommand": "pnpm run dev",
+    "env": {
+      "NODE_ENV": "production"
+    },
+    "functions": {
+      "index.js": {
+        "runtime": "nodejs22.x",
+        "maxDuration": 30
+      }
+    }
   }
 }

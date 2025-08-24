@@ -3,6 +3,7 @@
 	"regions": [
 		"iad1"
 	],
+	"maxDuration": 30,
 	"handler": ".svelte-kit/vercel-tmp/index.js",
 	"launcherType": "Nodejs",
 	"experimentalResponseStreaming": true

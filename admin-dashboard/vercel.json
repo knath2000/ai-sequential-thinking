@@ -6,8 +6,8 @@
   "devCommand": "pnpm run dev",
   "outputDirectory": ".svelte-kit/output",
   "functions": {
-    "index.js": {
-      "runtime": "nodejs22.x",
+    "src/routes/**/*": {
+      "runtime": "nodejs18.x",
       "maxDuration": 30
     }
   },

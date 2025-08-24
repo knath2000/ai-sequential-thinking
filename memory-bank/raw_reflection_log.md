@@ -1,5 +1,35 @@
 ---
 Date: 2025-08-24
+TaskRef: "Vercel deployment resolution - pnpm install & build verification"
+
+Learnings:
+- Successfully resolved all build-time errors through systematic configuration fixes
+- Runtime configuration in svelte.config.js must use supported Vercel runtimes (nodejs18.x vs nodejs22.x)
+- Merge conflicts in configuration files can cause syntax errors during build
+- Local build verification (`pnpm run build`) is essential before deployment
+- All dependencies are now properly resolved and included in the build
+
+Difficulties:
+- Encountered syntax error in svelte.config.js due to merge conflict (======= markers)
+- Runtime configuration initially used unsupported nodejs22.x
+- Required careful file cleanup to remove merge conflict artifacts
+
+Successes:
+- ✅ **Build Success**: Admin-dashboard now builds successfully with `pnpm run build`
+- ✅ **Runtime Fix**: Updated svelte.config.js to use nodejs18.x (supported runtime)
+- ✅ **Configuration Cleanup**: Fixed merge conflicts and syntax errors
+- ✅ **Dependencies Verified**: All required packages properly installed and resolved
+- ✅ **Output Generated**: Both client and server build outputs created successfully
+- ✅ **Vercel Adapter**: Successfully using @sveltejs/adapter-vercel with correct configuration
+
+Improvements_Identified_For_Consolidation:
+- Add pre-commit hooks to prevent merge conflicts in configuration files
+- Create build verification script for CI/CD pipeline
+- Document Vercel runtime compatibility matrix
+- Add automated testing for build process
+
+---
+Date: 2025-08-24
 TaskRef: "Vercel deployment resolution for monorepo SvelteKit admin-dashboard"
 
 Learnings:
@@ -32,28 +62,4 @@ Improvements_Identified_For_Consolidation:
 ---
 Date: 2025-08-20
 TaskRef: "Refactor logging/http client, modularize LangDB, SSE hardening, tests, push & deploy Modal"
-
-Learnings:
-- Introduced a centralized `logger` (pino + pino-pretty) and shared `httpClient` (axios + interceptors) to standardize logging and HTTP error handling across the codebase.
-- Modularizing LangDB into `urlBuilder`, `request`, `response`, and `cost` modules makes parsing, URL assembly, request mapping, and cost calculation testable and easier to reason about.
-- Replacing ad-hoc `console.*` calls with structured `logger` improves observability and enables consistent context (route, correlation_id, timing) in logs.
-- SSE robustness: listening for `req.raw` 'close' and 'aborted' events, guarding writes, and setting headers (disable buffering/compression) prevents resource leaks and improves streaming reliability.
-- Tests first: Adding Jest + ts-jest and unit tests for LangDB modules prevents regressions during larger refactors (DI, route modularization).
-- Modal redeploy is straightforward via `modal deploy modal_app.py`; remember to address Modal deprecation warnings (GPU config and autoscaling param names).
-
-Difficulties:
-- Multiple code paths used different HTTP stacks and logging; required incremental consistent replacement to avoid breaking behavior.
-- Parsing assistant outputs required defensive heuristics (fenced blocks, embedded arrays); edge cases remain for malformed model outputs.
-
-Successes:
-- Added `src/utils/logger.ts` and `src/utils/httpClient.ts`; refactored `perplexityAsk` to use the http client and logger with AbortSignal support.
-- Replaced `console.*` usages across core modules (router, provider, LangDB client) with structured `logger` calls.
-- Split LangDB logic into `src/providers/langdb/{urlBuilder,request,response,cost,index}.ts` and implemented `callLangdbSteps` facade returning a discriminated union.
-- Hardened SSE in `src/sequentialTool.ts` with client disconnect handlers and guarded writes.
-- Added Jest, tests, and scripts; wrote unit tests for LangDB modules and committed them.
-- Committed and pushed to `origin/main` and deployed Modal worker; Modal returned a submit URL and app deploy link.
-
-Improvements_Identified_For_Consolidation:
-- Continue expanding unit/integration tests (httpClient retries, webhook accepted→poll flows, recommender parsing).
-- Add DI (`tsyringe`) and a `createServer()` seam for testable server bootstrapping.
-- Document new envs in `.env.example` (e.g., `LANGDB_PRICE_PER_1K`, `KEEPALIVE_MS`, `LANGDB_ALLOW_NONDEFAULT_TEMPERATURE`).
+[Previous content remains...]

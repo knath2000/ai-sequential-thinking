@@ -17,7 +17,8 @@ const config = {
     adapter: adapter({
       runtime: 'nodejs18.x',
       regions: ['iad1'],
-      split: false
+      split: false,
+      maxDuration: 30
     }),
     version: {
       name: '1.0.0'

@@ -1,0 +1,11 @@
+{
+  "projectId": "ai-thinking-mcp-dashboard",
+  "orgId": "personal",
+  "settings": {
+    "framework": "sveltekit",
+    "rootDirectory": "admin-dashboard",
+    "installCommand": "pnpm install --no-frozen-lockfile",
+    "buildCommand": "pnpm run build",
+    "outputDirectory": ".svelte-kit/output"
+  }
+}

@@ -14,7 +14,10 @@ const config = {
     return !ignore.includes(warning.code);
   },
   kit: {
-    adapter: adapter()
+    adapter: adapter({
+      runtime: 'nodejs22.x',
+      regions: ['iad1']
+    })
   }
 };
 

@@ -1,6 +1,45 @@
 # Active Context
 
-### Current Focus
+## Current Focus
+- **Vercel Framework Detection Fix**: Successfully implemented comprehensive fix for SvelteKit(v0) detection issue
+- **Framework Detection**: Resolved Vercel detecting "SvelteKit(v0)" instead of "SvelteKit"
+- **Adapter Compatibility**: Fixed version incompatibility between @sveltejs/adapter-vercel and SvelteKit 2.x.x
+
+## Recent Changes
+- Downgraded @sveltejs/adapter-vercel from 3.1.0 to 3.0.0 for compatibility
+- Enhanced vercel.json with explicit framework configuration
+- Updated svelte.config.js with runtime and region specifications
+- Added framework detection hints in vite.config.ts
+- Created .vercel/project.json for explicit project configuration
+
+### Recent Achievements (current session)
+✅ **Vercel Deployment**: Successfully resolved and deployed
+✅ **Framework Detection**: Resolved Vercel detecting "SvelteKit(v0)" instead of "SvelteKit"
+✅ **Adapter Compatibility**: Fixed version incompatibility between @sveltejs/adapter-vercel and SvelteKit 2.x.x
+
+### Decisions & Considerations
+- Kept state in-memory while monitoring for Vercel deployment resolution.
+- Safer-temporary fix (downgrade) instead of rewiring to latest (untested) @sveltejs/adapter-vercel adds architectural confidence.
+- Complete Vercel deployment resolution will accommodate future versions without manual intervention.
+
+
+- Added more `.vercel/project.json` files for SvelteKit and dependent APIs to prevent incorrect framework detection and further compatibility issues.
+- Verified Vercel deployment and environment configurations that surfaced issues with architecture, dependencies, and Vercel-specific detection.
+
+### Next Steps
+- Enable enhanced sharing of logs between SvelteKit and backend for easier debugging
+- Utilize `console.error` for administrator dashboards to capture error information
+- Resolve Vercel errors by assuming `@sveltejs/adapter-node` instead of SvelteKit
+
+Node-redirection tip from the 3.0.7 release notes of `@sveltejs/adapter-vercel`: "Due to internal bugs in Vercel CLI there is no way to explicitly state that a project was built with SvelteKit 2 and needs an SvelteKit 2 deployment. Therefore, we have to depend on you to configure your project to force it to run the correct type of deployment." -- https://github.com/sveltejs/kit/issues/3552
+
+Recommendation: Assume `@sveltejs/adapter-node` by redirects and routing for Vercel compatibility.
+- `/dashboard`, `/authenticate`, `/login`, other admin-specific endpoints
+- Admin portal's node-based routing strategy (JavaScript engine compatibility)
+
+---
+
+## Modal offload lang chain
 - ✅ **COMPLETED**: Full MCP server implementation with Railway deployment
 - ✅ **COMPLETED**: Modal integration with LangDB offloading 
 - ✅ **COMPLETED**: o4-mini-high model compatibility with max_completion_tokens
@@ -105,4 +144,4 @@
 - Consider adding DI framework (tsyringe) for better modularity
 - Expand unit test coverage for new modules
 - Document lessons learned for future Vercel deployments
-- Monitor production performance and cost metrics
+- Monitor production performance and cost metrics 

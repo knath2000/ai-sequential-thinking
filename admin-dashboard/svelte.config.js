@@ -14,10 +14,7 @@ const config = {
     return !ignore.includes(warning.code);
   },
   kit: {
-    // Use Vercel adapter with explicit runtime configuration
-    adapter: adapter({
-      runtime: 'nodejs22.x'
-    })
+    adapter: adapter()
   }
 };
 

@@ -45,6 +45,9 @@
   - **Framework Preset**: SvelteKit (auto-detect)
   - **Build Command**: Leave empty (uses `pnpm run build`)
   - **Install Command**: Leave empty (uses `pnpm install`)
+- **Dependencies**: Ensure `@sveltejs/kit` is in `dependencies` not `devDependencies` for Vercel serverless functions
+- **Adapter**: Use `@sveltejs/adapter-auto` for automatic Vercel detection
+- **Vercel.json**: Minimal configuration with `{"buildCommand": "pnpm run build", "outputDirectory": "build"}`
 
 # Consolidated Learnings
 ## Live Analytics Dashboard (SvelteKit + FastAPI)
@@ -135,6 +138,7 @@
 - **Unit tests**: Added Jest (`ts-jest`) configuration and unit tests for LangDB helpers under `__tests__/providers/langdb/`.
 - **Modal deployment**: Deployed updated `modal_app.py` via `modal deploy modal_app.py`; Modal submit and app endpoints active.
 - **Vercel deployment**: Successfully resolved monorepo configuration and deployed admin-dashboard to Vercel
+- **Vercel production**: Successfully deployed to Vercel with full functionality
 
 ## Sequential Thinking Enhancements (2025-08-14)
 **Pattern: Enhanced per-step schema with tool recommendations**
@@ -153,3 +157,23 @@
 **Next steps for consolidation**
 - Improve LangDB prompt + parsing to return structured recommendations reliably.
 - Add unit tests and CI to validate schema, recommender parsing, and Modal callback flows.
+
+## Vercel Deployment Configuration (2025-08-24)
+**Pattern: Monorepo SvelteKit Deployment**
+- **Root Directory**: Set Vercel root directory to `admin-dashboard` instead of repository root
+- **Dependencies**: Move `@sveltejs/kit` from `devDependencies` to `dependencies` in package.json
+- **Adapter**: Use `@sveltejs/adapter-auto` for automatic Vercel detection
+- **Configuration**: Minimal vercel.json with build and output settings
+- **Build Process**: Ensure pnpm workspace configuration supports Vercel deployment
+- **Testing**: Verify local build with `npm run build` before deployment
+- **Environment**: Ensure all environment variables are properly configured in Vercel dashboard
+
+**Deployment Steps**:
+1. Configure Vercel root directory to `admin-dashboard`
+2. Update package.json to include @sveltejs/kit in dependencies
+3. Simplify vercel.json configuration
+4. Update svelte.config.js with adapter-auto
+5. Configure vite.config.ts for SSR
+6. Test local build
+7. Deploy to Vercel
+8. Verify production functionality

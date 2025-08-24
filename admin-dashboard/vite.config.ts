@@ -4,17 +4,28 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   plugins: [sveltekit()],
   build: {
+    rollupOptions: {
+      external: []
+    },
     target: 'node22',
     sourcemap: false,
-    chunkSizeWarningLimit: 1000
+    chunkSizeWarningLimit: 1000,
+    outDir: '.svelte-kit/output'
   },
   ssr: {
-    noExternal: ['chart.js', 'echarts']
+    noExternal: ['@sveltejs/kit', 'chart.js', 'echarts']
   },
   server: {
     port: 5173,
     hmr: {
       overlay: false
+    },
+    proxy: {
+      '/api': {
+        target: 'https://gallant-reflection-production.up.railway.app',
+        changeOrigin: true,
+        secure: true
+      }
     }
   },
   optimizeDeps: {
@@ -26,3 +37,5 @@ export default defineConfig({
   },
   logLevel: 'warn'
 });
+
+

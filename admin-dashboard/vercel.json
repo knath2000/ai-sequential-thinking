@@ -5,9 +5,6 @@
   "framework": "sveltekit",
   "devCommand": "pnpm run dev",
   "outputDirectory": ".svelte-kit/output",
-  "framework": "sveltekit",
-  "devCommand": "pnpm run dev",
-  "outputDirectory": ".svelte-kit/output",
   "functions": {
     "index.js": {
       "runtime": "nodejs22.x",

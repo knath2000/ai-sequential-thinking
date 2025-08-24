@@ -1,9 +1,7 @@
-import { w as slot } from "../../chunks/index2.js";
-function _layout($$payload, $$props) {
-  $$payload.out.push(`<!---->`);
-  slot($$payload, $$props, "default", {});
-  $$payload.out.push(`<!---->`);
-}
+import { c as create_ssr_component } from "../../chunks/ssr.js";
+const Layout = create_ssr_component(($$result, $$props, $$bindings, slots) => {
+  return `${slots.default ? slots.default({}) : ``}`;
+});
 export {
-  _layout as default
+  Layout as default
 };

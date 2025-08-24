@@ -1,247 +1,242 @@
-import { z as current_component, F as attr_class, G as attr_style, J as stringify, K as clsx, w as slot, N as bind_props, t as push, v as pop, y as escape_html, O as copy_payload, P as assign_payload } from "../../chunks/index2.js";
+import { c as create_ssr_component, d as add_attribute, e as null_to_empty, o as onDestroy, v as validate_component } from "../../chunks/ssr.js";
 import "../../chunks/exports.js";
 import "../../chunks/utils.js";
-import "../../chunks/state.svelte.js";
-import { j as fallback } from "../../chunks/utils2.js";
+import { e as escape } from "../../chunks/state.svelte.js";
 import { Chart, registerables } from "chart.js";
-function onDestroy(fn) {
-  var context = (
-    /** @type {Component} */
-    current_component
-  );
-  (context.d ??= []).push(fn);
-}
-function LiquidNavigation($$payload) {
-  let isScrolled, navOpacity;
+const css$7 = {
+  code: ".liquid-nav.svelte-1t31i7p.svelte-1t31i7p{position:fixed;top:0;left:0;right:0;z-index:1000;height:80px;transition:all var(--glass-transition-fluid);will-change:transform, backdrop-filter}.nav-backdrop.svelte-1t31i7p.svelte-1t31i7p{position:absolute;inset:0;height:200%;background:linear-gradient(\n      to bottom,\n      rgba(10, 10, 15, var(--nav-opacity)) 0%,\n      rgba(10, 10, 15, 0.4) 50%,\n      transparent 100%\n    );backdrop-filter:var(--glass-blur-primary) saturate(180%);-webkit-mask-image:linear-gradient(\n      to bottom,\n      black 0% 50%,\n      transparent 50% 100%\n    );mask-image:linear-gradient(\n      to bottom,\n      black 0% 50%,\n      transparent 50% 100%\n    );pointer-events:none}.nav-edge.svelte-1t31i7p.svelte-1t31i7p{position:absolute;bottom:0;left:0;right:0;height:1px;background:var(--glass-border-light);backdrop-filter:blur(8px) brightness(120%)}.scrolled.svelte-1t31i7p .nav-backdrop.svelte-1t31i7p{backdrop-filter:var(--glass-blur-primary) saturate(200%) brightness(110%)}",
+  map: '{"version":3,"file":"LiquidNavigation.svelte","sources":["LiquidNavigation.svelte"],"sourcesContent":["<script lang=\\"ts\\">import { page } from \\"$app/stores\\";\\nimport { onMount } from \\"svelte\\";\\nlet scrollY = 0;\\nlet navElement;\\n$: isScrolled = scrollY > 20;\\n$: navOpacity = Math.min(0.95, 0.7 + scrollY / 200 * 0.25);\\n<\/script>\\n\\n<svelte:window bind:scrollY />\\n\\n<nav \\n  bind:this={navElement}\\n  class=\\"liquid-nav\\" \\n  class:scrolled={isScrolled}\\n  style=\\"--nav-opacity: {navOpacity}\\"\\n>\\n  <div class=\\"nav-backdrop\\"></div>\\n  <div class=\\"nav-content\\">\\n    <div class=\\"nav-brand\\">\\n      <h1>MCP Analytics</h1>\\n    </div>\\n    <div class=\\"nav-links\\">\\n      <!-- Navigation items -->\\n    </div>\\n  </div>\\n  <div class=\\"nav-edge\\"></div>\\n</nav>\\n\\n<style>\\n  .liquid-nav {\\n    position: fixed;\\n    top: 0;\\n    left: 0;\\n    right: 0;\\n    z-index: 1000;\\n    height: 80px;\\n    transition: all var(--glass-transition-fluid);\\n    will-change: transform, backdrop-filter;\\n  }\\n  \\n  .nav-backdrop {\\n    position: absolute;\\n    inset: 0;\\n    height: 200%;\\n    background: linear-gradient(\\n      to bottom,\\n      rgba(10, 10, 15, var(--nav-opacity)) 0%,\\n      rgba(10, 10, 15, 0.4) 50%,\\n      transparent 100%\\n    );\\n    backdrop-filter: var(--glass-blur-primary) saturate(180%);\\n    -webkit-mask-image: linear-gradient(\\n      to bottom,\\n      black 0% 50%,\\n      transparent 50% 100%\\n    );\\n            mask-image: linear-gradient(\\n      to bottom,\\n      black 0% 50%,\\n      transparent 50% 100%\\n    );\\n    pointer-events: none;\\n  }\\n  \\n  .nav-edge {\\n    position: absolute;\\n    bottom: 0;\\n    left: 0;\\n    right: 0;\\n    height: 1px;\\n    background: var(--glass-border-light);\\n    backdrop-filter: blur(8px) brightness(120%);\\n  }\\n  \\n  .scrolled .nav-backdrop {\\n    backdrop-filter: var(--glass-blur-primary) saturate(200%) brightness(110%);\\n  }\\n</style>\\n"],"names":[],"mappings":"AA6BE,yCAAY,CACV,QAAQ,CAAE,KAAK,CACf,GAAG,CAAE,CAAC,CACN,IAAI,CAAE,CAAC,CACP,KAAK,CAAE,CAAC,CACR,OAAO,CAAE,IAAI,CACb,MAAM,CAAE,IAAI,CACZ,UAAU,CAAE,GAAG,CAAC,IAAI,wBAAwB,CAAC,CAC7C,WAAW,CAAE,SAAS,CAAC,CAAC,eAC1B,CAEA,2CAAc,CACZ,QAAQ,CAAE,QAAQ,CAClB,KAAK,CAAE,CAAC,CACR,MAAM,CAAE,IAAI,CACZ,UAAU,CAAE;AAChB,MAAM,EAAE,CAAC,MAAM;AACf,MAAM,KAAK,EAAE,CAAC,CAAC,EAAE,CAAC,CAAC,EAAE,CAAC,CAAC,IAAI,aAAa,CAAC,CAAC,CAAC,EAAE;AAC7C,MAAM,KAAK,EAAE,CAAC,CAAC,EAAE,CAAC,CAAC,EAAE,CAAC,CAAC,GAAG,CAAC,CAAC,GAAG;AAC/B,MAAM,WAAW,CAAC;AAClB,KAAK,CACD,eAAe,CAAE,IAAI,oBAAoB,CAAC,CAAC,SAAS,IAAI,CAAC,CACzD,kBAAkB,CAAE;AACxB,MAAM,EAAE,CAAC,MAAM;AACf,MAAM,KAAK,CAAC,EAAE,CAAC,GAAG;AAClB,MAAM,WAAW,CAAC,GAAG,CAAC;AACtB,KAAK,CACO,UAAU,CAAE;AACxB,MAAM,EAAE,CAAC,MAAM;AACf,MAAM,KAAK,CAAC,EAAE,CAAC,GAAG;AAClB,MAAM,WAAW,CAAC,GAAG,CAAC;AACtB,KAAK,CACD,cAAc,CAAE,IAClB,CAEA,uCAAU,CACR,QAAQ,CAAE,QAAQ,CAClB,MAAM,CAAE,CAAC,CACT,IAAI,CAAE,CAAC,CACP,KAAK,CAAE,CAAC,CACR,MAAM,CAAE,GAAG,CACX,UAAU,CAAE,IAAI,oBAAoB,CAAC,CACrC,eAAe,CAAE,KAAK,GAAG,CAAC,CAAC,WAAW,IAAI,CAC5C,CAEA,wBAAS,CAAC,4BAAc,CACtB,eAAe,CAAE,IAAI,oBAAoB,CAAC,CAAC,SAAS,IAAI,CAAC,CAAC,WAAW,IAAI,CAC3E"}'
+};
+const LiquidNavigation = create_ssr_component(($$result, $$props, $$bindings, slots) => {
+  let isScrolled;
+  let navOpacity;
   let scrollY = 0;
+  $$result.css.add(css$7);
   isScrolled = scrollY > 20;
   navOpacity = Math.min(0.95, 0.7 + scrollY / 200 * 0.25);
-  $$payload.out.push(`<nav${attr_class("liquid-nav svelte-1t31i7p", void 0, { "scrolled": isScrolled })}${attr_style(`--nav-opacity: ${stringify(navOpacity)}`)}><div class="nav-backdrop svelte-1t31i7p"></div> <div class="nav-content"><div class="nav-brand"><h1>MCP Analytics</h1></div> <div class="nav-links"></div></div> <div class="nav-edge svelte-1t31i7p"></div></nav>`);
-}
-function GlassCard($$payload, $$props) {
+  return ` <nav class="${["liquid-nav svelte-1t31i7p", isScrolled ? "scrolled" : ""].join(" ").trim()}" style="${"--nav-opacity: " + escape(navOpacity, true)}"${add_attribute()}><div class="nav-backdrop svelte-1t31i7p"></div> <div class="nav-content" data-svelte-h="svelte-s8832s"><div class="nav-brand"><h1>MCP Analytics</h1></div> <div class="nav-links"></div></div> <div class="nav-edge svelte-1t31i7p"></div> </nav>`;
+});
+const css$6 = {
+  code: ".glass-card.svelte-3kxrhk{position:relative;background:var(--glass-primary);backdrop-filter:var(--glass-blur-primary);border:1px solid var(--glass-border-light);border-radius:16px;box-shadow:var(--glass-shadow-primary);overflow:hidden;transition:all var(--glass-transition-smooth)}.glass-card--elevated.svelte-3kxrhk{background:var(--glass-secondary);backdrop-filter:var(--glass-blur-secondary);box-shadow:var(--glass-shadow-elevated);border-radius:20px}.glass-card.animated.svelte-3kxrhk:hover{transform:translateY(-2px);box-shadow:var(--glass-shadow-floating);background:rgba(255, 255, 255, 0.18);will-change:transform, box-shadow, background}.specular-highlight.svelte-3kxrhk{position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:linear-gradient(\n      45deg,\n      transparent 30%,\n      rgba(255, 255, 255, 0.1) 50%,\n      transparent 70%\n    );animation:specular-highlight var(--specular-duration) var(--specular-timing) infinite;pointer-events:none}",
+  map: '{"version":3,"file":"GlassCard.svelte","sources":["GlassCard.svelte"],"sourcesContent":["<script lang=\\"ts\\">export let variant = \\"primary\\";\\nexport let animated = true;\\nexport let specular = false;\\n$: glassClass = `glass-card glass-card--${variant}`;\\n<\/script>\\n\\n<div class={glassClass} class:animated class:specular>\\n  <div class=\\"glass-content\\">\\n    <slot />\\n  </div>\\n  {#if specular}\\n    <div class=\\"specular-highlight\\"></div>\\n  {/if}\\n</div>\\n\\n<style>\\n  .glass-card {\\n    position: relative;\\n    background: var(--glass-primary);\\n    backdrop-filter: var(--glass-blur-primary);\\n    border: 1px solid var(--glass-border-light);\\n    border-radius: 16px;\\n    box-shadow: var(--glass-shadow-primary);\\n    overflow: hidden;\\n    transition: all var(--glass-transition-smooth);\\n  }\\n  \\n  .glass-card--elevated {\\n    background: var(--glass-secondary);\\n    backdrop-filter: var(--glass-blur-secondary);\\n    box-shadow: var(--glass-shadow-elevated);\\n    border-radius: 20px;\\n  }\\n  \\n  .glass-card.animated:hover {\\n    transform: translateY(-2px);\\n    box-shadow: var(--glass-shadow-floating);\\n    background: rgba(255, 255, 255, 0.18);\\n    will-change: transform, box-shadow, background;\\n  }\\n  \\n  .specular-highlight {\\n    position: absolute;\\n    top: -50%;\\n    left: -50%;\\n    width: 200%;\\n    height: 200%;\\n    background: linear-gradient(\\n      45deg,\\n      transparent 30%,\\n      rgba(255, 255, 255, 0.1) 50%,\\n      transparent 70%\\n    );\\n    animation: specular-highlight var(--specular-duration) var(--specular-timing) infinite;\\n    pointer-events: none;\\n  }\\n</style>\\n"],"names":[],"mappings":"AAgBE,yBAAY,CACV,QAAQ,CAAE,QAAQ,CAClB,UAAU,CAAE,IAAI,eAAe,CAAC,CAChC,eAAe,CAAE,IAAI,oBAAoB,CAAC,CAC1C,MAAM,CAAE,GAAG,CAAC,KAAK,CAAC,IAAI,oBAAoB,CAAC,CAC3C,aAAa,CAAE,IAAI,CACnB,UAAU,CAAE,IAAI,sBAAsB,CAAC,CACvC,QAAQ,CAAE,MAAM,CAChB,UAAU,CAAE,GAAG,CAAC,IAAI,yBAAyB,CAC/C,CAEA,mCAAsB,CACpB,UAAU,CAAE,IAAI,iBAAiB,CAAC,CAClC,eAAe,CAAE,IAAI,sBAAsB,CAAC,CAC5C,UAAU,CAAE,IAAI,uBAAuB,CAAC,CACxC,aAAa,CAAE,IACjB,CAEA,WAAW,uBAAS,MAAO,CACzB,SAAS,CAAE,WAAW,IAAI,CAAC,CAC3B,UAAU,CAAE,IAAI,uBAAuB,CAAC,CACxC,UAAU,CAAE,KAAK,GAAG,CAAC,CAAC,GAAG,CAAC,CAAC,GAAG,CAAC,CAAC,IAAI,CAAC,CACrC,WAAW,CAAE,SAAS,CAAC,CAAC,UAAU,CAAC,CAAC,UACtC,CAEA,iCAAoB,CAClB,QAAQ,CAAE,QAAQ,CAClB,GAAG,CAAE,IAAI,CACT,IAAI,CAAE,IAAI,CACV,KAAK,CAAE,IAAI,CACX,MAAM,CAAE,IAAI,CACZ,UAAU,CAAE;AAChB,MAAM,KAAK;AACX,MAAM,WAAW,CAAC,GAAG;AACrB,MAAM,KAAK,GAAG,CAAC,CAAC,GAAG,CAAC,CAAC,GAAG,CAAC,CAAC,GAAG,CAAC,CAAC,GAAG;AAClC,MAAM,WAAW,CAAC;AAClB,KAAK,CACD,SAAS,CAAE,kBAAkB,CAAC,IAAI,mBAAmB,CAAC,CAAC,IAAI,iBAAiB,CAAC,CAAC,QAAQ,CACtF,cAAc,CAAE,IAClB"}'
+};
+const GlassCard = create_ssr_component(($$result, $$props, $$bindings, slots) => {
   let glassClass;
-  let variant = fallback($$props["variant"], "primary");
-  let animated = fallback($$props["animated"], true);
-  let specular = fallback($$props["specular"], false);
+  let { variant = "primary" } = $$props;
+  let { animated = true } = $$props;
+  let { specular = false } = $$props;
+  if ($$props.variant === void 0 && $$bindings.variant && variant !== void 0) $$bindings.variant(variant);
+  if ($$props.animated === void 0 && $$bindings.animated && animated !== void 0) $$bindings.animated(animated);
+  if ($$props.specular === void 0 && $$bindings.specular && specular !== void 0) $$bindings.specular(specular);
+  $$result.css.add(css$6);
   glassClass = `glass-card glass-card--${variant}`;
-  $$payload.out.push(`<div${attr_class(clsx(glassClass), "svelte-3kxrhk", { "animated": animated, "specular": specular })}><div class="glass-content"><!---->`);
-  slot($$payload, $$props, "default", {});
-  $$payload.out.push(`<!----></div> `);
-  if (specular) {
-    $$payload.out.push("<!--[-->");
-    $$payload.out.push(`<div class="specular-highlight svelte-3kxrhk"></div>`);
-  } else {
-    $$payload.out.push("<!--[!-->");
-  }
-  $$payload.out.push(`<!--]--></div>`);
-  bind_props($$props, { variant, animated, specular });
-}
-function GlassChart($$payload, $$props) {
-  push();
-  let type = fallback($$props["type"], "line");
-  let data = fallback(
-    $$props["data"],
-    null
-    // Initialize data to null
-  );
-  let title = $$props["title"];
-  let height = fallback($$props["height"], 300);
+  return `<div class="${[
+    escape(null_to_empty(glassClass), true) + " svelte-3kxrhk",
+    (animated ? "animated" : "") + " " + (specular ? "specular" : "")
+  ].join(" ").trim()}"><div class="glass-content">${slots.default ? slots.default({}) : ``}</div> ${specular ? `<div class="specular-highlight svelte-3kxrhk"></div>` : ``} </div>`;
+});
+const css$5 = {
+  code: ".glass-chart-container.svelte-1qcoguk{position:relative;background:var(--glass-secondary);backdrop-filter:var(--glass-blur-secondary);border:1px solid var(--glass-border-light);border-radius:16px;padding:16px;overflow:hidden}.glass-chart-container.svelte-1qcoguk::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:var(--glass-edge-highlight);pointer-events:none}.glass-chart-loading.svelte-1qcoguk{display:flex;align-items:center;justify-content:center;background:var(--glass-secondary) !important;border:1px solid var(--glass-border-dark) !important}.loading-shimmer.svelte-1qcoguk{width:80%;height:80%;background:linear-gradient(to right, transparent 0%, rgba(255,255,255,0.05) 50%, transparent 100%);background-size:200% 100%;animation:svelte-1qcoguk-shimmer 1.5s infinite;border-radius:8px;display:flex;flex-direction:column;justify-content:space-around;padding:10px}.shimmer-line.svelte-1qcoguk{height:10px;background-color:rgba(255,255,255,0.1);border-radius:4px}.shimmer-line.svelte-1qcoguk:nth-child(1){width:90%}.shimmer-line.svelte-1qcoguk:nth-child(2){width:70%}.shimmer-line.svelte-1qcoguk:nth-child(3){width:80%}@keyframes svelte-1qcoguk-shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}",
+  map: `{"version":3,"file":"GlassChart.svelte","sources":["GlassChart.svelte"],"sourcesContent":["<script lang=\\"ts\\">import { onMount } from \\"svelte\\";\\nimport { Chart, registerables } from \\"chart.js\\";\\nimport { liquidGlassChartTheme, generateGlassGradient } from \\"../themes/chartThemes\\";\\nexport let type = \\"line\\";\\nexport let data = null;\\nexport let title;\\nexport let height = 300;\\nlet chartCanvas;\\nlet chartInstance;\\nChart.register(...registerables);\\nconst initializeChart = () => {\\n  if (!chartCanvas) return;\\n  if (!data || !data.datasets) {\\n    console.warn(\\"Chart data not available yet, skipping initialization\\");\\n    return;\\n  }\\n  const ctx = chartCanvas.getContext(\\"2d\\");\\n  const glassBackgroundPlugin = {\\n    id: \\"glassBackground\\",\\n    beforeDraw: (chart) => {\\n      const ctx2 = chart.canvas.getContext(\\"2d\\");\\n      ctx2.save();\\n      ctx2.globalCompositeOperation = \\"destination-over\\";\\n      const gradient = generateGlassGradient(ctx2, [\\n        \\"rgba(99, 102, 241, 0.05)\\",\\n        \\"rgba(139, 92, 246, 0.08)\\",\\n        \\"rgba(244, 63, 94, 0.05)\\"\\n      ]);\\n      ctx2.fillStyle = gradient;\\n      ctx2.fillRect(0, 0, chart.width, chart.height);\\n      ctx2.restore();\\n    }\\n  };\\n  if (chartInstance) {\\n    chartInstance.destroy();\\n  }\\n  chartInstance = new Chart(ctx, {\\n    type,\\n    data: {\\n      ...data,\\n      datasets: (data?.datasets || []).map((dataset) => ({\\n        ...dataset,\\n        backgroundColor: type === \\"line\\" ? generateGlassGradient(ctx, dataset.colors || [\\"rgba(99, 102, 241, 0.2)\\", \\"transparent\\"]) : dataset.backgroundColor,\\n        borderColor: dataset.borderColor || \\"rgba(99, 102, 241, 0.8)\\",\\n        borderWidth: 2,\\n        tension: 0.4\\n        // Smooth curves for line charts\\n      }))\\n    },\\n    options: {\\n      ...liquidGlassChartTheme,\\n      responsive: true,\\n      maintainAspectRatio: false,\\n      plugins: {\\n        ...liquidGlassChartTheme.plugins,\\n        title: {\\n          display: !!title,\\n          text: title,\\n          color: \\"rgba(255, 255, 255, 0.9)\\",\\n          font: {\\n            family: \\"SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif\\",\\n            size: 16,\\n            weight: \\"600\\"\\n          },\\n          padding: 20\\n        }\\n      }\\n    },\\n    plugins: [glassBackgroundPlugin]\\n  });\\n};\\nonMount(() => {\\n  initializeChart();\\n  return () => chartInstance?.destroy();\\n});\\n$: if (chartInstance && data && data.datasets) {\\n  chartInstance.data = {\\n    ...data,\\n    datasets: (data.datasets || []).map((dataset) => ({\\n      ...dataset,\\n      backgroundColor: type === \\"line\\" ? generateGlassGradient(chartCanvas.getContext(\\"2d\\"), dataset.colors || [\\"rgba(99, 102, 241, 0.2)\\", \\"transparent\\"]) : dataset.backgroundColor,\\n      borderColor: dataset.borderColor || \\"rgba(99, 102, 241, 0.8)\\",\\n      borderWidth: 2,\\n      tension: 0.4\\n    }))\\n  };\\n  chartInstance.update();\\n}\\n<\/script>\\n\\n{#if data && data.datasets}\\n  <div class=\\"glass-chart-container\\" style=\\"height: {height}px\\">\\n    <canvas bind:this={chartCanvas}></canvas>\\n  </div>\\n{:else}\\n  <div class=\\"glass-chart-container glass-chart-loading\\" style=\\"height: {height}px\\">\\n    <div class=\\"loading-shimmer\\">\\n      <div class=\\"shimmer-line\\"></div>\\n      <div class=\\"shimmer-line\\"></div>\\n      <div class=\\"shimmer-line\\"></div>\\n    </div>\\n  </div>\\n{/if}\\n\\n<style>\\n  .glass-chart-container {\\n    position: relative;\\n    background: var(--glass-secondary);\\n    backdrop-filter: var(--glass-blur-secondary);\\n    border: 1px solid var(--glass-border-light);\\n    border-radius: 16px;\\n    padding: 16px;\\n    overflow: hidden;\\n  }\\n  \\n  .glass-chart-container::before {\\n    content: '';\\n    position: absolute;\\n    top: 0;\\n    left: 0;\\n    right: 0;\\n    height: 1px;\\n    background: var(--glass-edge-highlight);\\n    pointer-events: none;\\n  }\\n\\n  /* Loading State Styles */\\n  .glass-chart-loading {\\n    display: flex;\\n    align-items: center;\\n    justify-content: center;\\n    background: var(--glass-secondary) !important;\\n    border: 1px solid var(--glass-border-dark) !important;\\n  }\\n\\n  .loading-shimmer {\\n    width: 80%;\\n    height: 80%;\\n    background: linear-gradient(to right, transparent 0%, rgba(255,255,255,0.05) 50%, transparent 100%);\\n    background-size: 200% 100%;\\n    animation: shimmer 1.5s infinite;\\n    border-radius: 8px;\\n    display: flex;\\n    flex-direction: column;\\n    justify-content: space-around;\\n    padding: 10px;\\n  }\\n\\n  .shimmer-line {\\n    height: 10px;\\n    background-color: rgba(255,255,255,0.1);\\n    border-radius: 4px;\\n  }\\n  .shimmer-line:nth-child(1) { width: 90%; }\\n  .shimmer-line:nth-child(2) { width: 70%; }\\n  .shimmer-line:nth-child(3) { width: 80%; }\\n\\n  @keyframes shimmer {\\n    0% { background-position: -200% 0; }\\n    100% { background-position: 200% 0; }\\n  }\\n</style>\\n"],"names":[],"mappings":"AAyGE,qCAAuB,CACrB,QAAQ,CAAE,QAAQ,CAClB,UAAU,CAAE,IAAI,iBAAiB,CAAC,CAClC,eAAe,CAAE,IAAI,sBAAsB,CAAC,CAC5C,MAAM,CAAE,GAAG,CAAC,KAAK,CAAC,IAAI,oBAAoB,CAAC,CAC3C,aAAa,CAAE,IAAI,CACnB,OAAO,CAAE,IAAI,CACb,QAAQ,CAAE,MACZ,CAEA,qCAAsB,QAAS,CAC7B,OAAO,CAAE,EAAE,CACX,QAAQ,CAAE,QAAQ,CAClB,GAAG,CAAE,CAAC,CACN,IAAI,CAAE,CAAC,CACP,KAAK,CAAE,CAAC,CACR,MAAM,CAAE,GAAG,CACX,UAAU,CAAE,IAAI,sBAAsB,CAAC,CACvC,cAAc,CAAE,IAClB,CAGA,mCAAqB,CACnB,OAAO,CAAE,IAAI,CACb,WAAW,CAAE,MAAM,CACnB,eAAe,CAAE,MAAM,CACvB,UAAU,CAAE,IAAI,iBAAiB,CAAC,CAAC,UAAU,CAC7C,MAAM,CAAE,GAAG,CAAC,KAAK,CAAC,IAAI,mBAAmB,CAAC,CAAC,UAC7C,CAEA,+BAAiB,CACf,KAAK,CAAE,GAAG,CACV,MAAM,CAAE,GAAG,CACX,UAAU,CAAE,gBAAgB,EAAE,CAAC,KAAK,CAAC,CAAC,WAAW,CAAC,EAAE,CAAC,CAAC,KAAK,GAAG,CAAC,GAAG,CAAC,GAAG,CAAC,IAAI,CAAC,CAAC,GAAG,CAAC,CAAC,WAAW,CAAC,IAAI,CAAC,CACnG,eAAe,CAAE,IAAI,CAAC,IAAI,CAC1B,SAAS,CAAE,sBAAO,CAAC,IAAI,CAAC,QAAQ,CAChC,aAAa,CAAE,GAAG,CAClB,OAAO,CAAE,IAAI,CACb,cAAc,CAAE,MAAM,CACtB,eAAe,CAAE,YAAY,CAC7B,OAAO,CAAE,IACX,CAEA,4BAAc,CACZ,MAAM,CAAE,IAAI,CACZ,gBAAgB,CAAE,KAAK,GAAG,CAAC,GAAG,CAAC,GAAG,CAAC,GAAG,CAAC,CACvC,aAAa,CAAE,GACjB,CACA,4BAAa,WAAW,CAAC,CAAE,CAAE,KAAK,CAAE,GAAK,CACzC,4BAAa,WAAW,CAAC,CAAE,CAAE,KAAK,CAAE,GAAK,CACzC,4BAAa,WAAW,CAAC,CAAE,CAAE,KAAK,CAAE,GAAK,CAEzC,WAAW,sBAAQ,CACjB,EAAG,CAAE,mBAAmB,CAAE,KAAK,CAAC,CAAG,CACnC,IAAK,CAAE,mBAAmB,CAAE,IAAI,CAAC,CAAG,CACtC"}`
+};
+const GlassChart = create_ssr_component(($$result, $$props, $$bindings, slots) => {
+  let { type = "line" } = $$props;
+  let { data = null } = $$props;
+  let { title } = $$props;
+  let { height = 300 } = $$props;
   Chart.register(...registerables);
-  if (data && data.datasets) {
-    $$payload.out.push("<!--[-->");
-    $$payload.out.push(`<div class="glass-chart-container svelte-1qcoguk"${attr_style(`height: ${stringify(height)}px`)}><canvas class="svelte-1qcoguk"></canvas></div>`);
-  } else {
-    $$payload.out.push("<!--[!-->");
-    $$payload.out.push(`<div class="glass-chart-container glass-chart-loading svelte-1qcoguk"${attr_style(`height: ${stringify(height)}px`)}><div class="loading-shimmer svelte-1qcoguk"><div class="shimmer-line svelte-1qcoguk"></div> <div class="shimmer-line svelte-1qcoguk"></div> <div class="shimmer-line svelte-1qcoguk"></div></div></div>`);
-  }
-  $$payload.out.push(`<!--]-->`);
-  bind_props($$props, { type, data, title, height });
-  pop();
-}
-function MetricTile($$payload, $$props) {
-  push();
-  let colorClass, formattedValue, isPositiveTrend;
-  let title = $$props["title"];
-  let value = $$props["value"];
-  let unit = fallback($$props["unit"], "");
-  let trend = fallback($$props["trend"], "");
-  let icon = fallback($$props["icon"], "");
-  let color = fallback($$props["color"], "blue");
+  if ($$props.type === void 0 && $$bindings.type && type !== void 0) $$bindings.type(type);
+  if ($$props.data === void 0 && $$bindings.data && data !== void 0) $$bindings.data(data);
+  if ($$props.title === void 0 && $$bindings.title && title !== void 0) $$bindings.title(title);
+  if ($$props.height === void 0 && $$bindings.height && height !== void 0) $$bindings.height(height);
+  $$result.css.add(css$5);
+  return `${data && data.datasets ? `<div class="glass-chart-container svelte-1qcoguk" style="${"height: " + escape(height, true) + "px"}"><canvas${add_attribute()}></canvas></div>` : `<div class="glass-chart-container glass-chart-loading svelte-1qcoguk" style="${"height: " + escape(height, true) + "px"}"><div class="loading-shimmer svelte-1qcoguk" data-svelte-h="svelte-1o34j5d"><div class="shimmer-line svelte-1qcoguk"></div> <div class="shimmer-line svelte-1qcoguk"></div> <div class="shimmer-line svelte-1qcoguk"></div></div></div>`}`;
+});
+const css$4 = {
+  code: ".metric-tile.svelte-1s6vw74.svelte-1s6vw74{position:relative;display:flex;align-items:center;gap:16px;padding:20px;background:var(--glass-secondary);backdrop-filter:var(--glass-blur-secondary) saturate(150%);border:1px solid var(--glass-border-light);border-radius:16px;box-shadow:var(--glass-shadow-primary);transition:all var(--glass-transition-smooth);overflow:hidden}.metric-tile.svelte-1s6vw74.svelte-1s6vw74:hover{transform:translateY(-4px) scale(1.02);box-shadow:var(--glass-shadow-elevated);background:rgba(255, 255, 255, 0.18);will-change:transform, box-shadow, background}.metric-icon.svelte-1s6vw74.svelte-1s6vw74{display:flex;align-items:center;justify-content:center;width:48px;height:48px;background:var(--glass-accent);backdrop-filter:var(--glass-blur-subtle);border-radius:12px;border:1px solid var(--glass-border-light)}.icon.svelte-1s6vw74.svelte-1s6vw74{font-size:24px;filter:drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))}.metric-content.svelte-1s6vw74.svelte-1s6vw74{flex:1}.metric-title.svelte-1s6vw74.svelte-1s6vw74{color:var(--text-secondary);font-size:14px;font-weight:500;margin-bottom:4px;text-shadow:0 1px 2px rgba(0, 0, 0, 0.5)}.metric-value.svelte-1s6vw74.svelte-1s6vw74{color:var(--text-primary);font-size:28px;font-weight:700;line-height:1;text-shadow:0 1px 3px rgba(0, 0, 0, 0.5)}.metric-trend.svelte-1s6vw74.svelte-1s6vw74{font-size:12px;font-weight:600;margin-top:4px;opacity:0.8}.metric-trend.positive.svelte-1s6vw74.svelte-1s6vw74{color:var(--accent-green)}.metric-trend.svelte-1s6vw74.svelte-1s6vw74:not(.positive){color:var(--accent-pink)}.metric-glass-overlay.svelte-1s6vw74.svelte-1s6vw74{position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(\n      90deg,\n      transparent,\n      rgba(255, 255, 255, 0.1),\n      transparent\n    );transition:left var(--glass-transition-fluid);pointer-events:none}.metric-tile.svelte-1s6vw74:hover .metric-glass-overlay.svelte-1s6vw74{left:100%}.metric-tile--blue.svelte-1s6vw74 .metric-icon.svelte-1s6vw74{background:rgba(59, 130, 246, 0.2);border-color:rgba(59, 130, 246, 0.3)}.metric-tile--green.svelte-1s6vw74 .metric-icon.svelte-1s6vw74{background:rgba(16, 185, 129, 0.2);border-color:rgba(16, 185, 129, 0.3)}.metric-tile--purple.svelte-1s6vw74 .metric-icon.svelte-1s6vw74{background:rgba(139, 92, 246, 0.2);border-color:rgba(139, 92, 246, 0.3)}.metric-tile--amber.svelte-1s6vw74 .metric-icon.svelte-1s6vw74{background:rgba(245, 158, 11, 0.2);border-color:rgba(245, 158, 11, 0.3)}",
+  map: '{"version":3,"file":"MetricTile.svelte","sources":["MetricTile.svelte"],"sourcesContent":["<script lang=\\"ts\\">export let title;\\nexport let value;\\nexport let unit = \\"\\";\\nexport let trend = \\"\\";\\nexport let icon = \\"\\";\\nexport let color = \\"blue\\";\\n$: colorClass = `metric-tile--${color}`;\\n$: formattedValue = typeof value === \\"number\\" ? new Intl.NumberFormat().format(value) : value || \\"\\\\u2014\\";\\n$: isPositiveTrend = trend.startsWith(\\"+\\");\\n<\/script>\\n\\n<div class=\\"metric-tile {colorClass}\\">\\n  <div class=\\"metric-icon\\">\\n    <span class=\\"icon\\">{icon}</span>\\n  </div>\\n  \\n  <div class=\\"metric-content\\">\\n    <div class=\\"metric-title\\">{title}</div>\\n    <div class=\\"metric-value\\">\\n      {formattedValue}{unit}\\n    </div>\\n    {#if trend}\\n      <div class=\\"metric-trend\\" class:positive={isPositiveTrend}>\\n        {trend}\\n      </div>\\n    {/if}\\n  </div>\\n  \\n  <div class=\\"metric-glass-overlay\\"></div>\\n</div>\\n\\n<style>\\n  .metric-tile {\\n    position: relative;\\n    display: flex;\\n    align-items: center;\\n    gap: 16px;\\n    padding: 20px;\\n    background: var(--glass-secondary);\\n    backdrop-filter: var(--glass-blur-secondary) saturate(150%);\\n    border: 1px solid var(--glass-border-light);\\n    border-radius: 16px;\\n    box-shadow: var(--glass-shadow-primary);\\n    transition: all var(--glass-transition-smooth);\\n    overflow: hidden;\\n  }\\n  \\n  .metric-tile:hover {\\n    transform: translateY(-4px) scale(1.02);\\n    box-shadow: var(--glass-shadow-elevated);\\n    background: rgba(255, 255, 255, 0.18);\\n    will-change: transform, box-shadow, background;\\n  }\\n  \\n  .metric-icon {\\n    display: flex;\\n    align-items: center;\\n    justify-content: center;\\n    width: 48px;\\n    height: 48px;\\n    background: var(--glass-accent);\\n    backdrop-filter: var(--glass-blur-subtle);\\n    border-radius: 12px;\\n    border: 1px solid var(--glass-border-light);\\n  }\\n  \\n  .icon {\\n    font-size: 24px;\\n    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));\\n  }\\n  \\n  .metric-content {\\n    flex: 1;\\n  }\\n  \\n  .metric-title {\\n    color: var(--text-secondary);\\n    font-size: 14px;\\n    font-weight: 500;\\n    margin-bottom: 4px;\\n    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);\\n  }\\n  \\n  .metric-value {\\n    color: var(--text-primary);\\n    font-size: 28px;\\n    font-weight: 700;\\n    line-height: 1;\\n    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);\\n  }\\n  \\n  .metric-trend {\\n    font-size: 12px;\\n    font-weight: 600;\\n    margin-top: 4px;\\n    opacity: 0.8;\\n  }\\n  \\n  .metric-trend.positive {\\n    color: var(--accent-green);\\n  }\\n  \\n  .metric-trend:not(.positive) {\\n    color: var(--accent-pink);\\n  }\\n  \\n  .metric-glass-overlay {\\n    position: absolute;\\n    top: 0;\\n    left: -100%;\\n    width: 100%;\\n    height: 100%;\\n    background: linear-gradient(\\n      90deg,\\n      transparent,\\n      rgba(255, 255, 255, 0.1),\\n      transparent\\n    );\\n    transition: left var(--glass-transition-fluid);\\n    pointer-events: none;\\n  }\\n  \\n  .metric-tile:hover .metric-glass-overlay {\\n    left: 100%;\\n  }\\n  \\n  /* Color Variants */\\n  .metric-tile--blue .metric-icon {\\n    background: rgba(59, 130, 246, 0.2);\\n    border-color: rgba(59, 130, 246, 0.3);\\n  }\\n  \\n  .metric-tile--green .metric-icon {\\n    background: rgba(16, 185, 129, 0.2);\\n    border-color: rgba(16, 185, 129, 0.3);\\n  }\\n  \\n  .metric-tile--purple .metric-icon {\\n    background: rgba(139, 92, 246, 0.2);\\n    border-color: rgba(139, 92, 246, 0.3);\\n  }\\n  \\n  .metric-tile--amber .metric-icon {\\n    background: rgba(245, 158, 11, 0.2);\\n    border-color: rgba(245, 158, 11, 0.3);\\n  }\\n</style>\\n"],"names":[],"mappings":"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"}'
+};
+const MetricTile = create_ssr_component(($$result, $$props, $$bindings, slots) => {
+  let colorClass;
+  let formattedValue;
+  let isPositiveTrend;
+  let { title } = $$props;
+  let { value } = $$props;
+  let { unit = "" } = $$props;
+  let { trend = "" } = $$props;
+  let { icon = "" } = $$props;
+  let { color = "blue" } = $$props;
+  if ($$props.title === void 0 && $$bindings.title && title !== void 0) $$bindings.title(title);
+  if ($$props.value === void 0 && $$bindings.value && value !== void 0) $$bindings.value(value);
+  if ($$props.unit === void 0 && $$bindings.unit && unit !== void 0) $$bindings.unit(unit);
+  if ($$props.trend === void 0 && $$bindings.trend && trend !== void 0) $$bindings.trend(trend);
+  if ($$props.icon === void 0 && $$bindings.icon && icon !== void 0) $$bindings.icon(icon);
+  if ($$props.color === void 0 && $$bindings.color && color !== void 0) $$bindings.color(color);
+  $$result.css.add(css$4);
   colorClass = `metric-tile--${color}`;
   formattedValue = typeof value === "number" ? new Intl.NumberFormat().format(value) : value || "—";
   isPositiveTrend = trend.startsWith("+");
-  $$payload.out.push(`<div${attr_class(`metric-tile ${stringify(colorClass)}`, "svelte-1s6vw74")}><div class="metric-icon svelte-1s6vw74"><span class="icon svelte-1s6vw74">${escape_html(icon)}</span></div> <div class="metric-content svelte-1s6vw74"><div class="metric-title svelte-1s6vw74">${escape_html(title)}</div> <div class="metric-value svelte-1s6vw74">${escape_html(formattedValue)}${escape_html(unit)}</div> `);
-  if (trend) {
-    $$payload.out.push("<!--[-->");
-    $$payload.out.push(`<div${attr_class("metric-trend svelte-1s6vw74", void 0, { "positive": isPositiveTrend })}>${escape_html(trend)}</div>`);
-  } else {
-    $$payload.out.push("<!--[!-->");
-  }
-  $$payload.out.push(`<!--]--></div> <div class="metric-glass-overlay svelte-1s6vw74"></div></div>`);
-  bind_props($$props, { title, value, unit, trend, icon, color });
-  pop();
-}
-function PerformanceRadar($$payload, $$props) {
-  push();
+  return `<div class="${"metric-tile " + escape(colorClass, true) + " svelte-1s6vw74"}"><div class="metric-icon svelte-1s6vw74"><span class="icon svelte-1s6vw74">${escape(icon)}</span></div> <div class="metric-content svelte-1s6vw74"><div class="metric-title svelte-1s6vw74">${escape(title)}</div> <div class="metric-value svelte-1s6vw74">${escape(formattedValue)}${escape(unit)}</div> ${trend ? `<div class="${["metric-trend svelte-1s6vw74", isPositiveTrend ? "positive" : ""].join(" ").trim()}">${escape(trend)}</div>` : ``}</div> <div class="metric-glass-overlay svelte-1s6vw74"></div> </div>`;
+});
+const css$3 = {
+  code: ".radar-container.svelte-ifivxs{height:300px;position:relative}",
+  map: '{"version":3,"file":"PerformanceRadar.svelte","sources":["PerformanceRadar.svelte"],"sourcesContent":["<script lang=\\"ts\\">import { onMount } from \\"svelte\\";\\nimport { Chart, registerables } from \\"chart.js\\";\\nlet data;\\nlet radarCanvas;\\nChart.register(...registerables);\\nonMount(() => {\\n  const ctx = radarCanvas.getContext(\\"2d\\");\\n  new Chart(ctx, {\\n    type: \\"radar\\",\\n    data: {\\n      labels: [\\"Response Time\\", \\"Throughput\\", \\"Error Rate\\", \\"CPU Usage\\", \\"Memory\\", \\"Disk I/O\\"],\\n      datasets: [{\\n        label: \\"Current Performance\\",\\n        data: [85, 92, 98, 75, 88, 90],\\n        backgroundColor: \\"rgba(99, 102, 241, 0.1)\\",\\n        borderColor: \\"rgba(99, 102, 241, 0.8)\\",\\n        borderWidth: 2,\\n        pointBackgroundColor: \\"rgba(99, 102, 241, 1)\\",\\n        pointBorderColor: \\"rgba(255, 255, 255, 0.8)\\",\\n        pointBorderWidth: 2,\\n        pointRadius: 6\\n      }]\\n    },\\n    options: {\\n      responsive: true,\\n      maintainAspectRatio: false,\\n      plugins: {\\n        legend: {\\n          display: false\\n        },\\n        title: {\\n          display: true,\\n          text: \\"System Performance\\",\\n          color: \\"rgba(255, 255, 255, 0.9)\\",\\n          font: {\\n            family: \\"SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif\\",\\n            size: 16,\\n            weight: \\"600\\"\\n          }\\n        }\\n      },\\n      scales: {\\n        r: {\\n          beginAtZero: true,\\n          max: 100,\\n          grid: {\\n            color: \\"rgba(255, 255, 255, 0.1)\\"\\n          },\\n          angleLines: {\\n            color: \\"rgba(255, 255, 255, 0.1)\\"\\n          },\\n          pointLabels: {\\n            color: \\"rgba(255, 255, 255, 0.7)\\",\\n            font: {\\n              family: \\"SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif\\",\\n              size: 11\\n            }\\n          },\\n          ticks: {\\n            color: \\"rgba(255, 255, 255, 0.5)\\",\\n            backdropColor: \\"transparent\\"\\n          }\\n        }\\n      }\\n    }\\n  });\\n});\\n<\/script>\\n\\n<div class=\\"radar-container\\">\\n  <canvas bind:this={radarCanvas}></canvas>\\n</div>\\n\\n<style>\\n  .radar-container {\\n    height: 300px;\\n    position: relative;\\n  }\\n</style>\\n"],"names":[],"mappings":"AA0EE,8BAAiB,CACf,MAAM,CAAE,KAAK,CACb,QAAQ,CAAE,QACZ"}'
+};
+const PerformanceRadar = create_ssr_component(($$result, $$props, $$bindings, slots) => {
   Chart.register(...registerables);
-  $$payload.out.push(`<div class="radar-container svelte-ifivxs"><canvas></canvas></div>`);
-  pop();
-}
-function SessionsTable($$payload, $$props) {
-  push();
-  let $$settled = true;
-  let $$inner_payload;
-  function $$render_inner($$payload2) {
-    $$payload2.out.push(`<div class="glass-table-container svelte-exvabl"><div class="table-header svelte-exvabl"><h3 class="svelte-exvabl">Recent Sessions</h3> <div class="table-actions svelte-exvabl"><button class="glass-button svelte-exvabl"><span class="svelte-exvabl">↻</span> Refresh</button></div></div> `);
-    {
-      $$payload2.out.push("<!--[-->");
-      $$payload2.out.push(`<div class="loading-state svelte-exvabl"><div class="loading-spinner svelte-exvabl"></div> <span class="svelte-exvabl">Loading sessions...</span></div>`);
-    }
-    $$payload2.out.push(`<!--]--></div> `);
-    {
-      $$payload2.out.push("<!--[!-->");
-    }
-    $$payload2.out.push(`<!--]-->`);
-  }
+  $$result.css.add(css$3);
+  return `<div class="radar-container svelte-ifivxs"><canvas${add_attribute()}></canvas> </div>`;
+});
+const css$2 = {
+  code: ".glass-table-container.svelte-exvabl.svelte-exvabl{background:var(--glass-primary);backdrop-filter:var(--glass-blur-primary);border:1px solid var(--glass-border-light);border-radius:16px;overflow:hidden;box-shadow:var(--glass-shadow-primary)}.table-header.svelte-exvabl.svelte-exvabl{display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid var(--glass-border-light);background:rgba(255, 255, 255, 0.05)}.table-header.svelte-exvabl h3.svelte-exvabl{color:var(--text-primary);font-size:18px;font-weight:600;margin:0}.glass-button.svelte-exvabl.svelte-exvabl{display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--glass-secondary);backdrop-filter:var(--glass-blur-subtle);border:1px solid var(--glass-border-light);border-radius:8px;color:var(--text-secondary);font-size:14px;cursor:pointer;transition:all var(--glass-transition-fast)}.glass-button.svelte-exvabl.svelte-exvabl:hover{background:rgba(255, 255, 255, 0.15);color:var(--text-primary);transform:translateY(-1px)}.glass-table.svelte-exvabl.svelte-exvabl{overflow-x:auto}.table-header-row.svelte-exvabl.svelte-exvabl{display:grid;grid-template-columns:2fr 2fr 1fr 1fr 1fr;padding:16px 24px;background:rgba(255, 255, 255, 0.03);border-bottom:1px solid var(--glass-border-light)}.header-cell.svelte-exvabl.svelte-exvabl{color:var(--text-secondary);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px}.table-row.svelte-exvabl.svelte-exvabl{display:grid;grid-template-columns:2fr 2fr 1fr 1fr 1fr;padding:16px 24px;border-bottom:1px solid rgba(255, 255, 255, 0.05);cursor:pointer;transition:all var(--glass-transition-fast)}.table-row.svelte-exvabl.svelte-exvabl:hover{background:rgba(255, 255, 255, 0.08);backdrop-filter:var(--glass-blur-subtle) brightness(110%)}.table-cell.svelte-exvabl.svelte-exvabl{color:var(--text-primary);font-size:14px;display:flex;align-items:center}.session-id.svelte-exvabl.svelte-exvabl{font-family:'SF Mono', 'Monaco', 'Cascadia Code', monospace;background:rgba(99, 102, 241, 0.1);padding:4px 8px;border-radius:6px;font-size:12px}.status-badge.svelte-exvabl.svelte-exvabl{padding:4px 12px;border-radius:12px;font-size:12px;font-weight:600;text-transform:capitalize}.status-active.svelte-exvabl.svelte-exvabl{background:rgba(16, 185, 129, 0.2);color:var(--accent-green);border:1px solid rgba(16, 185, 129, 0.3)}.status-completed.svelte-exvabl.svelte-exvabl{background:rgba(59, 130, 246, 0.2);color:var(--accent-blue);border:1px solid rgba(59, 130, 246, 0.3)}.loading-state.svelte-exvabl.svelte-exvabl{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;color:var(--text-secondary)}.loading-spinner.svelte-exvabl.svelte-exvabl{width:32px;height:32px;border:3px solid rgba(255, 255, 255, 0.1);border-top:3px solid var(--accent-blue);border-radius:50%;animation:svelte-exvabl-spin 1s linear infinite;margin-bottom:16px}@keyframes svelte-exvabl-spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}",
+  map: `{"version":3,"file":"SessionsTable.svelte","sources":["SessionsTable.svelte"],"sourcesContent":["<script lang=\\"ts\\">import { onMount } from \\"svelte\\";\\nimport { fetchJson } from \\"../api\\";\\nimport SessionDetailModal from \\"./SessionDetailModal.svelte\\";\\nlet sessions = [];\\nlet loading = true;\\nlet selectedSession = null;\\nlet showModal = false;\\nfunction formatSessionId(id) {\\n  if (typeof id === \\"string\\") return id.slice(0, 8);\\n  if (typeof id === \\"number\\") return String(id).slice(0, 8);\\n  return String(id || \\"unknown\\").slice(0, 8);\\n}\\nonMount(async () => {\\n  try {\\n    sessions = await fetchJson(\\"/analytics/sessions?limit=20\\");\\n  } catch (e) {\\n    console.error(\\"Failed to load sessions:\\", e);\\n  } finally {\\n    loading = false;\\n  }\\n});\\nfunction openSessionDetail(session) {\\n  selectedSession = session;\\n  showModal = true;\\n}\\n<\/script>\\n\\n<div class=\\"glass-table-container\\">\\n  <div class=\\"table-header\\">\\n    <h3>Recent Sessions</h3>\\n    <div class=\\"table-actions\\">\\n      <button class=\\"glass-button\\">\\n        <span>↻</span> Refresh\\n      </button>\\n    </div>\\n  </div>\\n  \\n  {#if loading}\\n    <div class=\\"loading-state\\">\\n      <div class=\\"loading-spinner\\"></div>\\n      <span>Loading sessions...</span>\\n    </div>\\n  {:else}\\n    <div class=\\"glass-table\\">\\n      <div class=\\"table-header-row\\">\\n        <div class=\\"header-cell\\">Session ID</div>\\n        <div class=\\"header-cell\\">Started</div>\\n        <div class=\\"header-cell\\">Duration</div>\\n        <div class=\\"header-cell\\">Events</div>\\n        <div class=\\"header-cell\\">Status</div>\\n      </div>\\n      \\n      {#each sessions as session (session.id)}\\n        <div\\n          class=\\"table-row\\"\\n          on:click={() => openSessionDetail(session)}\\n          on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openSessionDetail(session); } }}\\n          role=\\"button\\"\\n          tabindex=\\"0\\"\\n        >\\n          <div class=\\"table-cell\\">\\n            <span class=\\"session-id\\">{formatSessionId(session.id)}...</span>\\n          </div>\\n          <div class=\\"table-cell\\">\\n            {new Date(session.created_at).toLocaleString()}\\n          </div>\\n          <div class=\\"table-cell\\">\\n            <span class=\\"duration-badge\\">\\n              {session.duration || '—'}\\n            </span>\\n          </div>\\n          <div class=\\"table-cell\\">\\n            <span class=\\"event-count\\">{session.total_requests || 0}</span>\\n          </div>\\n          <div class=\\"table-cell\\">\\n            <span class=\\"status-badge status-{session.status}\\">\\n              {session.status || 'active'}\\n            </span>\\n          </div>\\n        </div>\\n      {/each}\\n    </div>\\n  {/if}\\n</div>\\n\\n{#if showModal && selectedSession}\\n  <SessionDetailModal \\n    bind:show={showModal} \\n    sessionDetail={selectedSession} \\n  />\\n{/if}\\n\\n<style>\\n  .glass-table-container {\\n    background: var(--glass-primary);\\n    backdrop-filter: var(--glass-blur-primary);\\n    border: 1px solid var(--glass-border-light);\\n    border-radius: 16px;\\n    overflow: hidden;\\n    box-shadow: var(--glass-shadow-primary);\\n  }\\n  \\n  .table-header {\\n    display: flex;\\n    justify-content: space-between;\\n    align-items: center;\\n    padding: 20px 24px;\\n    border-bottom: 1px solid var(--glass-border-light);\\n    background: rgba(255, 255, 255, 0.05);\\n  }\\n  \\n  .table-header h3 {\\n    color: var(--text-primary);\\n    font-size: 18px;\\n    font-weight: 600;\\n    margin: 0;\\n  }\\n  \\n  .glass-button {\\n    display: flex;\\n    align-items: center;\\n    gap: 8px;\\n    padding: 8px 16px;\\n    background: var(--glass-secondary);\\n    backdrop-filter: var(--glass-blur-subtle);\\n    border: 1px solid var(--glass-border-light);\\n    border-radius: 8px;\\n    color: var(--text-secondary);\\n    font-size: 14px;\\n    cursor: pointer;\\n    transition: all var(--glass-transition-fast);\\n  }\\n  \\n  .glass-button:hover {\\n    background: rgba(255, 255, 255, 0.15);\\n    color: var(--text-primary);\\n    transform: translateY(-1px);\\n  }\\n  \\n  .glass-table {\\n    overflow-x: auto;\\n  }\\n  \\n  .table-header-row {\\n    display: grid;\\n    grid-template-columns: 2fr 2fr 1fr 1fr 1fr;\\n    padding: 16px 24px;\\n    background: rgba(255, 255, 255, 0.03);\\n    border-bottom: 1px solid var(--glass-border-light);\\n  }\\n  \\n  .header-cell {\\n    color: var(--text-secondary);\\n    font-size: 12px;\\n    font-weight: 600;\\n    text-transform: uppercase;\\n    letter-spacing: 0.5px;\\n  }\\n  \\n  .table-row {\\n    display: grid;\\n    grid-template-columns: 2fr 2fr 1fr 1fr 1fr;\\n    padding: 16px 24px;\\n    border-bottom: 1px solid rgba(255, 255, 255, 0.05);\\n    cursor: pointer;\\n    transition: all var(--glass-transition-fast);\\n  }\\n  \\n  .table-row:hover {\\n    background: rgba(255, 255, 255, 0.08);\\n    backdrop-filter: var(--glass-blur-subtle) brightness(110%);\\n  }\\n  \\n  .table-cell {\\n    color: var(--text-primary);\\n    font-size: 14px;\\n    display: flex;\\n    align-items: center;\\n  }\\n  \\n  .session-id {\\n    font-family: 'SF Mono', 'Monaco', 'Cascadia Code', monospace;\\n    background: rgba(99, 102, 241, 0.1);\\n    padding: 4px 8px;\\n    border-radius: 6px;\\n    font-size: 12px;\\n  }\\n  \\n  .status-badge {\\n    padding: 4px 12px;\\n    border-radius: 12px;\\n    font-size: 12px;\\n    font-weight: 600;\\n    text-transform: capitalize;\\n  }\\n  \\n  .status-active {\\n    background: rgba(16, 185, 129, 0.2);\\n    color: var(--accent-green);\\n    border: 1px solid rgba(16, 185, 129, 0.3);\\n  }\\n  \\n  .status-completed {\\n    background: rgba(59, 130, 246, 0.2);\\n    color: var(--accent-blue);\\n    border: 1px solid rgba(59, 130, 246, 0.3);\\n  }\\n  \\n  .loading-state {\\n    display: flex;\\n    flex-direction: column;\\n    align-items: center;\\n    justify-content: center;\\n    padding: 60px 20px;\\n    color: var(--text-secondary);\\n  }\\n  \\n  .loading-spinner {\\n    width: 32px;\\n    height: 32px;\\n    border: 3px solid rgba(255, 255, 255, 0.1);\\n    border-top: 3px solid var(--accent-blue);\\n    border-radius: 50%;\\n    animation: spin 1s linear infinite;\\n    margin-bottom: 16px;\\n  }\\n  \\n  @keyframes spin {\\n    0% { transform: rotate(0deg); }\\n    100% { transform: rotate(360deg); }\\n  }\\n</style>\\n\\n\\n"],"names":[],"mappings":"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"}`
+};
+const SessionsTable = create_ssr_component(($$result, $$props, $$bindings, slots) => {
+  $$result.css.add(css$2);
+  let $$settled;
+  let $$rendered;
+  let previous_head = $$result.head;
   do {
     $$settled = true;
-    $$inner_payload = copy_payload($$payload);
-    $$render_inner($$inner_payload);
+    $$result.head = previous_head;
+    $$rendered = `<div class="glass-table-container svelte-exvabl"><div class="table-header svelte-exvabl" data-svelte-h="svelte-1r6gkcw"><h3 class="svelte-exvabl">Recent Sessions</h3> <div class="table-actions"><button class="glass-button svelte-exvabl"><span>↻</span> Refresh</button></div></div> ${`<div class="loading-state svelte-exvabl" data-svelte-h="svelte-1rem9l"><div class="loading-spinner svelte-exvabl"></div> <span>Loading sessions...</span></div>`}</div> ${``}`;
   } while (!$$settled);
-  assign_payload($$payload, $$inner_payload);
-  pop();
+  return $$rendered;
+});
+const css$1 = {
+  code: ".glass-table-container.svelte-cd9rku.svelte-cd9rku{background:var(--glass-primary);backdrop-filter:var(--glass-blur-primary);border:1px solid var(--glass-border-light);border-radius:16px;overflow:hidden;box-shadow:var(--glass-shadow-primary);display:flex;flex-direction:column;height:100%}.table-header.svelte-cd9rku.svelte-cd9rku{display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid var(--glass-border-light);background:rgba(255, 255, 255, 0.05);flex-shrink:0}.table-header.svelte-cd9rku h3.svelte-cd9rku{color:var(--text-primary);font-size:18px;font-weight:600;margin:0}.glass-button.svelte-cd9rku.svelte-cd9rku{display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--glass-secondary);backdrop-filter:var(--glass-blur-subtle);border:1px solid var(--glass-border-light);border-radius:8px;color:var(--text-secondary);font-size:14px;cursor:pointer;transition:all var(--glass-transition-fast)}.glass-button.svelte-cd9rku.svelte-cd9rku:hover{background:rgba(255, 255, 255, 0.15);color:var(--text-primary);transform:translateY(-1px)}.glass-log-table.svelte-cd9rku.svelte-cd9rku{overflow-y:auto;flex-grow:1;padding:16px 24px;font-family:'SF Mono', 'Monaco', 'Cascadia Code', monospace;font-size:12px}.log-row.svelte-cd9rku.svelte-cd9rku{display:flex;gap:8px;margin-bottom:4px;line-height:1.4;color:var(--text-secondary)}.log-timestamp.svelte-cd9rku.svelte-cd9rku{color:var(--text-tertiary);flex-shrink:0}.log-level.svelte-cd9rku.svelte-cd9rku{font-weight:600;flex-shrink:0}.log-name.svelte-cd9rku.svelte-cd9rku{color:var(--text-tertiary);flex-shrink:0}.log-message.svelte-cd9rku.svelte-cd9rku{flex-grow:1;overflow-wrap:break-word;word-break:break-all}.level-error.svelte-cd9rku.svelte-cd9rku{color:var(--accent-pink)}.level-warning.svelte-cd9rku.svelte-cd9rku{color:var(--accent-amber)}.level-info.svelte-cd9rku.svelte-cd9rku{color:var(--accent-blue)}.loading-state.svelte-cd9rku.svelte-cd9rku{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;color:var(--text-secondary)}.loading-spinner.svelte-cd9rku.svelte-cd9rku{width:32px;height:32px;border:3px solid rgba(255, 255, 255, 0.1);border-top:3px solid var(--accent-blue);border-radius:50%;animation:svelte-cd9rku-spin 1s linear infinite;margin-bottom:16px}@keyframes svelte-cd9rku-spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}",
+  map: `{"version":3,"file":"RecentLogs.svelte","sources":["RecentLogs.svelte"],"sourcesContent":["<script lang=\\"ts\\">import { onMount } from \\"svelte\\";\\nimport { fetchJson } from \\"../api\\";\\nlet pollMs = 3e3;\\nlet max = 200;\\nlet level = \\"\\";\\nlet rows = [];\\nlet error = null;\\nlet loading = true;\\nasync function load() {\\n  try {\\n    const q = new URLSearchParams();\\n    q.set(\\"limit\\", String(max));\\n    if (level) q.set(\\"level\\", level);\\n    rows = await fetchJson(\`/analytics/logs?\${q.toString()}\`);\\n    error = null;\\n  } catch (e) {\\n    error = e.message;\\n  } finally {\\n    loading = false;\\n  }\\n}\\nonMount(() => {\\n  load();\\n  const id = setInterval(load, pollMs);\\n  return () => clearInterval(id);\\n});\\n<\/script>\\n\\n<div class=\\"glass-table-container\\">\\n  <div class=\\"table-header\\">\\n    <h3>Recent Logs</h3>\\n    <div class=\\"table-actions\\">\\n      <button class=\\"glass-button\\" on:click={load}>\\n        <span>↻</span> Refresh\\n      </button>\\n    </div>\\n  </div>\\n\\n  {#if error}\\n    <div class=\\"p-3 text-red-400 text-sm\\">{error}</div>\\n  {:else if loading}\\n    <div class=\\"loading-state\\">\\n      <div class=\\"loading-spinner\\"></div>\\n      <span>Loading logs...</span>\\n    </div>\\n  {:else}\\n    <div class=\\"glass-table glass-log-table\\">\\n      {#each rows as r}\\n        <div class=\\"log-row\\">\\n          <span class=\\"log-timestamp\\">[{r.ts.slice(11, 19)}]</span>\\n          <span class=\\"log-level level-{r.level.toLowerCase()}\\">{r.level}</span>\\n          <span class=\\"log-name\\">{r.name}</span>\\n          <span class=\\"log-message\\">{r.message}</span>\\n        </div>\\n      {/each}\\n    </div>\\n  {/if}\\n</div>\\n\\n<style>\\n  .glass-table-container {\\n    background: var(--glass-primary);\\n    backdrop-filter: var(--glass-blur-primary);\\n    border: 1px solid var(--glass-border-light);\\n    border-radius: 16px;\\n    overflow: hidden;\\n    box-shadow: var(--glass-shadow-primary);\\n    display: flex; /* Use flexbox for layout */\\n    flex-direction: column;\\n    height: 100%; /* Ensure it takes full height in grid */\\n  }\\n\\n  .table-header {\\n    display: flex;\\n    justify-content: space-between;\\n    align-items: center;\\n    padding: 20px 24px;\\n    border-bottom: 1px solid var(--glass-border-light);\\n    background: rgba(255, 255, 255, 0.05);\\n    flex-shrink: 0; /* Prevent header from shrinking */\\n  }\\n\\n  .table-header h3 {\\n    color: var(--text-primary);\\n    font-size: 18px;\\n    font-weight: 600;\\n    margin: 0;\\n  }\\n\\n  .glass-button {\\n    display: flex;\\n    align-items: center;\\n    gap: 8px;\\n    padding: 8px 16px;\\n    background: var(--glass-secondary);\\n    backdrop-filter: var(--glass-blur-subtle);\\n    border: 1px solid var(--glass-border-light);\\n    border-radius: 8px;\\n    color: var(--text-secondary);\\n    font-size: 14px;\\n    cursor: pointer;\\n    transition: all var(--glass-transition-fast);\\n  }\\n\\n  .glass-button:hover {\\n    background: rgba(255, 255, 255, 0.15);\\n    color: var(--text-primary);\\n    transform: translateY(-1px);\\n  }\\n\\n  .glass-log-table {\\n    overflow-y: auto; /* Enable vertical scrolling for logs */\\n    flex-grow: 1; /* Allow logs section to grow */\\n    padding: 16px 24px; /* Add padding to log content */\\n    font-family: 'SF Mono', 'Monaco', 'Cascadia Code', monospace;\\n    font-size: 12px;\\n  }\\n\\n  .log-row {\\n    display: flex;\\n    gap: 8px;\\n    margin-bottom: 4px;\\n    line-height: 1.4;\\n    color: var(--text-secondary);\\n  }\\n\\n  .log-timestamp {\\n    color: var(--text-tertiary);\\n    flex-shrink: 0;\\n  }\\n\\n  .log-level {\\n    font-weight: 600;\\n    flex-shrink: 0;\\n  }\\n  \\n  .log-name {\\n    color: var(--text-tertiary);\\n    flex-shrink: 0;\\n  }\\n\\n  .log-message {\\n    flex-grow: 1;\\n    overflow-wrap: break-word; /* Ensure long messages wrap */\\n    word-break: break-all; /* Break long words */\\n  }\\n\\n  .level-error {\\n    color: var(--accent-pink);\\n  }\\n\\n  .level-warning {\\n    color: var(--accent-amber);\\n  }\\n\\n  .level-info {\\n    color: var(--accent-blue);\\n  }\\n\\n  .loading-state {\\n    display: flex;\\n    flex-direction: column;\\n    align-items: center;\\n    justify-content: center;\\n    padding: 60px 20px;\\n    color: var(--text-secondary);\\n  }\\n\\n  .loading-spinner {\\n    width: 32px;\\n    height: 32px;\\n    border: 3px solid rgba(255, 255, 255, 0.1);\\n    border-top: 3px solid var(--accent-blue);\\n    border-radius: 50%;\\n    animation: spin 1s linear infinite;\\n    margin-bottom: 16px;\\n  }\\n\\n  @keyframes spin {\\n    0% { transform: rotate(0deg); }\\n    100% { transform: rotate(360deg); }\\n  }\\n</style>\\n\\n\\n"],"names":[],"mappings":"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"}`
+};
+const RecentLogs = create_ssr_component(($$result, $$props, $$bindings, slots) => {
+  $$result.css.add(css$1);
+  return `<div class="glass-table-container svelte-cd9rku"><div class="table-header svelte-cd9rku"><h3 class="svelte-cd9rku" data-svelte-h="svelte-1fqux60">Recent Logs</h3> <div class="table-actions"><button class="glass-button svelte-cd9rku" data-svelte-h="svelte-1sqs6kh"><span>↻</span> Refresh</button></div></div> ${`${`<div class="loading-state svelte-cd9rku" data-svelte-h="svelte-1gmkwqb"><div class="loading-spinner svelte-cd9rku"></div> <span>Loading logs...</span></div>`}`} </div>`;
+});
+const css = {
+  code: ".liquid-dashboard.svelte-1clg4lq{min-height:100vh;background:var(--bg-primary);position:relative;overflow-x:hidden}.dashboard-background.svelte-1clg4lq{position:fixed;inset:0;z-index:-1;overflow:hidden}.gradient-orb.svelte-1clg4lq{position:absolute;border-radius:50%;filter:blur(60px);opacity:0.3;animation:liquid-glass-shimmer var(--specular-duration) var(--specular-timing) infinite}.orb-1.svelte-1clg4lq{width:400px;height:400px;top:-200px;right:-200px;background:var(--glass-gradient-primary)}.orb-2.svelte-1clg4lq{width:300px;height:300px;bottom:-150px;left:-150px;background:conic-gradient(\n      from 180deg,\n      rgba(139, 92, 246, 0.2),\n      rgba(244, 63, 94, 0.15),\n      rgba(99, 102, 241, 0.2)\n    );animation-delay:-2s}.orb-3.svelte-1clg4lq{width:250px;height:250px;top:50%;left:50%;transform:translate(-50%, -50%);background:radial-gradient(\n      circle,\n      rgba(16, 185, 129, 0.15),\n      rgba(245, 158, 11, 0.1),\n      transparent\n    );animation-delay:-4s}.dashboard-content.svelte-1clg4lq{padding:120px 24px 40px;max-width:1400px;margin:0 auto}.hero-metrics.svelte-1clg4lq{margin-bottom:32px}.hero-grid.svelte-1clg4lq{display:grid;grid-template-columns:repeat(auto-fit, minmax(250px, 1fr));gap:24px;padding:24px}.charts-grid.svelte-1clg4lq{display:grid;grid-template-columns:2fr 1fr 1fr;gap:24px;margin-bottom:32px}.data-section.svelte-1clg4lq{display:grid;grid-template-columns:2fr 1fr;gap:24px}@media(max-width: 1024px){.charts-grid.svelte-1clg4lq{grid-template-columns:1fr}.data-section.svelte-1clg4lq{grid-template-columns:1fr}}",
+  map: '{"version":3,"file":"+page.svelte","sources":["+page.svelte"],"sourcesContent":["<script lang=\\"ts\\">import { onMount, onDestroy } from \\"svelte\\";\\nimport { fetchJson, connectSSE } from \\"../lib/api\\";\\nimport LiquidNavigation from \\"../lib/components/LiquidNavigation.svelte\\";\\nimport GlassCard from \\"../lib/components/GlassCard.svelte\\";\\nimport GlassChart from \\"../lib/components/GlassChart.svelte\\";\\nimport MetricTile from \\"../lib/components/MetricTile.svelte\\";\\nimport CostAnalyticsChart from \\"../lib/components/CostAnalyticsChart.svelte\\";\\nimport PerformanceRadar from \\"../lib/components/PerformanceRadar.svelte\\";\\nimport SessionsTable from \\"../lib/components/SessionsTable.svelte\\";\\nimport RecentLogs from \\"../lib/components/RecentLogs.svelte\\";\\nlet metrics = null;\\nlet error = null;\\nlet es = null;\\n$: costTrendData = prepareCostTrendData(metrics);\\n$: performanceData = preparePerformanceData(metrics);\\n$: usageDistributionData = prepareUsageData(metrics);\\nfunction prepareCostTrendData(metrics2) {\\n  if (!metrics2 || !metrics2.cost_history) return null;\\n  return {\\n    labels: metrics2.cost_history.map((item) => new Date(item.date).toLocaleDateString()),\\n    datasets: [{\\n      label: \\"Cost Trend (USD)\\",\\n      data: metrics2.cost_history.map((item) => item.cost),\\n      colors: [\\"rgba(99, 102, 241, 0.3)\\", \\"rgba(99, 102, 241, 0.05)\\"],\\n      borderColor: \\"rgba(99, 102, 241, 0.8)\\",\\n      fill: true\\n    }]\\n  };\\n}\\nfunction preparePerformanceData(metrics2) {\\n  if (!metrics2 || !metrics2.performance_metrics_data) return null;\\n  const labels = metrics2.performance_metrics_data.map((item) => item.name);\\n  const dataValues = metrics2.performance_metrics_data.map((item) => item.value);\\n  return {\\n    labels,\\n    datasets: [{\\n      label: \\"Current Performance\\",\\n      data: dataValues,\\n      backgroundColor: \\"rgba(99, 102, 241, 0.1)\\",\\n      borderColor: \\"rgba(99, 102, 241, 0.8)\\",\\n      borderWidth: 2,\\n      pointBackgroundColor: \\"rgba(99, 102, 241, 1)\\",\\n      pointBorderColor: \\"rgba(255, 255, 255, 0.8)\\",\\n      pointBorderWidth: 2,\\n      pointRadius: 6\\n    }]\\n  };\\n}\\nfunction prepareUsageData(metrics2) {\\n  if (!metrics2 || !metrics2.usage_distribution_data) return null;\\n  const labels = metrics2.usage_distribution_data.map((item) => item.name);\\n  const dataValues = metrics2.usage_distribution_data.map((item) => item.count);\\n  return {\\n    labels,\\n    datasets: [{\\n      label: \\"Usage Distribution\\",\\n      data: dataValues,\\n      backgroundColor: [\\n        \\"rgba(59, 130, 246, 0.6)\\",\\n        \\"rgba(139, 92, 246, 0.6)\\",\\n        \\"rgba(244, 63, 94, 0.6)\\",\\n        \\"rgba(16, 185, 129, 0.6)\\",\\n        \\"rgba(236, 72, 153, 0.6)\\",\\n        \\"rgba(245, 158, 11, 0.6)\\"\\n      ],\\n      borderColor: \\"rgba(255, 255, 255, 0.1)\\",\\n      borderWidth: 1\\n    }]\\n  };\\n}\\nonMount(async () => {\\n  try {\\n    metrics = await fetchJson(\\"/analytics/dashboard\\");\\n    es = connectSSE(\\"/analytics/stream\\", (ev) => {\\n      try {\\n        const parsed = JSON.parse(ev.data);\\n        if (parsed?.timestamp) {\\n          metrics = parsed;\\n        }\\n      } catch {\\n      }\\n    });\\n  } catch (e) {\\n    error = e.message;\\n  }\\n});\\nonDestroy(() => es?.close());\\n<\/script>\\n\\n<div class=\\"liquid-dashboard\\">\\n  <LiquidNavigation />\\n  \\n  <!-- Animated background -->\\n  <div class=\\"dashboard-background\\">\\n    <div class=\\"gradient-orb orb-1\\"></div>\\n    <div class=\\"gradient-orb orb-2\\"></div>\\n    <div class=\\"gradient-orb orb-3\\"></div>\\n    </div>\\n\\n  <main class=\\"dashboard-content\\">\\n    <!-- Hero Metrics Section -->\\n    <section class=\\"hero-metrics\\">\\n      <GlassCard variant=\\"elevated\\" animated specular>\\n        <div class=\\"hero-grid\\">\\n          <MetricTile \\n            title=\\"Active Sessions\\" \\n            value={metrics?.active_sessions} \\n            trend=\\"+12.5%\\"\\n            icon=\\"👥\\"\\n            color=\\"blue\\"\\n          />\\n          <MetricTile \\n            title=\\"Response Time\\" \\n            value={metrics?.average_response_time} \\n            unit=\\"ms\\"\\n            trend=\\"-8.2%\\"\\n            icon=\\"⚡\\"\\n            color=\\"green\\"\\n          />\\n          <MetricTile \\n            title=\\"Success Rate\\" \\n            value={metrics?.success_rate} \\n            unit=\\"%\\"\\n            trend=\\"+2.1%\\"\\n            icon=\\"✅\\"\\n            color=\\"purple\\"\\n          />\\n          <MetricTile \\n            title=\\"Cost Today\\" \\n            value={metrics?.total_cost_today} \\n            unit=\\"USD\\"\\n            trend=\\"+$0.12\\"\\n            icon=\\"💰\\"\\n            color=\\"amber\\"\\n          />\\n        </div>\\n      </GlassCard>\\n    </section>\\n    \\n    <!-- Charts Section -->\\n    <section class=\\"charts-grid\\">\\n      <GlassCard variant=\\"primary\\" animated>\\n        <GlassChart \\n          type=\\"line\\" \\n          data={costTrendData} \\n          title=\\"Cost Trends\\" \\n          height={320}\\n        />\\n      </GlassCard>\\n      \\n      <GlassCard variant=\\"primary\\" animated>\\n        <PerformanceRadar data={performanceData} />\\n      </GlassCard>\\n      \\n      <GlassCard variant=\\"secondary\\" animated>\\n        <GlassChart \\n          type=\\"doughnut\\" \\n          data={usageDistributionData} \\n          title=\\"Usage Distribution\\" \\n          height={280}\\n        />\\n      </GlassCard>\\n    </section>\\n    \\n    <!-- Data Tables Section -->\\n    <section class=\\"data-section\\">\\n      <GlassCard variant=\\"primary\\">\\n        <SessionsTable enhanced />\\n      </GlassCard>\\n      \\n      <GlassCard variant=\\"secondary\\">\\n        <RecentLogs enhanced />\\n      </GlassCard>\\n    </section>\\n  </main>\\n</div>\\n\\n<style>\\n  .liquid-dashboard {\\n    min-height: 100vh;\\n    background: var(--bg-primary);\\n    position: relative;\\n    overflow-x: hidden;\\n  }\\n  \\n  .dashboard-background {\\n    position: fixed;\\n    inset: 0;\\n    z-index: -1;\\n    overflow: hidden;\\n  }\\n  \\n  .gradient-orb {\\n    position: absolute;\\n    border-radius: 50%;\\n    filter: blur(60px);\\n    opacity: 0.3;\\n    animation: liquid-glass-shimmer var(--specular-duration) var(--specular-timing) infinite;\\n  }\\n  \\n  .orb-1 {\\n    width: 400px;\\n    height: 400px;\\n    top: -200px;\\n    right: -200px;\\n    background: var(--glass-gradient-primary);\\n  }\\n  \\n  .orb-2 {\\n    width: 300px;\\n    height: 300px;\\n    bottom: -150px;\\n    left: -150px;\\n    background: conic-gradient(\\n      from 180deg,\\n      rgba(139, 92, 246, 0.2),\\n      rgba(244, 63, 94, 0.15),\\n      rgba(99, 102, 241, 0.2)\\n    );\\n    animation-delay: -2s;\\n  }\\n  \\n  .orb-3 {\\n    width: 250px;\\n    height: 250px;\\n    top: 50%;\\n    left: 50%;\\n    transform: translate(-50%, -50%);\\n    background: radial-gradient(\\n      circle,\\n      rgba(16, 185, 129, 0.15),\\n      rgba(245, 158, 11, 0.1),\\n      transparent\\n    );\\n    animation-delay: -4s;\\n  }\\n  \\n  .dashboard-content {\\n    padding: 120px 24px 40px;\\n    max-width: 1400px;\\n    margin: 0 auto;\\n  }\\n  \\n  .hero-metrics {\\n    margin-bottom: 32px;\\n  }\\n  \\n  .hero-grid {\\n    display: grid;\\n    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));\\n    gap: 24px;\\n    padding: 24px;\\n  }\\n  \\n  .charts-grid {\\n    display: grid;\\n    grid-template-columns: 2fr 1fr 1fr; /* Two charts + one radar chart */\\n    gap: 24px;\\n    margin-bottom: 32px;\\n  }\\n  \\n  .data-section {\\n    display: grid;\\n    grid-template-columns: 2fr 1fr; /* Sessions table + Recent logs */\\n    gap: 24px;\\n  }\\n  \\n  @media (max-width: 1024px) {\\n    .charts-grid {\\n      grid-template-columns: 1fr;\\n    }\\n    \\n    .data-section {\\n      grid-template-columns: 1fr;\\n    }\\n  }\\n</style>\\n\\n\\n"],"names":[],"mappings":"AAkLE,gCAAkB,CAChB,UAAU,CAAE,KAAK,CACjB,UAAU,CAAE,IAAI,YAAY,CAAC,CAC7B,QAAQ,CAAE,QAAQ,CAClB,UAAU,CAAE,MACd,CAEA,oCAAsB,CACpB,QAAQ,CAAE,KAAK,CACf,KAAK,CAAE,CAAC,CACR,OAAO,CAAE,EAAE,CACX,QAAQ,CAAE,MACZ,CAEA,4BAAc,CACZ,QAAQ,CAAE,QAAQ,CAClB,aAAa,CAAE,GAAG,CAClB,MAAM,CAAE,KAAK,IAAI,CAAC,CAClB,OAAO,CAAE,GAAG,CACZ,SAAS,CAAE,oBAAoB,CAAC,IAAI,mBAAmB,CAAC,CAAC,IAAI,iBAAiB,CAAC,CAAC,QAClF,CAEA,qBAAO,CACL,KAAK,CAAE,KAAK,CACZ,MAAM,CAAE,KAAK,CACb,GAAG,CAAE,MAAM,CACX,KAAK,CAAE,MAAM,CACb,UAAU,CAAE,IAAI,wBAAwB,CAC1C,CAEA,qBAAO,CACL,KAAK,CAAE,KAAK,CACZ,MAAM,CAAE,KAAK,CACb,MAAM,CAAE,MAAM,CACd,IAAI,CAAE,MAAM,CACZ,UAAU,CAAE;AAChB,MAAM,IAAI,CAAC,MAAM;AACjB,MAAM,KAAK,GAAG,CAAC,CAAC,EAAE,CAAC,CAAC,GAAG,CAAC,CAAC,GAAG,CAAC;AAC7B,MAAM,KAAK,GAAG,CAAC,CAAC,EAAE,CAAC,CAAC,EAAE,CAAC,CAAC,IAAI,CAAC;AAC7B,MAAM,KAAK,EAAE,CAAC,CAAC,GAAG,CAAC,CAAC,GAAG,CAAC,CAAC,GAAG;AAC5B,KAAK,CACD,eAAe,CAAE,GACnB,CAEA,qBAAO,CACL,KAAK,CAAE,KAAK,CACZ,MAAM,CAAE,KAAK,CACb,GAAG,CAAE,GAAG,CACR,IAAI,CAAE,GAAG,CACT,SAAS,CAAE,UAAU,IAAI,CAAC,CAAC,IAAI,CAAC,CAChC,UAAU,CAAE;AAChB,MAAM,MAAM;AACZ,MAAM,KAAK,EAAE,CAAC,CAAC,GAAG,CAAC,CAAC,GAAG,CAAC,CAAC,IAAI,CAAC;AAC9B,MAAM,KAAK,GAAG,CAAC,CAAC,GAAG,CAAC,CAAC,EAAE,CAAC,CAAC,GAAG,CAAC;AAC7B,MAAM;AACN,KAAK,CACD,eAAe,CAAE,GACnB,CAEA,iCAAmB,CACjB,OAAO,CAAE,KAAK,CAAC,IAAI,CAAC,IAAI,CACxB,SAAS,CAAE,MAAM,CACjB,MAAM,CAAE,CAAC,CAAC,IACZ,CAEA,4BAAc,CACZ,aAAa,CAAE,IACjB,CAEA,yBAAW,CACT,OAAO,CAAE,IAAI,CACb,qBAAqB,CAAE,OAAO,QAAQ,CAAC,CAAC,OAAO,KAAK,CAAC,CAAC,GAAG,CAAC,CAAC,CAC3D,GAAG,CAAE,IAAI,CACT,OAAO,CAAE,IACX,CAEA,2BAAa,CACX,OAAO,CAAE,IAAI,CACb,qBAAqB,CAAE,GAAG,CAAC,GAAG,CAAC,GAAG,CAClC,GAAG,CAAE,IAAI,CACT,aAAa,CAAE,IACjB,CAEA,4BAAc,CACZ,OAAO,CAAE,IAAI,CACb,qBAAqB,CAAE,GAAG,CAAC,GAAG,CAC9B,GAAG,CAAE,IACP,CAEA,MAAO,YAAY,MAAM,CAAE,CACzB,2BAAa,CACX,qBAAqB,CAAE,GACzB,CAEA,4BAAc,CACZ,qBAAqB,CAAE,GACzB,CACF"}'
+};
+function prepareCostTrendData(metrics2) {
+  return null;
 }
-function RecentLogs($$payload, $$props) {
-  push();
-  $$payload.out.push(`<div class="glass-table-container svelte-cd9rku"><div class="table-header svelte-cd9rku"><h3 class="svelte-cd9rku">Recent Logs</h3> <div class="table-actions svelte-cd9rku"><button class="glass-button svelte-cd9rku"><span class="svelte-cd9rku">↻</span> Refresh</button></div></div> `);
-  {
-    $$payload.out.push("<!--[!-->");
-    {
-      $$payload.out.push("<!--[-->");
-      $$payload.out.push(`<div class="loading-state svelte-cd9rku"><div class="loading-spinner svelte-cd9rku"></div> <span class="svelte-cd9rku">Loading logs...</span></div>`);
-    }
-    $$payload.out.push(`<!--]-->`);
-  }
-  $$payload.out.push(`<!--]--></div>`);
-  pop();
+function preparePerformanceData(metrics2) {
+  return null;
 }
-function _page($$payload, $$props) {
-  push();
-  let costTrendData, usageDistributionData;
+function prepareUsageData(metrics2) {
+  return null;
+}
+const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
+  let costTrendData;
+  let performanceData;
+  let usageDistributionData;
   let metrics = null;
   let es = null;
-  function prepareCostTrendData(metrics2) {
-    return null;
-  }
-  function prepareUsageData(metrics2) {
-    return null;
-  }
   onDestroy(() => es?.close());
+  $$result.css.add(css);
   costTrendData = prepareCostTrendData();
+  performanceData = preparePerformanceData();
   usageDistributionData = prepareUsageData();
-  $$payload.out.push(`<div class="liquid-dashboard svelte-1clg4lq">`);
-  LiquidNavigation($$payload);
-  $$payload.out.push(`<!----> <div class="dashboard-background svelte-1clg4lq"><div class="gradient-orb orb-1 svelte-1clg4lq"></div> <div class="gradient-orb orb-2 svelte-1clg4lq"></div> <div class="gradient-orb orb-3 svelte-1clg4lq"></div></div> <main class="dashboard-content svelte-1clg4lq"><section class="hero-metrics svelte-1clg4lq">`);
-  GlassCard($$payload, {
-    variant: "elevated",
-    animated: true,
-    specular: true,
-    children: ($$payload2) => {
-      $$payload2.out.push(`<div class="hero-grid svelte-1clg4lq">`);
-      MetricTile($$payload2, {
-        title: "Active Sessions",
-        value: metrics?.active_sessions,
-        trend: "+12.5%",
-        icon: "👥",
-        color: "blue"
-      });
-      $$payload2.out.push(`<!----> `);
-      MetricTile($$payload2, {
-        title: "Response Time",
-        value: metrics?.average_response_time,
-        unit: "ms",
-        trend: "-8.2%",
-        icon: "⚡",
-        color: "green"
-      });
-      $$payload2.out.push(`<!----> `);
-      MetricTile($$payload2, {
-        title: "Success Rate",
-        value: metrics?.success_rate,
-        unit: "%",
-        trend: "+2.1%",
-        icon: "✅",
-        color: "purple"
-      });
-      $$payload2.out.push(`<!----> `);
-      MetricTile($$payload2, {
-        title: "Cost Today",
-        value: metrics?.total_cost_today,
-        unit: "USD",
-        trend: "+$0.12",
-        icon: "💰",
-        color: "amber"
-      });
-      $$payload2.out.push(`<!----></div>`);
+  return `<div class="liquid-dashboard svelte-1clg4lq">${validate_component(LiquidNavigation, "LiquidNavigation").$$render($$result, {}, {}, {})}  <div class="dashboard-background svelte-1clg4lq" data-svelte-h="svelte-1kkmwwe"><div class="gradient-orb orb-1 svelte-1clg4lq"></div> <div class="gradient-orb orb-2 svelte-1clg4lq"></div> <div class="gradient-orb orb-3 svelte-1clg4lq"></div></div> <main class="dashboard-content svelte-1clg4lq"> <section class="hero-metrics svelte-1clg4lq">${validate_component(GlassCard, "GlassCard").$$render(
+    $$result,
+    {
+      variant: "elevated",
+      animated: true,
+      specular: true
     },
-    $$slots: { default: true }
-  });
-  $$payload.out.push(`<!----></section> <section class="charts-grid svelte-1clg4lq">`);
-  GlassCard($$payload, {
-    variant: "primary",
-    animated: true,
-    children: ($$payload2) => {
-      GlassChart($$payload2, {
-        type: "line",
-        data: costTrendData,
-        title: "Cost Trends",
-        height: 320
-      });
-    },
-    $$slots: { default: true }
-  });
-  $$payload.out.push(`<!----> `);
-  GlassCard($$payload, {
-    variant: "primary",
-    animated: true,
-    children: ($$payload2) => {
-      PerformanceRadar($$payload2);
-    },
-    $$slots: { default: true }
-  });
-  $$payload.out.push(`<!----> `);
-  GlassCard($$payload, {
-    variant: "secondary",
-    animated: true,
-    children: ($$payload2) => {
-      GlassChart($$payload2, {
-        type: "doughnut",
-        data: usageDistributionData,
-        title: "Usage Distribution",
-        height: 280
-      });
-    },
-    $$slots: { default: true }
-  });
-  $$payload.out.push(`<!----></section> <section class="data-section svelte-1clg4lq">`);
-  GlassCard($$payload, {
-    variant: "primary",
-    children: ($$payload2) => {
-      SessionsTable($$payload2);
-    },
-    $$slots: { default: true }
-  });
-  $$payload.out.push(`<!----> `);
-  GlassCard($$payload, {
-    variant: "secondary",
-    children: ($$payload2) => {
-      RecentLogs($$payload2);
-    },
-    $$slots: { default: true }
-  });
-  $$payload.out.push(`<!----></section></main></div>`);
-  pop();
-}
+    {},
+    {
+      default: () => {
+        return `<div class="hero-grid svelte-1clg4lq">${validate_component(MetricTile, "MetricTile").$$render(
+          $$result,
+          {
+            title: "Active Sessions",
+            value: metrics?.active_sessions,
+            trend: "+12.5%",
+            icon: "👥",
+            color: "blue"
+          },
+          {},
+          {}
+        )} ${validate_component(MetricTile, "MetricTile").$$render(
+          $$result,
+          {
+            title: "Response Time",
+            value: metrics?.average_response_time,
+            unit: "ms",
+            trend: "-8.2%",
+            icon: "⚡",
+            color: "green"
+          },
+          {},
+          {}
+        )} ${validate_component(MetricTile, "MetricTile").$$render(
+          $$result,
+          {
+            title: "Success Rate",
+            value: metrics?.success_rate,
+            unit: "%",
+            trend: "+2.1%",
+            icon: "✅",
+            color: "purple"
+          },
+          {},
+          {}
+        )} ${validate_component(MetricTile, "MetricTile").$$render(
+          $$result,
+          {
+            title: "Cost Today",
+            value: metrics?.total_cost_today,
+            unit: "USD",
+            trend: "+$0.12",
+            icon: "💰",
+            color: "amber"
+          },
+          {},
+          {}
+        )}</div>`;
+      }
+    }
+  )}</section>  <section class="charts-grid svelte-1clg4lq">${validate_component(GlassCard, "GlassCard").$$render($$result, { variant: "primary", animated: true }, {}, {
+    default: () => {
+      return `${validate_component(GlassChart, "GlassChart").$$render(
+        $$result,
+        {
+          type: "line",
+          data: costTrendData,
+          title: "Cost Trends",
+          height: 320
+        },
+        {},
+        {}
+      )}`;
+    }
+  })} ${validate_component(GlassCard, "GlassCard").$$render($$result, { variant: "primary", animated: true }, {}, {
+    default: () => {
+      return `${validate_component(PerformanceRadar, "PerformanceRadar").$$render($$result, { data: performanceData }, {}, {})}`;
+    }
+  })} ${validate_component(GlassCard, "GlassCard").$$render($$result, { variant: "secondary", animated: true }, {}, {
+    default: () => {
+      return `${validate_component(GlassChart, "GlassChart").$$render(
+        $$result,
+        {
+          type: "doughnut",
+          data: usageDistributionData,
+          title: "Usage Distribution",
+          height: 280
+        },
+        {},
+        {}
+      )}`;
+    }
+  })}</section>  <section class="data-section svelte-1clg4lq">${validate_component(GlassCard, "GlassCard").$$render($$result, { variant: "primary" }, {}, {
+    default: () => {
+      return `${validate_component(SessionsTable, "SessionsTable").$$render($$result, { enhanced: true }, {}, {})}`;
+    }
+  })} ${validate_component(GlassCard, "GlassCard").$$render($$result, { variant: "secondary" }, {}, {
+    default: () => {
+      return `${validate_component(RecentLogs, "RecentLogs").$$render($$result, { enhanced: true }, {}, {})}`;
+    }
+  })}</section></main> </div>`;
+});
 export {
-  _page as default
+  Page as default
 };
